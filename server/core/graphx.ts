@@ -7,9 +7,10 @@ import { EnumFilterAttributeType } from '../filter-attributes/enum-filter-attrib
 //
 //
 export class GraphX {
-	
-	entities:{[name:string]:EntityType} = {};
-	filterAttributes:{[name:string]:FilterAttributeType} = {};
+
+  readonly entities:{[name:string]:EntityType} = {};
+  readonly filterAttributes:{[name:string]:FilterAttributeType} = {};
+  readonly menuItems:string[] = [];
 	rawTypes:any = {};
 
 	private fnFromArray = (fns:any) => () => fns.reduce((obj:any, fn:any) => Object.assign({}, obj, fn.call()), {});
@@ -23,17 +24,17 @@ export class GraphX {
 				ping: { type: GraphQLString, resolve: () => 'pong' }
 			})
 		});
-	
+
 		this.createType('mutation', {
 			name: 'Mutation',
 			fields: () => ({
-				ping: { 
-					type: GraphQLString, 
+				ping: {
+					type: GraphQLString,
 					args: {  some: { type: GraphQLString } },
 					resolve: (root:any, args:any ) => `pong, ${args.some}!`
 				}
 			})
-		});		
+		});
 	}
 
 	addEnumFilterAttributeType( name:string ):void {
@@ -41,7 +42,7 @@ export class GraphX {
 		type.init( this );
 		type.createTypes();
 	}
-	
+
 	//
 	//
 	private createType( name:string, obj:any ){
@@ -56,7 +57,7 @@ export class GraphX {
 			extend: (fields:any) => this.rawTypes[name].fields.push(fields instanceof Function ? fields : () => fields)
 		};
 	}
-	
+
 	//
 	//
 	type( name:string, obj?:any ){
@@ -66,10 +67,20 @@ export class GraphX {
 		}
 		return this.createType(name, obj);
 	}
-	
+
 	//
-	//	
-	generate = () => {		
+	//
+	generate = () => {
+
+    this.type('query').extend( () => {
+      const query = {};
+			_.set( query, 'menuItems', {
+				type: new GraphQLList( GraphQLString ),
+				resolve: () => _.compact( this.menuItems )
+			});
+			return query;
+    });
+
 		for (let key in this.rawTypes) {
 			let item = this.rawTypes[key];
 			this.rawTypes[key] = new item.from({
@@ -80,9 +91,9 @@ export class GraphX {
 				values: item.values
 			});
 		}
-		let schema = new GraphQLSchema({ 
-			query: this.type('query'), 
-			mutation: this.type('mutation') 
+		let schema = new GraphQLSchema({
+			query: this.type('query'),
+			mutation: this.type('mutation')
 		});
 
 		return schema;

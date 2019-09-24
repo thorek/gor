@@ -14,6 +14,7 @@ export abstract class EntityType extends SchemaType {
 	get hasMany(): EntityReference[] { return [] }
 	get plural() { return inflection.pluralize( _.toLower( this.name ) ) }
 	get singular() { return _.toLower( this.name ) }
+  get menuItem() { return this.name }
 
 	protected collection:Collection<any>;
 
@@ -28,7 +29,8 @@ export abstract class EntityType extends SchemaType {
 	//
 	init( graphx:GraphX ):void {
 		super.init( graphx );
-		this.graphx.entities[this.name] = this;
+    this.graphx.entities[this.name] = this;
+    this.graphx.menuItems.push( this.menuItem );
 	}
 
 	//
@@ -70,8 +72,8 @@ export abstract class EntityType extends SchemaType {
 	//
 	addQueries():void  {
 		this.addTypeQuery();
-		this.addTypesQuery();
-	}
+    this.addTypesQuery();
+  }
 
 	//
 	//
@@ -157,7 +159,7 @@ export abstract class EntityType extends SchemaType {
 				resolve: (root:any, args:any) => this.typeResolver( this.collection, args.id )
 			});
 			return query;
-		});
+    });
 	}
 
 	//

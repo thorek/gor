@@ -1,10 +1,9 @@
-import { GraphQLEnumType, GraphQLInputObjectType, GraphQLList } from 'graphql';
+import { GraphQLEnumType } from 'graphql';
 import inflection from 'inflection';
 import _ from 'lodash';
 
 import { GraphX } from './graphx';
 import { Attribute, TypeAttribute } from './type-attribute';
-import { EnumFilterAttributeType } from '../filter-attributes/enum-filter-attribute.type';
 
 //
 //
