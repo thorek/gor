@@ -3,7 +3,7 @@ import { EntityType } from '../core/entity-type';
 //
 //
 export class PersonType extends EntityType {
-	
+
 	get name() { return 'Person' }
 	get attributes() { return {
 		firstname: { type: "String" },
@@ -17,9 +17,9 @@ export class PersonType extends EntityType {
 	]}
 	get enums() { return {
 		Gender: {
-			MALE: 0,
-			FEMALE: 1,
-			DIVERSE: 2
+			MALE: 'male',
+			FEMALE: 'female',
+			DIVERSE: 'diverse'
 		}
 	}}
 

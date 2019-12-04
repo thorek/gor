@@ -225,7 +225,7 @@ export abstract class EntityType extends SchemaType {
 				args: { input: { type: this.graphx.type(`${this.typeName}Input`)}},
 				resolve: (root:any, args:any ) => {
 					const attrs = args.input;
-					return args.id ? this.updateEntity( attrs ) : this.createEntity( attrs );
+					return _.has( attrs, 'id' ) ? this.updateEntity( attrs ) : this.createEntity( attrs );
 				}
 			});
 			return mutation;
