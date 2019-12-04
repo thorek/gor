@@ -6,8 +6,9 @@ import { Collection, Db, FilterQuery, ObjectId } from 'mongodb';
 import { GraphX } from './graphx';
 import { EntityReference, SchemaType } from './schema-type';
 
-//
-//
+/**
+ * Base class for all Entities
+ */
 export abstract class EntityType extends SchemaType {
 
 	get belongsTo(): EntityReference[] { return [] }

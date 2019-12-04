@@ -37,10 +37,14 @@ export class GraphX {
 		});
 	}
 
+  /**
+   *
+   * @param name
+   */
 	addEnumFilterAttributeType( name:string ):void {
-		const type = new EnumFilterAttributeType( name );
-		type.init( this );
-		type.createTypes();
+		const efat = new EnumFilterAttributeType( name );
+		efat.init( this );
+		efat.createTypes();
 	}
 
 	//

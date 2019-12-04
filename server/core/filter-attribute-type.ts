@@ -4,8 +4,9 @@ import _ from 'lodash';
 import { GraphX } from './graphx';
 import { SchemaType } from './schema-type';
 
-//
-//
+/**
+ * Base class for all Filter Attributes
+ */
 export abstract class FilterAttributeType extends SchemaType {
 
 	//

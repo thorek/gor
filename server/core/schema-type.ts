@@ -11,8 +11,9 @@ export type EntityReference = {
 	type:string;
 }
 
-//
-//
+/**
+ * Base class for any custom type that can occur in a GraphQL Schema
+ */
 export abstract class SchemaType {
 
 	abstract get name():string;

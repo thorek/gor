@@ -1,0 +1,9 @@
+entity:
+  name: Car
+  attributes:
+    maker:
+      type: string
+    licence:
+      type: string
+  belongsTo:
+    - person

@@ -1,7 +1,7 @@
 import { EntityType } from '../core/entity-type';
 
 /**
- * 
+ *
  */
 export class AddressType extends EntityType{
 
