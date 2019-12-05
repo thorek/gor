@@ -1,5 +1,6 @@
-import _ from 'lodash';
-import { GraphQLString, GraphQLObjectType, GraphQLSchema, GraphQLEnumType, GraphQLInputObjectType, GraphQLList } from "graphql";
+import { GraphQLList, GraphQLObjectType, GraphQLSchema, GraphQLString } from 'graphql';
+import * as _ from 'lodash';
+
 import { EntityType } from '../core/entity-type';
 import { FilterAttributeType } from '../core/filter-attribute-type';
 import { EnumFilterAttributeType } from '../filter-attributes/enum-filter-attribute.type';
@@ -10,7 +11,6 @@ export class GraphX {
 
   readonly entities:{[name:string]:EntityType} = {};
   readonly filterAttributes:{[name:string]:FilterAttributeType} = {};
-  readonly menuItems:string[] = [];
 	rawTypes:any = {};
 
 	private fnFromArray = (fns:any) => () => fns.reduce((obj:any, fn:any) => Object.assign({}, obj, fn.call()), {});
@@ -72,21 +72,54 @@ export class GraphX {
 		return this.createType(name, obj);
 	}
 
-	//
-	//
+  /**
+   *
+   */
 	generate = () => {
 
-    this.type('query').extend( () => {
-      const query = {};
-			_.set( query, 'menuItems', {
-				type: new GraphQLList( GraphQLString ),
-				resolve: () => _.compact( this.menuItems )
-			});
-			return query;
-    });
+    this.generateMetaData();
+    this.generateTypes();
 
-		for (let key in this.rawTypes) {
-			let item = this.rawTypes[key];
+		return new GraphQLSchema({
+			query: this.type('query'),
+			mutation: this.type('mutation')
+		});
+  }
+
+  /**
+   *
+   */
+  private generateMetaData = () => {
+    const metaDataType = new GraphQLObjectType({
+      name: 'metaData',
+      fields: {
+        name: {
+          type: GraphQLString,
+          resolve: (obj) => _.get( obj, 'name' )
+        },
+        menuLabel: {
+          type: GraphQLString,
+          resolve: (obj) => _.get( obj, 'menuLabel' )
+        },
+        parent: {
+          type: GraphQLString,
+          resolve: (obj) => _.get( obj, 'parent' )
+        }
+    }});
+
+    this.type('query').extend( () => {
+      return _.set( {}, 'metaData', {
+        type: new GraphQLList( metaDataType ),
+        resolve: (root:any) => _.values( this.entities )
+			});
+    });
+  }
+
+  /**
+   *
+   */
+  private generateTypes = () => {
+    _.forEach( this.rawTypes, (item, key) => {
 			this.rawTypes[key] = new item.from({
 				name: item.name,
 				description: item.description,
@@ -94,14 +127,8 @@ export class GraphX {
 				fields: this.fnFromArray(item.fields),
 				values: item.values
 			});
-		}
-		let schema = new GraphQLSchema({
-			query: this.type('query'),
-			mutation: this.type('mutation')
-		});
-
-		return schema;
-	}
+    });
+  }
 
 }
 

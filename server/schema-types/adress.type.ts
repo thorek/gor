@@ -15,5 +15,5 @@ export class AddressType extends EntityType{
 	get belongsTo() { return [
 		{ type: 'Person' }
 	]}
-
+  get parent() { return "foo" }
 }

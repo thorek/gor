@@ -1,6 +1,6 @@
 import { GraphQLBoolean, GraphQLID, GraphQLInputObjectType, GraphQLList } from 'graphql';
-import inflection from 'inflection';
-import _ from 'lodash';
+import * as inflection from 'inflection';
+import * as _ from 'lodash';
 import { Collection, Db, FilterQuery, ObjectId } from 'mongodb';
 
 import { GraphX } from './graphx';
@@ -15,7 +15,9 @@ export abstract class EntityType extends SchemaType {
 	get hasMany(): EntityReference[] { return [] }
 	get plural() { return inflection.pluralize( _.toLower( this.name ) ) }
 	get singular() { return _.toLower( this.name ) }
-  get menuItem() { return this.name }
+
+  get menuLabel() { return inflection.titleize(  this.plural ) }
+  get parent():string|null { return null }
 
 	protected collection:Collection<any>;
 
@@ -31,7 +33,6 @@ export abstract class EntityType extends SchemaType {
 	init( graphx:GraphX ):void {
 		super.init( graphx );
     this.graphx.entities[this.name] = this;
-    this.graphx.menuItems.push( this.menuItem );
 	}
 
 	//
@@ -153,13 +154,11 @@ export abstract class EntityType extends SchemaType {
 	//
 	protected addTypeQuery(){
 		this.graphx.type( 'query' ).extend( () => {
-			const query = {};
-			_.set( query, this.singular, {
+			return _.set( {}, this.singular, {
 				type: this.graphx.type(this.typeName),
 				args: { id: { type: GraphQLID } },
 				resolve: (root:any, args:any) => this.typeResolver( this.collection, args.id )
 			});
-			return query;
     });
 	}
 
@@ -167,13 +166,11 @@ export abstract class EntityType extends SchemaType {
 	//
 	protected addTypesQuery(){
 		this.graphx.type( 'query' ).extend( () => {
-			const query = {};
-			_.set( query, this.plural, {
+			return _.set( {}, this.plural, {
 				type: new GraphQLList( this.graphx.type(this.typeName) ),
 				args: { filter: { type: this.graphx.type(`${this.typeName}Filter`) } },
 				resolve: (root:any, args:any) => this.typesResolver( this.collection, this.getFilter( args ) )
 			});
-			return query;
 		});
 	}
 
@@ -195,10 +192,9 @@ export abstract class EntityType extends SchemaType {
 	//
 	//
 	protected getOutEntity( entity:any ):any {
-		if( ! _.has( entity, 'attrs' ) ) return null;
-		let outEntity = entity.attrs;
-		outEntity.id = entity._id;
-		return outEntity;
+    const outEntity = _.get( entity, 'attrs' );
+    if( _.isNil( outEntity ) ) return;
+    return _.set( outEntity, 'id', entity._id );
 	}
 
 	//

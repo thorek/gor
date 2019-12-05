@@ -20,6 +20,7 @@ export class GraphQLServer {
 		const client = await MongoClient.connect( url, { useNewUrlParser: true, useUnifiedTopology: true } );
 		const db = client.db(dbName);
 
+    // make this dynamic
 		const types = [
 			new PersonType( db ),
 			new AddressType( db ),
