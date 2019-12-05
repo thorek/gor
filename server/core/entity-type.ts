@@ -16,7 +16,8 @@ export abstract class EntityType extends SchemaType {
 	get plural() { return inflection.pluralize( _.toLower( this.name ) ) }
 	get singular() { return _.toLower( this.name ) }
 
-  get menuLabel() { return inflection.titleize(  this.plural ) }
+  get label() { return inflection.titleize(  this.plural ) }
+  get path() { return this.plural }
   get parent():string|null { return null }
 
 	protected collection:Collection<any>;

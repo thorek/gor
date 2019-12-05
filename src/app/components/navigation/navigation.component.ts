@@ -1,4 +1,5 @@
 import { Component, OnInit } from '@angular/core';
+import { MetaDataService } from 'src/app/services/meta-data.service';
 
 @Component({
   selector: 'app-navigation',
@@ -7,9 +8,11 @@ import { Component, OnInit } from '@angular/core';
 })
 export class NavigationComponent implements OnInit {
 
-  constructor() { }
+  constructor( private metaData:MetaDataService  ) { }
 
-  ngOnInit() {
+  async ngOnInit() {
+    const x = await this.metaData.resolveRoutes();
+    console.log( x );
   }
 
 }
