@@ -219,12 +219,14 @@ export abstract class EntityType extends SchemaType {
 	//
 	protected addSaveMutation():void {
 		this.graphx.type( 'mutation' ).extend( () => {
-			const mutation = {};
+      const mutation = {};
+      const args = {};
+      _.set( args, this.singular, { type: this.graphx.type(`${this.typeName}Input`)} );
 			_.set( mutation, `save${this.typeName}`, {
 				type: this.graphx.type( this.typeName ),
-				args: { input: { type: this.graphx.type(`${this.typeName}Input`)}},
+				args,
 				resolve: (root:any, args:any ) => {
-					const attrs = args.input;
+					const attrs = _.get( args, this.singular );
 					return _.has( attrs, 'id' ) ? this.updateEntity( attrs ) : this.createEntity( attrs );
 				}
 			});
