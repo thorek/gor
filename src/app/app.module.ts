@@ -9,6 +9,7 @@ import { InMemoryCache } from 'apollo-cache-inmemory';
 import { AppComponent } from './components/app/app.component';
 import { NavigationComponent } from './components/navigation/navigation.component';
 import { IndexComponent } from './components/index/index.component';
+import {MatTableModule} from '@angular/material/table';
 
 
 const appRoutes: Routes = [
@@ -28,6 +29,7 @@ const appRoutes: Routes = [
     HttpClientModule,
     ApolloModule,
     HttpLinkModule,
+    MatTableModule,
     RouterModule.forRoot(appRoutes)
   ],
   providers: [],

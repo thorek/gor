@@ -13,6 +13,12 @@ export class IndexComponent implements OnInit {
 
   metaData = null;
   entityData = null;
+  displayedColumns: string[] = [];
+  dataSource = [
+    {id: 1, firstname: "Thomas", lastname: "Moeller", gender: "MALE", 'age': 23},
+    {id: 1, firstname: "Thomas", lastname: "Moeller", gender: "MALE", 'age': 33},
+    {id: 1, firstname: "Thomas", lastname: "Moeller", gender: "MALE", 'age': 43}
+  ];
 
   /**
    *
@@ -40,5 +46,14 @@ export class IndexComponent implements OnInit {
     const name = _.get( this.metaData, 'name' );
     if( _.isNil( name ) ) return;
     this.entityData = await this.entityService.resolveMetaData( name );
+    this.setDisplayedColumns();
+  }
+
+  /**
+   *
+   */
+  private setDisplayedColumns():void {
+    this.displayedColumns = _.map( _.filter(
+      this.entityData.fields, (field:any) => _.get( field, 'type.kind') === 'SCALAR'), (field:any) => field.name);
   }
 }
