@@ -8,11 +8,18 @@ import { MetaDataService } from 'src/app/services/meta-data.service';
 })
 export class NavigationComponent implements OnInit {
 
-  constructor( private metaData:MetaDataService  ) { }
+  metaData = null;
 
+  /**
+   *
+   */
+  constructor( private metaDataService:MetaDataService  ) { }
+
+  /**
+   *
+   */
   async ngOnInit() {
-    const x = await this.metaData.resolveRoutes();
-    console.log( x );
+    this.metaData = await this.metaDataService.resolveMetaData();
   }
 
 }

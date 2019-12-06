@@ -1,7 +1,4 @@
 import { Component } from '@angular/core';
-import { Apollo } from 'apollo-angular';
-import gql from 'graphql-tag';
-import _ from 'lodash';
 
 @Component({
   selector: 'app-root',
@@ -10,6 +7,5 @@ import _ from 'lodash';
 })
 export class AppComponent {
   title = 'gor';
-
 
 }

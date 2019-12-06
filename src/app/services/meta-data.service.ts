@@ -4,7 +4,9 @@ import { Apollo } from 'apollo-angular';
 import gql from 'graphql-tag';
 import _ from 'lodash';
 import { resolve } from 'url';
+
 import { AppComponent } from '../components/app/app.component';
+import { IndexComponent } from '../components/index/index.component';
 
 
 @Injectable({
@@ -12,7 +14,7 @@ import { AppComponent } from '../components/app/app.component';
 })
 export class MetaDataService {
 
-  metaData: any = {};
+  private metaData: any = undefined;
 
   /**
    *
@@ -22,7 +24,9 @@ export class MetaDataService {
   /**
    *
    */
-  async resolveRoutes():Promise<any> {
+  async resolveMetaData():Promise<any> {
+    if( this.metaData ) return new Promise( resolve => resolve( this.metaData ) );
+
     return new Promise( resolve => {
       this.apollo.watchQuery<any>({
         query: gql`
@@ -50,7 +54,7 @@ export class MetaDataService {
    */
   private addRoutes():void {
     const routes = _.flatten( _.map( this.metaData, (item:any) => [
-      { path: item.path, component: AppComponent },
+      { path: item.path, component: IndexComponent },
       { path: `${item.path}/:id`, component: AppComponent }
     ]));
     this.router.resetConfig( routes );

@@ -6,18 +6,21 @@ import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { Apollo, ApolloModule } from 'apollo-angular';
 import { HttpLink, HttpLinkModule } from 'apollo-angular-link-http';
 import { InMemoryCache } from 'apollo-cache-inmemory';
-import { AppComponent } from '../components/app/app.component';
-import { NavigationComponent } from '../components/navigation/navigation.component';
+import { AppComponent } from './components/app/app.component';
+import { NavigationComponent } from './components/navigation/navigation.component';
+import { IndexComponent } from './components/index/index.component';
 
 
 const appRoutes: Routes = [
-  {path: 'foo', component: AppComponent }
+  {path: 'foo', component: AppComponent },
+  {path: 'index', component: IndexComponent }
 ];
 
 @NgModule({
   declarations: [
     AppComponent,
-    NavigationComponent
+    NavigationComponent,
+    IndexComponent
   ],
   imports: [
     BrowserModule,
