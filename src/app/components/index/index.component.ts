@@ -15,7 +15,7 @@ export class IndexComponent implements OnInit {
   metaData = null;
   entityData = null;
   displayedColumns: string[] = [];
-  dataSource:Observable<unknown> = null;
+  dataSource:Observable<any> = null;
 
   /**
    *
@@ -48,7 +48,7 @@ export class IndexComponent implements OnInit {
    */
   async setData():Promise<void> {
     const list = _.get(this.metaData, 'list' );
-    this.dataSource = this.entityService.getIndexData( list, this.displayedColumns );
+    this.dataSource = this.entityService.getIndexData( list, this.displayedColumns )
   }
 
   /**

@@ -54,13 +54,12 @@ export class EntityService {
    *
    */
   getIndexData( index:string, fields:string[] ):Observable<unknown> {
-    const query = gql`query {\n${index} { id \n firstname \n lastname \n } \n }`;
+    const query = gql`query {\n${index} { ${_.join(fields, '\n') } } \n }`;
     console.log( query );
-    return this.apollo.watchQuery({query}).valueChanges.pipe( map(({data}) => {
-      console.info( "data--->" );
-      console.info( data );
-      return data;
-    }  ) )
+    return this.apollo.watchQuery({query}).valueChanges.pipe( map((result:any) => {
+      console.log( result );
+      return _.get( result, ['data', index ] );
+    }));
   }
 
 }
