@@ -95,6 +95,8 @@ export class GraphX {
       fields: {
         name: { type: GraphQLString, resolve: (obj) => _.get( obj, 'name' )},
         path: { type: GraphQLString, resolve: (obj) => _.get( obj, 'path' )},
+        list: { type: GraphQLString, resolve: (obj) => _.get( obj, 'list' )},
+        entity: { type: GraphQLString, resolve: (obj) => _.get( obj, 'entity' )},
         label: { type: GraphQLString, resolve: (obj) => _.get( obj, 'label' ) },
         parent: { type: GraphQLString, resolve: (obj) => _.get( obj, 'parent' ) }
     }});

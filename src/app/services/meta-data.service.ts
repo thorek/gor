@@ -36,6 +36,8 @@ export class MetaDataService {
               path
               label
               parent
+              list
+              entity
             }
           }
         `

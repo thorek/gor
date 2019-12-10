@@ -1,12 +1,10 @@
 import { Injectable } from '@angular/core';
-import { Router } from '@angular/router';
 import { Apollo } from 'apollo-angular';
 import gql from 'graphql-tag';
-import _ from 'lodash';
-import { resolve } from 'url';
+import * as _ from 'lodash';
+import { Observable } from 'rxjs';
+import { map } from 'rxjs/operators';
 
-import { AppComponent } from '../components/app/app.component';
-import { IndexComponent } from '../components/index/index.component';
 
 
 @Injectable({
@@ -27,7 +25,6 @@ export class EntityService {
   async resolveMetaData( entity:string ):Promise<any> {
     const data = this.metaData[entity];
     if( data ) return new Promise( resolve => resolve( data ) );
-
     return new Promise( resolve => {
       this.apollo.watchQuery<any>({
         query: gql`
@@ -42,7 +39,7 @@ export class EntityService {
               }
             }
           }
-        }        `
+        }`
       }).valueChanges.subscribe( response => {
         const loading = _.get( response, 'data.loading' );
         if( loading ) return;
@@ -52,4 +49,18 @@ export class EntityService {
       });
     });
   }
+
+  /**
+   *
+   */
+  getIndexData( index:string, fields:string[] ):Observable<unknown> {
+    const query = gql`query {\n${index} { id \n firstname \n lastname \n } \n }`;
+    console.log( query );
+    return this.apollo.watchQuery({query}).valueChanges.pipe( map(({data}) => {
+      console.info( "data--->" );
+      console.info( data );
+      return data;
+    }  ) )
+  }
+
 }
