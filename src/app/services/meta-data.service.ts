@@ -5,8 +5,8 @@ import gql from 'graphql-tag';
 import _ from 'lodash';
 import { resolve } from 'url';
 
-import { AppComponent } from '../components/app/app.component';
 import { IndexComponent } from '../components/index/index.component';
+import { ViewComponent } from '../components/view/view.component';
 
 
 @Injectable({
@@ -55,10 +55,12 @@ export class MetaDataService {
    *
    */
   private addRoutes():void {
-    const routes = _.flatten( _.map( this.metaData, (item:any) => [
-      { path: item.path, component: IndexComponent },
-      { path: `${item.path}/:id`, component: AppComponent }
-    ]));
-    this.router.resetConfig( routes );
+    // const routes = _.flatten( _.map( this.metaData, (item:any) => [
+    //   { path: item.path, component: IndexComponent },
+    //   { path: `${item.path}/:id`, component: ViewComponent },
+    //   { path: `${item.path}/:id/edit`, component: ViewComponent },
+    //   { path: `${item.path}/new`, component: ViewComponent }
+    // ]));
+    // this.router.resetConfig( routes );
   }
 }

@@ -3,8 +3,8 @@ import { Apollo } from 'apollo-angular';
 import gql from 'graphql-tag';
 import * as _ from 'lodash';
 import { Observable } from 'rxjs';
-import { map } from 'rxjs/operators';
-
+import { map, filter, catchError } from 'rxjs/operators';
+import { of } from 'rxjs';
 
 
 @Injectable({
@@ -54,12 +54,29 @@ export class EntityService {
    *
    */
   getIndexData( index:string, fields:string[] ):Observable<unknown> {
-    const query = gql`query {\n${index} { ${_.join(fields, '\n') } } \n }`;
-    console.log( query );
-    return this.apollo.watchQuery({query}).valueChanges.pipe( map((result:any) => {
-      console.log( result );
-      return _.get( result, ['data', index ] );
+    const query = gql`query { ${index} { ${_.join(fields) } } }`;
+    return this.apollo.watchQuery({query}).valueChanges.pipe(
+      filter((result:any) => !result.loading),
+      map((result:any) => {
+      if( result.error ) console.error( result.error );
+      return _.get( result, ['data', index ] )
     }));
+  }
+
+  /**
+   *
+   */
+  getEntityData( entity:string, id:string, fields:string[] ):Observable<unknown> {
+    const query = gql`query { ${entity}(id: "${id}") { ${_.join(fields) } } }`;
+    return this.apollo.watchQuery({query, errorPolicy: 'all'}).valueChanges.pipe(
+      filter( result => !result.loading ),
+      map( result => _.get( result, ['data', entity ] ),
+      catchError( error => {
+        if (error.graphQLErrors) error.graphQLErrors.forEach((e:any) => console.error(e));
+        if (error.networkError) console.error( error.networkError );
+        return of([]);
+      })
+    ));
   }
 
 }
