@@ -25,10 +25,11 @@ export abstract class SchemaType {
 
 	protected _attributes?:{[name:string]:Attribute};
 
+
 	//
 	//
 	init(graphx:GraphX ):void {
-		this.graphx = graphx;
+    this.graphx = graphx;
 		this.createEnums();
 	}
 
@@ -74,7 +75,7 @@ export abstract class SchemaType {
 
 	//
 	//
-	protected getAttribute( name:string): Attribute {
+	public getAttribute( name:string): Attribute {
 		return this.getAttributes()[name];
 	}
 

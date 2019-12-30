@@ -1,15 +1,15 @@
-import { GraphQLServer } from './graphql-server';
-import express from 'express';
-import { createServer } from 'http';
 import compression from 'compression';
 import cors from 'cors';
+import express from 'express';
+import { createServer } from 'http';
+import { GorServerBuilder } from './gor-server-builder';
 
 const app = express();
 
 app.use('*', cors());
 app.use(compression());
 
-GraphQLServer.server().then( server => {
+GorServerBuilder.server().then( server => {
   server.applyMiddleware({ app, path: '/graphql' });
   const httpServer = createServer(app);
 

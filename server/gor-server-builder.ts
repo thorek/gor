@@ -7,8 +7,9 @@ import { IntFilterAttributeType } from './filter-attributes/int-filter-attribute
 import { StringFilterAttributeType } from './filter-attributes/string-filter-attribute.type';
 import { AddressType } from './schema-types/adress.type';
 import { PersonType } from './schema-types/person.type';
+import { VersionedMongoDbResolver } from './resolvers/versioned-mongodb.resolver';
 
-export class GraphQLServer {
+export class GorServerBuilder {
 
 	/**
 	 *
@@ -18,12 +19,14 @@ export class GraphQLServer {
 		const url = 'mongodb://localhost:27017';
 		const dbName = 'ae_one';
 		const client = await MongoClient.connect( url, { useNewUrlParser: true, useUnifiedTopology: true } );
-		const db = client.db(dbName);
+    const db = client.db(dbName);
+
+    const resolver = new VersionedMongoDbResolver( db );
 
     // make this dynamic
 		const types = [
-			new PersonType( db ),
-			new AddressType( db ),
+			new PersonType( resolver ),
+			new AddressType( resolver ),
 			new IntFilterAttributeType(),
 			new StringFilterAttributeType(),
 		]
