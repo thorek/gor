@@ -1,5 +1,4 @@
-import { EntityType } from "./entity-type";
-import { SchemaType } from "./schema-type";
+import { EntityType } from './entity-type';
 
 export abstract class Resolver {
 
@@ -7,7 +6,12 @@ export abstract class Resolver {
   /**
    *
    */
-  abstract init( schemaType:SchemaType ):void;
+  init( entityType:EntityType ):void { }
+
+  /**
+   *
+   */
+  extendType( entityType:EntityType ):void { }
 
   /**
    *

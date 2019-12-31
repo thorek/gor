@@ -1,8 +1,9 @@
 import _ from 'lodash';
-import { Resolver } from "../core/resolver";
-import { Collection, ObjectId, FilterQuery, Db } from 'mongodb';
+import { Collection, Db, FilterQuery, ObjectId } from 'mongodb';
+
 import { EntityType } from '../core/entity-type';
-import { SchemaType } from '../core/schema-type';
+import { Resolver } from '../core/resolver';
+import { GraphQLList, GraphQLObjectType } from 'graphql';
 
 /**
  *
@@ -18,8 +19,14 @@ export class VersionedMongoDbResolver extends Resolver {
   /**
    *
    */
-  init( schemaType:SchemaType ):void {
-    // add version Query
+  extendType( entityType:EntityType ):void { 
+    // const objectType = entityType.graphx.type(entityType.typeName);
+		// objectType.extend( () => (
+    //   { versions: {
+    //       type: new GraphQLList(  ),
+    //       resolve: (root:any, args:any ) => null //([{foo: 0, bar: "Eins"},{foo: 1, bar: "Zwei"},{foo: 2, bar: "Drei"}])
+    //     }
+		//   }));
   }
 
   /**

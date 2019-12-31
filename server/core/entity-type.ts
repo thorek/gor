@@ -1,4 +1,4 @@
-import { GraphQLBoolean, GraphQLID, GraphQLInputObjectType, GraphQLList } from 'graphql';
+import { GraphQLBoolean, GraphQLID, GraphQLInputObjectType, GraphQLList, GraphQLInt } from 'graphql';
 import inflection from 'inflection';
 import _ from 'lodash';
 
@@ -16,7 +16,7 @@ export abstract class EntityType extends SchemaType {
 	get plural() { return inflection.pluralize( _.toLower( this.name ) ) }
 	get singular() { return _.toLower( this.name ) }
 
-  get list() { return this.plural }
+  get collection() { return this.plural }
   get entity() { return this.singular }
   get label() { return inflection.titleize(  this.plural )  }
   get path() { return this.plural }
@@ -53,7 +53,8 @@ export abstract class EntityType extends SchemaType {
 		this.createFilterType();
 		this.addReferences();
 		this.addQueries();
-		this.addMutations();
+    this.addMutations();
+    this.resolver.extendType( this );
 	}
 
 	//
@@ -93,7 +94,20 @@ export abstract class EntityType extends SchemaType {
 				});
 			});
 			return fields;
-		});
+    });
+
+    const inputType = `${this.typeName}Input`;
+    this.graphx.type(inputType).extend( () => {
+      const fields = {};
+      _.forEach( this.belongsTo, ref => {
+				const refType = this.graphx.entities[ref.type];
+				if( ! (refType instanceof EntityType) ) return console.warn( `'${this.typeName}:belongsTo': no such entity type '${ref.type}'` );
+				const refObjectType = this.graphx.type(refType.typeName)
+				if( ! refObjectType ) return console.warn( `'${this.typeName}:belongsTo': no objectType in '${ref.type}'` );
+				_.set( fields, `${refType.singular}Id`, { type: GraphQLID });
+      });
+      return fields;
+    });
 	}
 
 	//
