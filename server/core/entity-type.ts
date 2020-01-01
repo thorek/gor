@@ -78,56 +78,69 @@ export abstract class EntityType extends SchemaType {
     this.addTypesQuery();
   }
 
+
 	//
 	//
 	protected addBelongsTo():void {
-		this.graphx.type(this.typeName).extend( () => {
-			const fields = {};
-			_.forEach( this.belongsTo, ref => {
-				const refType = this.graphx.entities[ref.type];
-				if( ! (refType instanceof EntityType) ) return console.warn( `'${this.typeName}:belongsTo': no such entity type '${ref.type}'` );
-				const refObjectType = this.graphx.type(refType.typeName)
-				if( ! refObjectType ) return console.warn( `'${this.typeName}:belongsTo': no objectType in '${ref.type}'` );
-				_.set( fields, refType.singular, {
-					type: refObjectType,
-          resolve: (root:any, args:any ) => this.resolver.resolveRefType( refType, root, args )
-				});
-			});
-			return fields;
-    });
-
-    const inputType = `${this.typeName}Input`;
-    this.graphx.type(inputType).extend( () => {
-      const fields = {};
-      _.forEach( this.belongsTo, ref => {
-				const refType = this.graphx.entities[ref.type];
-				if( ! (refType instanceof EntityType) ) return console.warn( `'${this.typeName}:belongsTo': no such entity type '${ref.type}'` );
-				const refObjectType = this.graphx.type(refType.typeName)
-				if( ! refObjectType ) return console.warn( `'${this.typeName}:belongsTo': no objectType in '${ref.type}'` );
-				_.set( fields, `${refType.singular}Id`, { type: GraphQLID });
-      });
-      return fields;
-    });
+    const belongsTo = _.filter( this.belongsTo, bt => this.checkReference( 'belongsTo', bt ) );
+		this.graphx.type(this.typeName).extend(
+      () => _.reduce( belongsTo, (fields, ref) => this.addBelongsToReference( fields, ref ), {} ));
+    this.graphx.type(`${this.typeName}Input`).extend(
+      () => _.reduce( belongsTo, (fields, ref) => this.addBelongsToId( fields, ref ), {} ));
 	}
+
+  //
+  //
+  private addBelongsToId( fields:any, ref:EntityReference ):any {
+    const refType = this.graphx.entities[ref.type];
+    return _.set( fields, `${refType.singular}Id`, { type: GraphQLID });
+  }
+
+  //
+  //
+  private addBelongsToReference( fields:any, ref:EntityReference ):any {
+    const refType = this.graphx.entities[ref.type];
+    const refObjectType = this.graphx.type(refType.typeName);
+    return _.set( fields, refType.singular, {
+      type: refObjectType,
+      resolve: (root:any, args:any ) => this.resolver.resolveRefType( refType, root, args )
+    });
+  }
+
 
 	//
 	//
 	protected addHasMany():void {
-		this.graphx.type(this.typeName).extend( () => {
-			const fields = {};
-			_.forEach( this.hasMany, ref => {
-				const refType = this.graphx.entities[ref.type];
-				if( ! (refType instanceof EntityType) ) return console.warn( `'${this.typeName}:hasMany': no such entity type '${ref.type}'` );
-				const refObjectType = this.graphx.type(refType.typeName)
-				if( ! refObjectType ) return console.warn( `'${this.typeName}:hasMany': no objectType in '${ref.type}'` );
-				_.set( fields, refType.plural, {
-					type: new GraphQLList( refObjectType ),
-					resolve: (root:any, args:any ) => this.resolver.resolveRefTypes( this, refType, root, args )
-				});
-			});
-			return fields;
-		});
-	}
+    const hasMany = _.filter( this.hasMany, hm => this.checkReference( 'hasMany', hm ) );
+		this.graphx.type(this.typeName).extend(
+      () => _.reduce( hasMany, (fields, ref) => this.addHasManyReference( fields, ref ), {} ));
+  }
+
+  //
+  //
+  private addHasManyReference(fields:any, ref:EntityReference):any {
+    const refType = this.graphx.entities[ref.type];
+    const refObjectType = this.graphx.type(refType.typeName)
+    return _.set( fields, refType.plural, {
+      type: new GraphQLList( refObjectType ),
+      resolve: (root:any, args:any ) => this.resolver.resolveRefTypes( this, refType, root, args )
+    });
+  }
+
+  //
+  //
+  private checkReference( direction:'belongsTo'|'hasMany', ref:EntityReference ):boolean {
+    const refType = this.graphx.entities[ref.type];
+    if( ! (refType instanceof EntityType) ) {
+      console.warn( `'${this.typeName}:${direction}': no such entity type '${ref.type}'` );
+      return false;
+    }
+    if( ! this.graphx.type(refType.typeName) ) {
+      console.warn( `'${this.typeName}:${direction}': no objectType in '${ref.type}'` );
+      return false;
+    }
+    return true;
+  }
 
 
 	//
