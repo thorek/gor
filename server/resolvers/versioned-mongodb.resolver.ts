@@ -19,8 +19,8 @@ export class VersionedMongoDbResolver extends Resolver {
   /**
    *
    */
-  extendType( entityType:EntityType ):void { 
-    // const objectType = entityType.graphx.type(entityType.typeName);
+  extendType( entityType:EntityType ):void {
+    // const objectType = entityType.graphx.type(entityType.typeName());
 		// objectType.extend( () => (
     //   { versions: {
     //       type: new GraphQLList(  ),
@@ -33,7 +33,7 @@ export class VersionedMongoDbResolver extends Resolver {
    *
    */
   protected getCollection( entityType:EntityType ):Collection {
-    return this.db.collection( entityType.plural );
+    return this.db.collection( entityType.plural()  );
   }
 
   /**
@@ -51,7 +51,7 @@ export class VersionedMongoDbResolver extends Resolver {
    */
   async resolveRefType( refType:EntityType, root:any, args:any ):Promise<any> {
     const collection = this.getCollection( refType );
-    const id = _.get( root, `${refType.singular}Id`);
+    const id = _.get( root, `${refType.singular()}Id`);
 		const entity = await collection.findOne( new ObjectId(id) );
 		return this.getOutEntity( entity );
   }
@@ -62,7 +62,7 @@ export class VersionedMongoDbResolver extends Resolver {
    */
   async resolveRefTypes( entityType:EntityType, refType:EntityType, root:any, args:any ):Promise<any[]> {
     const collection = this.getCollection( refType );
-    const filter = _.set( {}, [`attrs.${entityType.singular}Id`], _.toString( root.id ) );
+    const filter = _.set( {}, [`attrs.${entityType.singular()}Id`], _.toString( root.id ) );
 		const entities = await collection.find( filter ).toArray();
 		return _.map( entities, entity => this.getOutEntity( entity ) );
   }
@@ -82,7 +82,7 @@ export class VersionedMongoDbResolver extends Resolver {
    *
    */
   async saveEntity( entityType:EntityType, root:any, args:any ):Promise<any> {
-    const attrs = _.get( args, entityType.singular );
+    const attrs = _.get( args, entityType.singular() );
     return _.has( attrs, 'id' ) ? this.updateEntity( entityType, attrs ) : this.createEntity( entityType, attrs );
   }
 

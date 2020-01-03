@@ -16,10 +16,10 @@ export type EntityReference = {
  */
 export abstract class SchemaType {
 
-	abstract get name():string;
-	get typeName() { return this.name ?  inflection.camelize( this.name ) : '' }
-	get attributes():{[name:string]:TypeAttribute} { return {} };
-	get enums():any { return {} }
+	abstract name():string;
+	typeName() { return inflection.camelize( this.name() ) }
+	attributes():{[name:string]:TypeAttribute} { return {} };
+	enums():any { return {} }
 
 	graphx!:GraphX;
 
@@ -48,7 +48,7 @@ export abstract class SchemaType {
 	//
 	//
 	protected createEnums():void {
-		_.forEach( this.enums, (keyValues:any, name:string) => {
+		_.forEach( this.enums(), (keyValues:any, name:string) => {
 			const values = {};
 			_.forEach( keyValues, (value,key) => _.set( values, key, { value }));
 			this.graphx.type( name, { name, values, from: GraphQLEnumType	} );
@@ -68,7 +68,7 @@ export abstract class SchemaType {
 	//
 	protected getAttributes():{[name:string]:Attribute} {
 		if( ! this._attributes ) {
-			this._attributes = _.mapValues( this.attributes, attribute => new Attribute( attribute, this ) );
+			this._attributes = _.mapValues( this.attributes(), attribute => new Attribute( attribute, this ) );
 		}
 		return this._attributes;
 	}

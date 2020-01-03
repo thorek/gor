@@ -93,12 +93,12 @@ export class GraphX {
     const metaDataType = new GraphQLObjectType({
       name: 'metaData',
       fields: {
-        name: { type: GraphQLString, resolve: (obj) => _.get( obj, 'name' )},
-        path: { type: GraphQLString, resolve: (obj) => _.get( obj, 'path' )},
-        list: { type: GraphQLString, resolve: (obj) => _.get( obj, 'list' )},
-        entity: { type: GraphQLString, resolve: (obj) => _.get( obj, 'entity' )},
-        label: { type: GraphQLString, resolve: (obj) => _.get( obj, 'label' ) },
-        parent: { type: GraphQLString, resolve: (obj) => _.get( obj, 'parent' ) }
+        name: { type: GraphQLString, resolve: (obj) => obj.name() },
+        path: { type: GraphQLString, resolve: (obj) => obj.path() },
+        list: { type: GraphQLString, resolve: (obj) => obj.list() },
+        entity: { type: GraphQLString, resolve: (obj) => obj.entity() },
+        label: { type: GraphQLString, resolve: (obj) => obj.label() },
+        parent: { type: GraphQLString, resolve: (obj) => obj.parent() }
     }});
 
     this.type('query').extend( () => {

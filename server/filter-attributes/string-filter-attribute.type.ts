@@ -2,12 +2,12 @@ import _ from 'lodash';
 import { FilterAttributeType } from '../core/filter-attribute-type';
 
 /**
- * 
+ *
  */
 export class StringFilterAttributeType extends FilterAttributeType{
 
-	get name() { return 'String' }
-	get attributes() { return {
+	name() { return 'String' }
+	attributes() { return {
 		ne: { type: 'String' },
 		eq: { type: 'String' },
 		in: { type: '[String]' },
@@ -28,7 +28,7 @@ export class StringFilterAttributeType extends FilterAttributeType{
 			case 'contains': return {$regex : new RegExp(`.*${operand}.*`, 'i') };
 			case 'notContains':return {$regex : new RegExp(`.*^[${operand}].*`, 'i') };
 			case 'beginsWith': return {$regex : new RegExp(`${operand}.*`, 'i') };
-		}		
+		}
 		console.warn(`StringFilterType unknown operator '${operator}' `);
 	}
 }

@@ -5,11 +5,11 @@ import { GraphQLInputObjectType, GraphQLList, GraphQLEnumType } from 'graphql';
 //
 //
 export class EnumFilterAttributeType extends FilterAttributeType {
-		
-	get name(): string { return this._name; }
-	
-	// 
-	// 
+
+	name(): string { return this._name; }
+
+	//
+	//
 	constructor( private _name:string ){ super() }
 
 	//
@@ -18,18 +18,17 @@ export class EnumFilterAttributeType extends FilterAttributeType {
 		const filterName = `${this._name}Filter`;
 		this.graphx.type( filterName, {
 			name: filterName,
-			from: GraphQLInputObjectType, 
-			fields: () => {				
+			from: GraphQLInputObjectType,
+			fields: () => {
 				const enumType = this.graphx.type( this._name );
-				const fields = {
+				return {
 					ne: { type: enumType},
 					eq: { type: enumType },
 					in: { type: new GraphQLList( enumType ) },
 					notIn: { type: new GraphQLList( enumType ) }
 				}
-				return fields;			
 			}
-		});		
+		});
 	}
 
 	//
@@ -45,9 +44,9 @@ export class EnumFilterAttributeType extends FilterAttributeType {
 			case 'contains': return {$regex : new RegExp(`.*${operand}.*`, 'i') };
 			case 'notContains':return {$regex : new RegExp(`.*^[${operand}].*`, 'i') };
 			case 'beginsWith': return {$regex : new RegExp(`${operand}.*`, 'i') };
-		}		
+		}
 		console.warn(`EnumFilterType '${this._name}' unknown operator '${operator}' `);
-	}	
-	
+	}
+
 
 }

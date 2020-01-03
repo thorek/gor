@@ -4,24 +4,24 @@ import { EntityType } from '../core/entity-type';
 //
 export class PersonType extends EntityType {
 
-	get name() { return 'Person' }
-	get attributes() { return {
+	name() { return 'Person' }
+	attributes() { return {
 		firstname: { type: "String" },
 		lastname: { type: "String" },
 		birthdate: { type: "String" },
 		gender: { type: 'Gender' },
 		age: { type: 'Int' }
 	}}
-	get hasMany() { return [
-		{ type: 'Address' }
+	hasMany() { return [
+    { type: 'Address' },
+    { type: 'Car' }
 	]}
-	get enums() { return {
+	enums() { return {
 		Gender: {
 			MALE: 'male',
 			FEMALE: 'female',
 			DIVERSE: 'diverse'
 		}
 	}}
-
 
 }

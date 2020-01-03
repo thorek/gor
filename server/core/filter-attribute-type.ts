@@ -24,7 +24,7 @@ export abstract class FilterAttributeType extends SchemaType {
 	//
 	//
 	protected createObjectType():void {
-		const filterName = `${this.typeName}Filter`;
+		const filterName = `${this.typeName()}Filter`;
 		this.graphx.type( filterName, { name: filterName, from: GraphQLInputObjectType, fields: () => {
 			const fields = {};
 			this.setAttributes( fields );

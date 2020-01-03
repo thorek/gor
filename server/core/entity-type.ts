@@ -11,16 +11,16 @@ import { EntityReference, SchemaType } from './schema-type';
  */
 export abstract class EntityType extends SchemaType {
 
-	get belongsTo(): EntityReference[] { return [] }
-	get hasMany(): EntityReference[] { return [] }
-	get plural() { return inflection.pluralize( _.toLower( this.name ) ) }
-	get singular() { return _.toLower( this.name ) }
+	belongsTo(): EntityReference[] { return [] }
+	hasMany(): EntityReference[] { return [] }
+	plural() { return inflection.pluralize( _.toLower( this.name() ) ) }
+	singular() { return _.toLower( this.name() ) }
 
-  get collection() { return this.plural }
-  get entity() { return this.singular }
-  get label() { return inflection.titleize(  this.plural )  }
-  get path() { return this.plural }
-  get parent():string|null { return null }
+  collection() { return this.plural() }
+  instance() { return this.singular() }
+  label() { return inflection.titleize(  this.plural() )  }
+  path() { return this.plural() }
+  parent():string | null { return null }
 
 
 	//
@@ -32,17 +32,16 @@ export abstract class EntityType extends SchemaType {
 	init( graphx:GraphX ):void {
     super.init( graphx );
     this.resolver.init( this );
-    this.graphx.entities[this.name] = this;
+    this.graphx.entities[this.name()] = this;
 	}
 
 	//
 	//
 	protected createObjectType():void {
-		const name = this.typeName;
+		const name = this.typeName();
 		this.graphx.type( name, { name, fields: () => {
 			const fields = {  id: { type: GraphQLID } };
-			this.setAttributes( fields );
-			return fields;
+			return this.setAttributes( fields );
 		} });
 	}
 
@@ -82,28 +81,28 @@ export abstract class EntityType extends SchemaType {
 	//
 	//
 	protected addBelongsTo():void {
-    const belongsTo = _.filter( this.belongsTo, bt => this.checkReference( 'belongsTo', bt ) );
-		this.graphx.type(this.typeName).extend(
+    const belongsTo = _.filter( this.belongsTo(), bt => this.checkReference( 'belongsTo', bt ) );
+		this.graphx.type(this.typeName()).extend(
       () => _.reduce( belongsTo, (fields, ref) => this.addBelongsToReference( fields, ref ), {} ));
-    this.graphx.type(`${this.typeName}Input`).extend(
+    this.graphx.type(`${this.typeName()}Input`).extend(
       () => _.reduce( belongsTo, (fields, ref) => this.addBelongsToId( fields, ref ), {} ));
 	}
 
   //
   //
   private addBelongsToId( fields:any, ref:EntityReference ):any {
-    const refType = this.graphx.entities[ref.type];
-    return _.set( fields, `${refType.singular}Id`, { type: GraphQLID });
+    const refEntity = this.graphx.entities[ref.type];
+    return _.set( fields, `${refEntity.singular()}Id`, { type: GraphQLID });
   }
 
   //
   //
   private addBelongsToReference( fields:any, ref:EntityReference ):any {
-    const refType = this.graphx.entities[ref.type];
-    const refObjectType = this.graphx.type(refType.typeName);
-    return _.set( fields, refType.singular, {
+    const refEntity = this.graphx.entities[ref.type];
+    const refObjectType = this.graphx.type(refEntity.typeName());
+    return _.set( fields, refEntity.singular(), {
       type: refObjectType,
-      resolve: (root:any, args:any ) => this.resolver.resolveRefType( refType, root, args )
+      resolve: (root:any, args:any ) => this.resolver.resolveRefType( refEntity, root, args )
     });
   }
 
@@ -111,32 +110,32 @@ export abstract class EntityType extends SchemaType {
 	//
 	//
 	protected addHasMany():void {
-    const hasMany = _.filter( this.hasMany, hm => this.checkReference( 'hasMany', hm ) );
-		this.graphx.type(this.typeName).extend(
+    const hasMany = _.filter( this.hasMany(), hm => this.checkReference( 'hasMany', hm ) );
+		this.graphx.type(this.typeName()).extend(
       () => _.reduce( hasMany, (fields, ref) => this.addHasManyReference( fields, ref ), {} ));
   }
 
   //
   //
   private addHasManyReference(fields:any, ref:EntityReference):any {
-    const refType = this.graphx.entities[ref.type];
-    const refObjectType = this.graphx.type(refType.typeName)
-    return _.set( fields, refType.plural, {
+    const refEntity = this.graphx.entities[ref.type];
+    const refObjectType = this.graphx.type(refEntity.typeName())
+    return _.set( fields, refEntity.plural(), {
       type: new GraphQLList( refObjectType ),
-      resolve: (root:any, args:any ) => this.resolver.resolveRefTypes( this, refType, root, args )
+      resolve: (root:any, args:any ) => this.resolver.resolveRefTypes( this, refEntity, root, args )
     });
   }
 
   //
   //
   private checkReference( direction:'belongsTo'|'hasMany', ref:EntityReference ):boolean {
-    const refType = this.graphx.entities[ref.type];
-    if( ! (refType instanceof EntityType) ) {
-      console.warn( `'${this.typeName}:${direction}': no such entity type '${ref.type}'` );
+    const refEntity = this.graphx.entities[ref.type];
+    if( ! (refEntity instanceof EntityType) ) {
+      console.warn( `'${this.typeName()}:${direction}': no such entity type '${ref.type}'` );
       return false;
     }
-    if( ! this.graphx.type(refType.typeName) ) {
-      console.warn( `'${this.typeName}:${direction}': no objectType in '${ref.type}'` );
+    if( ! this.graphx.type(refEntity.typeName()) ) {
+      console.warn( `'${this.typeName()}:${direction}': no objectType in '${ref.type}'` );
       return false;
     }
     return true;
@@ -146,30 +145,30 @@ export abstract class EntityType extends SchemaType {
 	//
 	//
 	protected createInputType():void {
-		const name = `${this.typeName}Input`;
+		const name = `${this.typeName()}Input`;
 		this.graphx.type( name, { name, from: GraphQLInputObjectType, fields: () => {
 			const fields = { id: { type: GraphQLID }};
-			this.setAttributes( fields );
-			return fields;
+			return this.setAttributes( fields );
 		}});
 	}
 
 	//
 	//
-	protected setAttributes( fields:any ):void {
+	protected setAttributes( fields:any ):any {
 		_.forEach( this.getAttributes(), (attribute,name) => {
 			_.set( fields, name, { type: attribute.getType()} );
-		});
+    });
+    return fields;
 	}
 
 
 	//
 	//
 	protected createFilterType():void {
-		const name = `${this.typeName}Filter`;
+		const name = `${this.typeName()}Filter`;
 		this.graphx.type( name, { name, from: GraphQLInputObjectType, fields: () => {
 			const fields = { id: { type: GraphQLID } };
-			_.forEach( this.getAttributes(), (attribute,name) => {
+			_.forEach( this.getAttributes(), (attribute, name) => {
 				_.set( fields, name, { type: attribute.getFilterInputType() } );
 			});
 			return fields;
@@ -180,8 +179,8 @@ export abstract class EntityType extends SchemaType {
 	//
 	protected addTypeQuery(){
 		this.graphx.type( 'query' ).extend( () => {
-			return _.set( {}, this.singular, {
-				type: this.graphx.type(this.typeName),
+			return _.set( {}, this.singular(), {
+				type: this.graphx.type(this.typeName()),
 				args: { id: { type: GraphQLID } },
 				resolve: (root:any, args:any) => this.resolver.resolveType( this, root, args )
 			});
@@ -192,9 +191,9 @@ export abstract class EntityType extends SchemaType {
 	//
 	protected addTypesQuery(){
 		this.graphx.type( 'query' ).extend( () => {
-			return _.set( {}, this.plural, {
-				type: new GraphQLList( this.graphx.type(this.typeName) ),
-				args: { filter: { type: this.graphx.type(`${this.typeName}Filter`) } },
+			return _.set( {}, this.plural(), {
+				type: new GraphQLList( this.graphx.type(this.typeName()) ),
+				args: { filter: { type: this.graphx.type(`${this.typeName()}Filter`) } },
         resolve: (root:any, args:any) => this.resolver.resolveTypes( this, root, args )
 			});
 		});
@@ -204,15 +203,12 @@ export abstract class EntityType extends SchemaType {
 	//
 	protected addSaveMutation():void {
 		this.graphx.type( 'mutation' ).extend( () => {
-      const mutation = {};
-      const args = {};
-      _.set( args, this.singular, { type: this.graphx.type(`${this.typeName}Input`)} );
-			_.set( mutation, `save${this.typeName}`, {
-				type: this.graphx.type( this.typeName ),
+      const args = _.set( {}, this.singular(), { type: this.graphx.type(`${this.typeName()}Input`)} );
+      return _.set( {}, `save${this.typeName()}`, {
+				type: this.graphx.type( this.typeName() ),
 				args,
 				resolve: (root:any, args:any ) => this.resolver.saveEntity( this, root, args )
 			});
-			return mutation;
 		});
 	}
 
@@ -220,15 +216,12 @@ export abstract class EntityType extends SchemaType {
 	//
 	protected addDeleteMutation():void {
 		this.graphx.type( 'mutation' ).extend( () => {
-			const mutation = {};
-			_.set( mutation, `delete${this.typeName}`, {
+			return _.set( {}, `delete${this.typeName()}`, {
 				type: GraphQLBoolean,
 				args: { id: { type: GraphQLID } },
 				resolve: (root:any, args:any ) => this.resolver.deleteEntity( this, root, args )
 			});
-			return mutation;
 		});
 	}
-
 
 }

@@ -2,12 +2,12 @@ import _ from 'lodash';
 import { FilterAttributeType } from '../core/filter-attribute-type';
 
 /**
- * 
+ *
  */
 export class IntFilterAttributeType extends FilterAttributeType{
 
-	get name() { return 'Int' }
-	get attributes() { return {
+	name() { return 'Int' }
+	attributes() { return {
 		eq: { type: 'int' },
 		ne: { type: 'int' },
 		le: { type: 'int' },
@@ -31,7 +31,7 @@ export class IntFilterAttributeType extends FilterAttributeType{
 		// 	case 'notContains': return { $regex : new RegExp(`.*^[${operand}].*`, 'i')  };
 		// 	case 'beginsWith': return { $regex : new RegExp(`${operand}.*`, 'i')  };
 		// }
-		
+
 		}
-	}	
+	}
 }

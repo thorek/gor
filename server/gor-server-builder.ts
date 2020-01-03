@@ -8,6 +8,13 @@ import { StringFilterAttributeType } from './filter-attributes/string-filter-att
 import { AddressType } from './schema-types/adress.type';
 import { PersonType } from './schema-types/person.type';
 import { VersionedMongoDbResolver } from './resolvers/versioned-mongodb.resolver';
+import { ConfigurationType } from './core/configuration-entity';
+import { EntityConfig } from './core/entity-config';
+import { Resolver } from './core/resolver';
+import fs from 'fs';
+import path from 'path';
+import _ from 'lodash';
+import YAML from 'yaml';
 
 export class GorServerBuilder {
 
@@ -16,17 +23,17 @@ export class GorServerBuilder {
 	 */
 	public static async server(): Promise<ApolloServer> {
 
-		const url = 'mongodb://localhost:27017';
-		const dbName = 'ae_one';
-		const client = await MongoClient.connect( url, { useNewUrlParser: true, useUnifiedTopology: true } );
-    const db = client.db(dbName);
+    const resolver = await this.getResolver();
+    const configEntities = this.getConfigEntities( resolver );
 
-    const resolver = new VersionedMongoDbResolver( db );
+    const customEntities = [
+      new PersonType( resolver ),
+			new AddressType( resolver )
+    ];
 
-    // make this dynamic
 		const types = [
-			new PersonType( resolver ),
-			new AddressType( resolver ),
+      ...configEntities,
+      ...customEntities,
 			new IntFilterAttributeType(),
 			new StringFilterAttributeType(),
 		]
@@ -39,4 +46,41 @@ export class GorServerBuilder {
 			validationRules: [depthLimit(7)],
 		});
 	}
+
+  /**
+   *
+   */
+  private static async getResolver():Promise<Resolver> {
+		const url = 'mongodb://localhost:27017';
+		const dbName = 'ae_one';
+		const client = await MongoClient.connect( url, { useNewUrlParser: true, useUnifiedTopology: true } );
+    const db = client.db(dbName);
+
+    return new VersionedMongoDbResolver( db );
+  }
+
+  /**
+   *
+   */
+  private static getConfigEntities( resolver:Resolver ):ConfigurationType[] {
+    const folder = './server/schema-types';
+    const files = _.filter( fs.readdirSync( folder ), file => _.toLower( path.extname( file )) === '.yaml' );
+    return _.compact( _.map( files, file => this.createConfigurationType( folder, file, resolver ) ) );
+  }
+
+  /**
+   *
+   */
+  private static createConfigurationType( folder:string, file:string, resolver:Resolver ):ConfigurationType | null {
+    try {
+      file = path.join( folder, file );
+      const content = fs.readFileSync( file).toString();
+      const config = _.get( YAML.parse(content), 'entity' ) as EntityConfig;
+      return ConfigurationType.create( resolver, config );
+    } catch ( e ){
+      console.warn( `[${file}]: ${e}`);
+      return null;
+    }
+  }
+
 }

@@ -17,23 +17,20 @@ import { FilterAttributeType } from './filter-attribute-type';
 //
 //
 export type TypeAttribute = {
-	
-	
 	filterType?:string;
 	type:string;
 }
 
-
 //
 //
 export class Attribute {
-	
+
 	get graphx() { return this.entity.graphx }
 
 	//
 	//
-	constructor( 
-		public readonly attr:TypeAttribute, 
+	constructor(
+		public readonly attr:TypeAttribute,
 		private entity:SchemaType)
 	{}
 
@@ -57,12 +54,12 @@ export class Attribute {
 			}
 		};
 	}
-	
+
 	//
 	//
 	getFilterInputType():GraphQLInputType|any {
 		switch( _.toLower(this.attr.type) ){
-			case 'id': 
+			case 'id':
 			case 'int': return this.graphx.type('IntFilter');
 			case 'float': return this.graphx.type('FloatFilter');
 			case 'boolean': return this.graphx.type('BooleanFilter');
@@ -80,7 +77,7 @@ export class Attribute {
 	//
 	getFilterAttributeType():FilterAttributeType | null {
 		switch( _.toLower(this.attr.type) ){
-			case 'id': 
+			case 'id':
 			case 'int': return <FilterAttributeType>this.graphx.filterAttributes['IntFilter']
 			case 'float': return <FilterAttributeType>this.graphx.filterAttributes['FloatFilter']
 			case 'boolean': return <FilterAttributeType>this.graphx.filterAttributes['BooleanFilter']
@@ -88,7 +85,7 @@ export class Attribute {
 			default: {
 				return <FilterAttributeType>this.graphx.filterAttributes['GenderFilter']
 			}
-		};		
+		};
 	}
 
 }

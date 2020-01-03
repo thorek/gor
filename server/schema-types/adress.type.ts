@@ -3,17 +3,17 @@ import { EntityType } from '../core/entity-type';
 /**
  *
  */
-export class AddressType extends EntityType{
+export class AddressType extends EntityType {
 
-	get name() { return 'Address' }
-	get attributes() { return {
+	name() { return 'Address' }
+	attributes() { return {
 			street: { type: "String" },
 			zip: { type: "String" },
 			city: { type: "String" },
 			country: { type: "String" }
 	}}
-	get belongsTo() { return [
+	belongsTo() { return [
 		{ type: 'Person' }
 	]}
-  get parent() { return "foo" }
+  parent() { return "foo" }
 }
