@@ -1,4 +1,4 @@
-import { EntityType } from '../core/entity-type';
+import { EntityBuilder } from "../builder/entity-builder";
 
 /**
  *
@@ -9,58 +9,58 @@ export class NoResolver {
   /**
    *
    */
-  init( entityType:EntityType ):void { }
+  init( EntityBuilder:EntityBuilder ):void { }
 
   /**
    *
    */
-  extendType( entityType:EntityType ):void { }
+  extendType( EntityBuilder:EntityBuilder ):void { }
 
   /**
    *
    */
-  async resolveType( entityType:EntityType, root:any, args:any ):Promise<any> {
-    console.warn(`no resolver specified to resolve type '${entityType.name}'`);
+  async resolveType( EntityBuilder:EntityBuilder, root:any, args:any ):Promise<any> {
+    console.warn(`no resolver specified to resolve type '${EntityBuilder.name}'`);
     return {};
   }
 
   /**
    *
    */
-  async resolveTypes( entityType:EntityType, root:any, args:any ):Promise<any[]>{
-    console.warn(`no resolver specified to resolve types for '${entityType.name}'`);
+  async resolveTypes( EntityBuilder:EntityBuilder, root:any, args:any ):Promise<any[]>{
+    console.warn(`no resolver specified to resolve types for '${EntityBuilder.name}'`);
     return [{}];
   }
 
   /**
    *
    */
-  async resolveRefType( entityType:EntityType, root:any, args:any ):Promise<any> {
-    console.warn(`no resolver specified to resolve reference type '${entityType.name}'`);
+  async resolveRefType( EntityBuilder:EntityBuilder, root:any, args:any ):Promise<any> {
+    console.warn(`no resolver specified to resolve reference type '${EntityBuilder.name}'`);
     return {};
   }
 
   /**
    *
    */
-  async resolveRefTypes( entityType:EntityType, refType:EntityType, root:any, args:any ):Promise<any[]> {
-    console.warn(`no resolver specified to resolve reference types for '${entityType.name}'`);
+  async resolveRefTypes( EntityBuilder:EntityBuilder, refType:EntityBuilder, root:any, args:any ):Promise<any[]> {
+    console.warn(`no resolver specified to resolve reference types for '${EntityBuilder.name}'`);
     return [{}];
   }
 
   /**
    *
    */
-  async saveEntity( entityType:EntityType, root:any, args:any ):Promise<any> {
-    console.warn(`no resolver specified to save type '${entityType.name}'`);
+  async saveEntity( EntityBuilder:EntityBuilder, root:any, args:any ):Promise<any> {
+    console.warn(`no resolver specified to save type '${EntityBuilder.name}'`);
     return {};
   }
 
   /**
    *
    */
-  async deleteEntity( entityType:EntityType, root:any, args:any  ):Promise<boolean> {
-    console.warn(`no resolver specified to delete type '${entityType.name}'`);
+  async deleteEntity( EntityBuilder:EntityBuilder, root:any, args:any  ):Promise<boolean> {
+    console.warn(`no resolver specified to delete type '${EntityBuilder.name}'`);
     return false;
   }
 }

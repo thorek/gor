@@ -2,14 +2,14 @@ import { GraphQLBoolean, GraphQLID, GraphQLInputObjectType, GraphQLList } from '
 import inflection from 'inflection';
 import _ from 'lodash';
 
-import { GraphX } from './graphx';
-import { Resolver } from './resolver';
-import { EntityReference, SchemaType } from './schema-type';
+import { GraphX } from '../core/graphx';
+import { Resolver } from '../core/resolver';
+import { EntityReference, SchemaBuilder } from './schema-builder';
 
 /**
  * Base class for all Entities
  */
-export abstract class EntityType extends SchemaType {
+export abstract class EntityBuilder extends SchemaBuilder {
 
 	belongsTo(): EntityReference[] { return [] }
 	hasMany(): EntityReference[] { return [] }
@@ -130,7 +130,7 @@ export abstract class EntityType extends SchemaType {
   //
   private checkReference( direction:'belongsTo'|'hasMany', ref:EntityReference ):boolean {
     const refEntity = this.graphx.entities[ref.type];
-    if( ! (refEntity instanceof EntityType) ) {
+    if( ! (refEntity instanceof EntityBuilder) ) {
       console.warn( `'${this.typeName()}:${direction}': no such entity type '${ref.type}'` );
       return false;
     }

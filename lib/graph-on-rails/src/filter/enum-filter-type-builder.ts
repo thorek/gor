@@ -1,10 +1,10 @@
 import _ from 'lodash';
-import { FilterAttributeType } from '../core/filter-attribute-type';
 import { GraphQLInputObjectType, GraphQLList, GraphQLEnumType } from 'graphql';
+import { FilterTypeBuilder } from '../builder/filter-type-builder';
 
 //
 //
-export class EnumFilterAttributeType extends FilterAttributeType {
+export class EnumFilterTypeBuilder extends FilterTypeBuilder {
 
 	name(): string { return this._name; }
 

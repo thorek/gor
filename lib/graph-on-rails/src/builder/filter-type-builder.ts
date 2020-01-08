@@ -1,13 +1,13 @@
 import { GraphQLInputObjectType } from 'graphql';
 import _ from 'lodash';
 
-import { GraphX } from './graphx';
-import { SchemaType } from './schema-type';
+import { GraphX } from '../core/graphx';
+import { SchemaBuilder } from './schema-builder';
 
 /**
  * Base class for all Filter Attributes
  */
-export abstract class FilterAttributeType extends SchemaType {
+export abstract class FilterTypeBuilder extends SchemaBuilder {
 
 	//
 	//

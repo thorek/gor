@@ -6,15 +6,14 @@ import _ from 'lodash';
 import path from 'path';
 import YAML from 'yaml';
 
-import { IntFilterAttributeType } from '../filter-attributes/int-filter-attribute.type';
-import { StringFilterAttributeType } from '../filter-attributes/string-filter-attribute.type';
-import { ConfigurationType } from './configuration-type';
-import { EntityConfig } from './entity-config';
-import { EntityType } from './entity-type';
 import { Resolver } from './resolver';
 import { SchemaFactory } from './schema-factory';
-import { SchemaType } from './schema-type';
 import { NoResolver } from './no-resolver';
+import { EntityBuilder } from '../builder/entity-builder';
+import { EntityConfigBuilder, EntityConfig } from '../builder/entity-config-builder';
+import { SchemaBuilder } from '../builder/schema-builder';
+import { IntFilterTypeBuilder } from '../filter/int-filter-type-builder';
+import { StringFilterTypeBuilder } from '../filter/string-filter-type-builder';
 
 /**
  *
@@ -23,7 +22,7 @@ export class Gor {
 
   private _schema?:GraphQLSchema;
   private configs:{[folder:string]:Resolver} = {};
-  private customEntities:EntityType[] = [];
+  private customEntities:EntityBuilder[] = [];
 
   /**
    *
@@ -35,7 +34,7 @@ export class Gor {
   /**
    *
    */
-  addCustomEntities( ...types:EntityType[] ):void {
+  addCustomEntities( ...types:EntityBuilder[] ):void {
     this.customEntities.push( ...types );
   }
 
@@ -71,7 +70,7 @@ export class Gor {
   /**
    *
    */
-  private getConfigEntities():ConfigurationType[] {
+  private getConfigEntities():EntityConfigBuilder[] {
     return _.flatten( _.map( this.configs, (resolver, folder) => {
       if( ! resolver ) resolver = new NoResolver();
       const files = this.getConfigFiles( folder );
@@ -82,10 +81,10 @@ export class Gor {
   /**
    *
    */
-  private getDefaultFilterTypes():SchemaType[] {
+  private getDefaultFilterTypes():SchemaBuilder[] {
     return [
-      new IntFilterAttributeType(),
-      new StringFilterAttributeType()
+      new IntFilterTypeBuilder(),
+      new StringFilterTypeBuilder()
     ];
   }
 
@@ -105,12 +104,12 @@ export class Gor {
   /**
    *
    */
-  private createConfigurationType( folder:string, file:string, resolver:Resolver ):ConfigurationType | null {
+  private createConfigurationType( folder:string, file:string, resolver:Resolver ):EntityConfigBuilder | null {
     try {
       file = path.join( folder, file );
       const content = fs.readFileSync( file).toString();
       const config = _.get( YAML.parse(content), 'entity' ) as EntityConfig;
-      return ConfigurationType.create( resolver, config );
+      return EntityConfigBuilder.create( resolver, config );
     } catch ( e ){
       console.warn( `[${file}]: ${e}`);
       return null;

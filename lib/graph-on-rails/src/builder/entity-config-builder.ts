@@ -1,19 +1,49 @@
 import _ from 'lodash';
-import { EntityConfig } from './entity-config';
-import { EntityType } from './entity-type';
-import { Resolver } from './resolver';
+import { EntityBuilder } from './entity-builder';
+import { Resolver } from '../core/resolver';
 
 /**
  *
  */
-export class ConfigurationType extends EntityType {
+export type AttributeConfig = { 
+  type:string;
+}
+
+/**
+ *
+ */
+export type EntityConfig  = {
+
+  name: string;
+  typeName?:string;
+
+  attributes?:{[name:string]:string|AttributeConfig};
+  belongsTo?:[string|{type:string}];
+  hasMany?:string[];
+
+	plural?:string
+	singular?:string;
+
+  collection?:string;
+  instance?:string;
+  label?:string;
+  path?:string;
+  parent?:string;
+
+  enums:{[name:string]:{[key:string]:string}}
+}
+
+/**
+ *
+ */
+export class EntityConfigBuilder extends EntityBuilder {
 
   /**
    *
    */
-  static create( resolver:Resolver, config:EntityConfig ):ConfigurationType | null {
+  static create( resolver:Resolver, config:EntityConfig ):EntityConfigBuilder {
     if( ! _.has( config, 'name' ) ) throw new Error('no name property' );
-    return new ConfigurationType( resolver, config );
+    return new EntityConfigBuilder( resolver, config );
   }
 
   /**

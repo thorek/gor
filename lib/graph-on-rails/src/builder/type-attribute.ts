@@ -11,8 +11,9 @@ import {
 } from 'graphql';
 import _ from 'lodash';
 
-import { SchemaType } from './schema-type';
-import { FilterAttributeType } from './filter-attribute-type';
+import { EntityBuilder } from './entity-builder';
+import { FilterTypeBuilder } from './filter-type-builder';
+import { SchemaBuilder } from './schema-builder';
 
 //
 //
@@ -31,7 +32,7 @@ export class Attribute {
 	//
 	constructor(
 		public readonly attr:TypeAttribute,
-		private entity:SchemaType)
+		private entity:SchemaBuilder)
 	{}
 
 	//
@@ -75,15 +76,15 @@ export class Attribute {
 
 	//
 	//
-	getFilterAttributeType():FilterAttributeType | null {
+	getFilterAttributeType():FilterTypeBuilder | null {
 		switch( _.toLower(this.attr.type) ){
 			case 'id':
-			case 'int': return <FilterAttributeType>this.graphx.filterAttributes['IntFilter']
-			case 'float': return <FilterAttributeType>this.graphx.filterAttributes['FloatFilter']
-			case 'boolean': return <FilterAttributeType>this.graphx.filterAttributes['BooleanFilter']
-			case 'string': return <FilterAttributeType>this.graphx.filterAttributes['StringFilter']
+			case 'int': return <FilterTypeBuilder>this.graphx.filterAttributes['IntFilter']
+			case 'float': return <FilterTypeBuilder>this.graphx.filterAttributes['FloatFilter']
+			case 'boolean': return <FilterTypeBuilder>this.graphx.filterAttributes['BooleanFilter']
+			case 'string': return <FilterTypeBuilder>this.graphx.filterAttributes['StringFilter']
 			default: {
-				return <FilterAttributeType>this.graphx.filterAttributes['GenderFilter']
+				return <FilterTypeBuilder>this.graphx.filterAttributes['GenderFilter']
 			}
 		};
 	}

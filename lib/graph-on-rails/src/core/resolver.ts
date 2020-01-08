@@ -1,45 +1,47 @@
-import { EntityType } from './entity-type';
+import { EntityBuilder } from "../builder/entity-builder";
 
+/**
+ *
+ */
 export abstract class Resolver {
 
+  /**
+   *
+   */
+  init( EntityBuilder:EntityBuilder ):void { }
 
   /**
    *
    */
-  init( entityType:EntityType ):void { }
+  extendType( EntityBuilder:EntityBuilder ):void { }
 
   /**
    *
    */
-  extendType( entityType:EntityType ):void { }
+  abstract resolveType( EntityBuilder:EntityBuilder, root:any, args:any ):Promise<any>;
 
   /**
    *
    */
-  abstract resolveType( entityType:EntityType, root:any, args:any ):Promise<any>;
+  abstract resolveTypes( EntityBuilder:EntityBuilder, root:any, args:any ):Promise<any[]>;
 
   /**
    *
    */
-  abstract resolveTypes( entityType:EntityType, root:any, args:any ):Promise<any[]>;
+  abstract resolveRefType( refType:EntityBuilder, root:any, args:any ):Promise<any>;
 
   /**
    *
    */
-  abstract resolveRefType( refType:EntityType, root:any, args:any ):Promise<any>;
+  abstract resolveRefTypes( EntityBuilder:EntityBuilder, refType:EntityBuilder, root:any, args:any ):Promise<any[]>;
 
   /**
    *
    */
-  abstract resolveRefTypes( entityType:EntityType, refType:EntityType, root:any, args:any ):Promise<any[]>;
+  abstract saveEntity( EntityBuilder:EntityBuilder, root:any, args:any ):Promise<any>;
 
   /**
    *
    */
-  abstract saveEntity( entityType:EntityType, root:any, args:any ):Promise<any>;
-
-  /**
-   *
-   */
-  abstract deleteEntity( entityType:EntityType, root:any, args:any  ):Promise<boolean>;
+  abstract deleteEntity( EntityBuilder:EntityBuilder, root:any, args:any  ):Promise<boolean>;
 }

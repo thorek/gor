@@ -1,10 +1,10 @@
 import _ from 'lodash';
-import { FilterAttributeType } from '../core/filter-attribute-type';
+import { FilterTypeBuilder } from '../builder/filter-type-builder';
 
 /**
  *
  */
-export class IntFilterAttributeType extends FilterAttributeType{
+export class IntFilterTypeBuilder extends FilterTypeBuilder{
 
 	name() { return 'Int' }
 	attributes() { return {

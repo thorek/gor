@@ -2,7 +2,7 @@ import { GraphQLEnumType } from 'graphql';
 import inflection from 'inflection';
 import _ from 'lodash';
 
-import { GraphX } from './graphx';
+import { GraphX } from '../core/graphx';
 import { Attribute, TypeAttribute } from './type-attribute';
 
 //
@@ -14,7 +14,7 @@ export type EntityReference = {
 /**
  * Base class for any custom type that can occur in a GraphQL Schema
  */
-export abstract class SchemaType {
+export abstract class SchemaBuilder {
 
 	abstract name():string;
 	typeName() { return inflection.camelize( this.name() ) }

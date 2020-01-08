@@ -1,16 +1,16 @@
 import { GraphQLList, GraphQLObjectType, GraphQLSchema, GraphQLString } from 'graphql';
 import * as _ from 'lodash';
+import { EntityBuilder } from '../builder/entity-builder';
+import { FilterTypeBuilder } from '../builder/filter-type-builder';
+import { EnumFilterTypeBuilder } from '../filter/enum-filter-type-builder';
 
-import { EntityType } from './entity-type';
-import { FilterAttributeType } from './filter-attribute-type';
-import { EnumFilterAttributeType } from '../filter-attributes/enum-filter-attribute.type';
 
 //
 //
 export class GraphX {
 
-  readonly entities:{[name:string]:EntityType} = {};
-  readonly filterAttributes:{[name:string]:FilterAttributeType} = {};
+  readonly entities:{[name:string]:EntityBuilder} = {};
+  readonly filterAttributes:{[name:string]:FilterTypeBuilder} = {};
 	rawTypes:any = {};
 
 	private fnFromArray = (fns:any) => () => fns.reduce((obj:any, fn:any) => Object.assign({}, obj, fn.call()), {});
@@ -42,7 +42,7 @@ export class GraphX {
    * @param name
    */
 	addEnumFilterAttributeType( name:string ):void {
-		const efat = new EnumFilterAttributeType( name );
+		const efat = new EnumFilterTypeBuilder( name );
 		efat.init( this );
 		efat.createTypes();
 	}

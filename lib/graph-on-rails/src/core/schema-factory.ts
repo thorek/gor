@@ -1,14 +1,14 @@
 import _ from 'lodash';
 
 import { GraphX } from './graphx';
-import { SchemaType } from './schema-type';
 import { GraphQLSchema } from 'graphql';
+import { SchemaBuilder } from '../builder/schema-builder';
 
 export class SchemaFactory {
 
 	//
 	//
-	constructor( private types:SchemaType[] ){}
+	constructor( private types:SchemaBuilder[] ){}
 
 	//
 	//
