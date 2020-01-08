@@ -22,6 +22,11 @@ export declare class ConfigurationType extends EntityType {
     };
     belongsTo(): import("./schema-type").EntityReference[];
     hasMany(): import("./schema-type").EntityReference[];
+    enums(): {
+        [name: string]: {
+            [key: string]: string;
+        };
+    };
     plural(): string;
     singular(): string;
     collection(): string;

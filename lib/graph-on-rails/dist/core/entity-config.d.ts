@@ -18,4 +18,9 @@ export declare type EntityConfig = {
     label?: string;
     path?: string;
     parent?: string;
+    enums: {
+        [name: string]: {
+            [key: string]: string;
+        };
+    };
 };

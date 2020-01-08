@@ -1,4 +1,4 @@
-import { GraphQLBoolean, GraphQLID, GraphQLInputObjectType, GraphQLList, GraphQLInt } from 'graphql';
+import { GraphQLBoolean, GraphQLID, GraphQLInputObjectType, GraphQLList } from 'graphql';
 import inflection from 'inflection';
 import _ from 'lodash';
 

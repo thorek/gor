@@ -19,7 +19,7 @@ export abstract class SchemaType {
 	abstract name():string;
 	typeName() { return inflection.camelize( this.name() ) }
 	attributes():{[name:string]:TypeAttribute} { return {} };
-	enums():any { return {} }
+	enums():{[name:string]:{[key:string]:string}} { return {} }
 
 	graphx!:GraphX;
 

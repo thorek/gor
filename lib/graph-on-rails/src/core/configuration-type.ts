@@ -8,7 +8,6 @@ import { Resolver } from './resolver';
  */
 export class ConfigurationType extends EntityType {
 
-
   /**
    *
    */
@@ -48,6 +47,11 @@ export class ConfigurationType extends EntityType {
     return _.map( this.config.hasMany, hm => {
       return _.isString(hm) ? { type: hm } : hm;
     });
+   }
+
+   enums(){
+     if( ! this.config.enums ) return super.enums();
+     return this.config.enums;
    }
 
   plural() { return this.config.plural || super.plural() }

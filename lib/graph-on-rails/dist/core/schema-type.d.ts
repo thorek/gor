@@ -12,7 +12,11 @@ export declare abstract class SchemaType {
     attributes(): {
         [name: string]: TypeAttribute;
     };
-    enums(): any;
+    enums(): {
+        [name: string]: {
+            [key: string]: string;
+        };
+    };
     graphx: GraphX;
     protected _attributes?: {
         [name: string]: Attribute;

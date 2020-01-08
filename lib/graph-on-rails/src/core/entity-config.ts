@@ -1,5 +1,3 @@
-import { EntityReference } from './schema-type';
-
 
 export type AttributeConfig = { 
   type:string;
@@ -22,4 +20,6 @@ export type EntityConfig  = {
   label?:string;
   path?:string;
   parent?:string;
+
+  enums:{[name:string]:{[key:string]:string}}
 }

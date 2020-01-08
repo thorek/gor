@@ -16,7 +16,7 @@ export declare class Gor {
     /**
      *
      */
-    addCustomEntities(types: EntityType[]): void;
+    addCustomEntities(...types: EntityType[]): void;
     /**
      *
      */

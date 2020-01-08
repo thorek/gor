@@ -35,8 +35,8 @@ export class Gor {
   /**
    *
    */
-  addCustomEntities( types:EntityType[] ):void {
-    _.concat( this.customEntities, types );
+  addCustomEntities( ...types:EntityType[] ):void {
+    this.customEntities.push( ...types );
   }
 
   /**
@@ -72,7 +72,6 @@ export class Gor {
    *
    */
   private getConfigEntities():ConfigurationType[] {
-    console.info( "this.configs", this.configs );
     return _.flatten( _.map( this.configs, (resolver, folder) => {
       if( ! resolver ) resolver = new NoResolver();
       const files = this.getConfigFiles( folder );
