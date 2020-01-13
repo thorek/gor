@@ -13,8 +13,6 @@ export type AttributeConfig = { 
  *
  */
 export type EntityConfig  = {
-
-  name: string;
   typeName?:string;
 
   attributes?:{[name:string]:string|AttributeConfig};
@@ -41,21 +39,21 @@ export class EntityConfigBuilder extends EntityBuilder {
   /**
    *
    */
-  static create( resolver:Resolver, config:EntityConfig ):EntityConfigBuilder {
-    if( ! _.has( config, 'name' ) ) throw new Error('no name property' );
-    return new EntityConfigBuilder( resolver, config );
+  static create( name:string, resolver:Resolver, config:EntityConfig ):EntityConfigBuilder {
+    return new EntityConfigBuilder( name, resolver, config );
   }
 
   /**
    *
    */
-	constructor(
+	protected constructor(
+      protected readonly _name:string,
       protected readonly resolver:Resolver,
       protected readonly config:EntityConfig ){
     super( resolver);
   }
 
-  name() { return this.config.name }
+  name() { return this._name }
   typeName() { return this.config.typeName || super.typeName() }
 
   attributes() {

@@ -37,7 +37,7 @@ export abstract class SchemaBuilder {
 
 	//
 	//
-	abstract extendTypes():void;
+	extendTypes():void {}
 
 	//
 	//

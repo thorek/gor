@@ -10,7 +10,8 @@ import { Resolver } from './resolver';
 import { SchemaFactory } from './schema-factory';
 import { NoResolver } from './no-resolver';
 import { EntityBuilder } from '../builder/entity-builder';
-import { EntityConfigBuilder, EntityConfig } from '../builder/entity-config-builder';
+import { EntityConfigBuilder } from '../builder/entity-config-builder';
+import { EnumConfigBuilder } from '../builder/enum-config-builder';
 import { SchemaBuilder } from '../builder/schema-builder';
 import { IntFilterTypeBuilder } from '../filter/int-filter-type-builder';
 import { StringFilterTypeBuilder } from '../filter/string-filter-type-builder';
@@ -44,7 +45,7 @@ export class Gor {
   async schema():Promise<GraphQLSchema> {
     if( this._schema ) return this._schema;
 
-    const configEntities = this.getConfigEntities();
+    const configEntities = this.getConfigTypes();
     const defaultFilterTypes = this.getDefaultFilterTypes();
 
     const types = [
@@ -70,11 +71,11 @@ export class Gor {
   /**
    *
    */
-  private getConfigEntities():EntityConfigBuilder[] {
+  private getConfigTypes():SchemaBuilder[] {
     return _.flatten( _.map( this.configs, (resolver, folder) => {
       if( ! resolver ) resolver = new NoResolver();
       const files = this.getConfigFiles( folder );
-      return _.compact( _.map( files, file => this.createConfigurationType( folder, file, resolver ) ) );
+      return _.compact( _.flatten( _.map( files, file => this.createConfigurationTypes( folder, file, resolver ) ) ) );
     }));
   }
 
@@ -93,7 +94,6 @@ export class Gor {
    */
   private getConfigFiles( folder:string ):string[] {
     try {
-      console.log( __dirname );
       return _.filter( fs.readdirSync( folder ), file => _.toLower( path.extname( file )) === '.yaml' );
     } catch (error) {
       console.error( `cannot read files from folder '${folder}'`, error );
@@ -104,16 +104,18 @@ export class Gor {
   /**
    *
    */
-  private createConfigurationType( folder:string, file:string, resolver:Resolver ):EntityConfigBuilder | null {
+  private createConfigurationTypes( folder:string, file:string, resolver:Resolver ):SchemaBuilder[] {
+    const builder:SchemaBuilder[] = [];
     try {
       file = path.join( folder, file );
       const content = fs.readFileSync( file).toString();
-      const config = _.get( YAML.parse(content), 'entity' ) as EntityConfig;
-      return EntityConfigBuilder.create( resolver, config );
+      const configs = YAML.parse(content);
+      builder.push( ... _.map( configs['entity'], (config, name) => EntityConfigBuilder.create( name, resolver, config ) ) );
+      builder.push( ... _.map( configs['enum'], (config, name) => EnumConfigBuilder.create( name, resolver, config ) ) );
     } catch ( e ){
       console.warn( `[${file}]: ${e}`);
-      return null;
     }
+    return builder;
   }
 
 }

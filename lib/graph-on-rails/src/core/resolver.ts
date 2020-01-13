@@ -1,4 +1,5 @@
 import { EntityBuilder } from "../builder/entity-builder";
+import { SchemaBuilder } from "../builder/schema-builder";
 
 /**
  *
@@ -8,7 +9,7 @@ export abstract class Resolver {
   /**
    *
    */
-  init( EntityBuilder:EntityBuilder ):void { }
+  init( EntityBuilder:SchemaBuilder ):void { }
 
   /**
    *

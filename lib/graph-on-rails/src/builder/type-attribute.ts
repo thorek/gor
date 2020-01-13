@@ -11,7 +11,6 @@ import {
 } from 'graphql';
 import _ from 'lodash';
 
-import { FilterTypeBuilder } from './filter-type-builder';
 import { SchemaBuilder } from './schema-builder';
 
 //
@@ -67,8 +66,8 @@ export class Attribute {
 			default: {
         const filterTypeName = `${this.attr.type}Filter`;
 				const type = this.graphx.type( filterTypeName );
-        if( ! type ) console.warn( `${this.entity.name} no such filter type '${filterTypeName}'` );
 				if( type instanceof GraphQLInputObjectType ) return type;
+        console.warn( `${this.entity.name} no such filter type '${filterTypeName}'` );
 				return null;
 			}
 		};

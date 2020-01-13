@@ -1,10 +1,12 @@
 entity:
-  name: Car
-  attributes:
-    maker:
-      type: string
-    licence:
-      type: string
-    color: string
-  belongsTo:
-    - Person
+  Car:
+    attributes:
+      maker:
+        type: string
+      licence:
+        type: string
+      color: string
+      fuel:
+        type: Fuel
+    belongsTo:
+      - Person
