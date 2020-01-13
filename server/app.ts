@@ -4,7 +4,7 @@ import express from 'express';
 import { createServer } from 'http';
 import { Gor } from 'graph-on-rails';
 import { MongoDbResolver } from 'graph-on-rails-mongodb';
-import { AddressType } from './types/adress.type';
+import { AddressType } from './types/adress';
 
 (async () => {
 

@@ -9,7 +9,7 @@ entity:
   hasMany:
     - type: Address
     - type: Car
-  enums:
+  enum:
     Gender:
       MALE: male
       FEMALE: female

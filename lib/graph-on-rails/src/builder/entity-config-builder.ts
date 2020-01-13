@@ -30,7 +30,7 @@ export type EntityConfig  = {
   path?:string;
   parent?:string;
 
-  enums:{[name:string]:{[key:string]:string}}
+  enum:{[name:string]:{[key:string]:string}}
 }
 
 /**
@@ -79,9 +79,9 @@ export class EntityConfigBuilder extends EntityBuilder {
     });
    }
 
-   enums(){
-     if( ! this.config.enums ) return super.enums();
-     return this.config.enums;
+   enum(){
+     if( ! this.config.enum ) return super.enum();
+     return this.config.enum;
    }
 
   plural() { return this.config.plural || super.plural() }
@@ -92,5 +92,4 @@ export class EntityConfigBuilder extends EntityBuilder {
   label() { return this.config.label || super.label() }
   path() { return this.config.path || super.path() }
   parent() { return this.config.parent || super.parent() }
-
 }

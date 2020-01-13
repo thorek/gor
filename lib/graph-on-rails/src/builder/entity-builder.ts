@@ -22,6 +22,8 @@ export abstract class EntityBuilder extends SchemaBuilder {
   path() { return this.plural() }
   parent():string | null { return null }
 
+  enum():{[name:string]:{[key:string]:string}} { return {} }
+
 
 	//
 	//
@@ -39,7 +41,7 @@ export abstract class EntityBuilder extends SchemaBuilder {
 	//
 	//
 	protected createEnums():void {
-		_.forEach( this.enums(), (keyValues:any, name:string) => {
+		_.forEach( this.enum(), (keyValues:any, name:string) => {
 			const values = {};
 			_.forEach( keyValues, (value,key) => _.set( values, key, { value }));
 			this.graphx.type( name, { name, values, from: GraphQLEnumType	} );
