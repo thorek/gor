@@ -17,7 +17,8 @@ export class StringFilterTypeBuilder extends FilterTypeBuilder{
 		beginsWith: { type: 'String' }
 	}}
 
-	//
+  //
+  // TODO must come from resolver
 	//
 	getFilterExpression( condition:any, field:string ):any {
 		const operator = _.toString( _.first( _.keys( condition ) ) );

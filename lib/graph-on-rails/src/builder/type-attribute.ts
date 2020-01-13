@@ -12,6 +12,7 @@ import {
 import _ from 'lodash';
 
 import { SchemaBuilder } from './schema-builder';
+import { FilterTypeBuilder } from './filter-type-builder';
 
 //
 //
@@ -69,6 +70,22 @@ export class Attribute {
 				if( type instanceof GraphQLInputObjectType ) return type;
         console.warn( `${this.entity.name} no such filter type '${filterTypeName}'` );
 				return null;
+			}
+		};
+  }
+
+	//
+	//
+	getFilterAttributeType():FilterTypeBuilder | null {
+		switch( _.toLower(this.attr.type) ){
+			case 'id':
+			case 'int': return this.graphx.filterAttributes['IntFilter']
+			case 'float': return this.graphx.filterAttributes['FloatFilter']
+			case 'boolean': return this.graphx.filterAttributes['BooleanFilter']
+      case 'string': return this.graphx.filterAttributes['StringFilter']
+			default: {
+        const filterTypeName = `${this.attr.type}Filter`;
+				return <FilterTypeBuilder>this.graphx.filterAttributes[filterTypeName];
 			}
 		};
 	}

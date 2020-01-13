@@ -6,7 +6,6 @@ entity:
       licence:
         type: string
       color: string
-      fuel:
-        type: Fuel
+      fuel: Fuel
     belongsTo:
       - Person

@@ -93,14 +93,16 @@ export class MongoDbResolver extends Resolver {
    *
    */
 	protected getFilter( entityType:EntityBuilder, root:any, args:any ):FilterQuery<any> {
-		const filter:FilterQuery<any> = {};
+    const filter:FilterQuery<any> = {};
 		_.forEach( _.get( args, 'filter'), (condition, field) => {
-			const attribute = entityType.getAttribute(field);
+      const attribute = entityType.getAttribute(field);
 			if( ! attribute ) return;
 			const filterType = attribute.getFilterAttributeType();
 			const expression = filterType ? filterType.getFilterExpression( condition, field ) : null;
+      console.info({condition, field, attribute, filterType, expression })
 			if( expression ) filter[`${field}`] = expression;
-		});
+    });
+    console.info( {filter} )
 		return filter;
 	}
 

@@ -13,7 +13,7 @@ export abstract class FilterTypeBuilder extends SchemaBuilder {
 	//
 	init(graphx:GraphX ):void {
 		super.init( graphx );
-		this.graphx.filterAttributes[`${this.name}Filter`] = this;
+    this.graphx.filterAttributes[`${this.name()}Filter`] = this;
 	}
 
 

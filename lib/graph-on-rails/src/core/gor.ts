@@ -49,9 +49,9 @@ export class Gor {
     const defaultFilterTypes = this.getDefaultFilterTypes();
 
     const types = [
+      ...defaultFilterTypes,
       ...this.customEntities,
       ...configEntities,
-      ...defaultFilterTypes
     ]
 
     const factory = new SchemaFactory( types );
