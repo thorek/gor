@@ -1,8 +1,8 @@
 import {
   GraphQLBoolean,
-  GraphQLEnumType,
   GraphQLFloat,
   GraphQLID,
+  GraphQLInputObjectType,
   GraphQLInputType,
   GraphQLInt,
   GraphQLList,
@@ -11,7 +11,6 @@ import {
 } from 'graphql';
 import _ from 'lodash';
 
-import { EntityBuilder } from './entity-builder';
 import { FilterTypeBuilder } from './filter-type-builder';
 import { SchemaBuilder } from './schema-builder';
 
@@ -66,25 +65,11 @@ export class Attribute {
 			case 'boolean': return this.graphx.type('BooleanFilter');
 			case 'string': return this.graphx.type('StringFilter');
 			default: {
-				const type = this.graphx.type( this.attr.type );
-				if( ! type ) console.warn( `${this.entity.name} no such type '${this.attr.type}'` );
-				if( type instanceof GraphQLEnumType ) return this.graphx.type('GenderFilter');
+        const filterTypeName = `${this.attr.type}Filter`;
+				const type = this.graphx.type( filterTypeName );
+        if( ! type ) console.warn( `${this.entity.name} no such filter type '${filterTypeName}'` );
+				if( type instanceof GraphQLInputObjectType ) return type;
 				return null;
-			}
-		};
-	}
-
-	//
-	//
-	getFilterAttributeType():FilterTypeBuilder | null {
-		switch( _.toLower(this.attr.type) ){
-			case 'id':
-			case 'int': return <FilterTypeBuilder>this.graphx.filterAttributes['IntFilter']
-			case 'float': return <FilterTypeBuilder>this.graphx.filterAttributes['FloatFilter']
-			case 'boolean': return <FilterTypeBuilder>this.graphx.filterAttributes['BooleanFilter']
-			case 'string': return <FilterTypeBuilder>this.graphx.filterAttributes['StringFilter']
-			default: {
-				return <FilterTypeBuilder>this.graphx.filterAttributes['GenderFilter']
 			}
 		};
 	}
