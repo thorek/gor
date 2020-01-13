@@ -30,7 +30,6 @@ export abstract class SchemaBuilder {
 	//
 	init(graphx:GraphX ):void {
     this.graphx = graphx;
-		this.createEnums();
 	}
 
 	//
@@ -44,25 +43,6 @@ export abstract class SchemaBuilder {
 	//
 	//
 	protected abstract createObjectType():void;
-
-	//
-	//
-	protected createEnums():void {
-		_.forEach( this.enums(), (keyValues:any, name:string) => {
-			const values = {};
-			_.forEach( keyValues, (value,key) => _.set( values, key, { value }));
-			this.graphx.type( name, { name, values, from: GraphQLEnumType	} );
-
-			this.createEnumFilter( name );
-		});
-	}
-
-	//
-	//
-	protected createEnumFilter( name:string ):void {
-		this.graphx.addEnumFilterAttributeType( name );
-
-	}
 
 	//
 	//

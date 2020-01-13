@@ -9,8 +9,8 @@ entity:
   hasMany:
     - type: Address
     - type: Car
-enums:
-  Gender:
-    MALE: male
-    FEMALE: female
-    DIVERSE: diverse
+  enums:
+    Gender:
+      MALE: male
+      FEMALE: female
+      DIVERSE: diverse

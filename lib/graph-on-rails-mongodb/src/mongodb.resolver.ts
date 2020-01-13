@@ -1,6 +1,6 @@
 import _ from 'lodash';
 import { Collection, Db, FilterQuery, ObjectId, MongoClient } from 'mongodb';
-import { EntityType, Resolver } from 'graph-on-rails';
+import { EntityBuilder, Resolver } from 'graph-on-rails';
 
 /**
  *
@@ -35,14 +35,14 @@ export class MongoDbResolver extends Resolver {
   /**
    *
    */
-  protected getCollection( entityType:EntityType ):Collection {
+  protected getCollection( entityType:EntityBuilder ):Collection {
     return this.db.collection( entityType.plural()  );
   }
 
   /**
    *
    */
-  async resolveType( entityType:EntityType, root:any, args:any ):Promise<any> {
+  async resolveType( entityType:EntityBuilder, root:any, args:any ):Promise<any> {
     const collection = this.getCollection( entityType );
     const id = _.get( args, 'id' );
 		const entity = await collection.findOne( new ObjectId(id));
@@ -52,7 +52,7 @@ export class MongoDbResolver extends Resolver {
   /**
    *
    */
-  async resolveRefType( refType:EntityType, root:any, args:any ):Promise<any> {
+  async resolveRefType( refType:EntityBuilder, root:any, args:any ):Promise<any> {
     const collection = this.getCollection( refType );
     const id = _.get( root, `${refType.singular()}Id`);
 		const entity = await collection.findOne( new ObjectId(id) );
@@ -63,7 +63,7 @@ export class MongoDbResolver extends Resolver {
   /**
    *
    */
-  async resolveRefTypes( entityType:EntityType, refType:EntityType, root:any, args:any ):Promise<any[]> {
+  async resolveRefTypes( entityType:EntityBuilder, refType:EntityBuilder, root:any, args:any ):Promise<any[]> {
     const collection = this.getCollection( refType );
     const filter = _.set( {}, [`${entityType.singular()}Id`], _.toString( root.id ) );
 		const entities = await collection.find( filter ).toArray();
@@ -73,7 +73,7 @@ export class MongoDbResolver extends Resolver {
   /**
    *
    */
-  async resolveTypes( entityType:EntityType, root:any, args:any ):Promise<any[]> {
+  async resolveTypes( entityType:EntityBuilder, root:any, args:any ):Promise<any[]> {
     const collection = this.getCollection( entityType );
     const filter = this.getFilter( entityType, root, args );
     _.set( filter, 'deleted', { $ne: true } );
@@ -84,7 +84,7 @@ export class MongoDbResolver extends Resolver {
   /**
    *
    */
-  async saveEntity( entityType:EntityType, root:any, args:any ):Promise<any> {
+  async saveEntity( entityType:EntityBuilder, root:any, args:any ):Promise<any> {
     const attrs = _.get( args, entityType.singular() );
     return _.has( attrs, 'id' ) ? this.updateEntity( entityType, attrs ) : this.createEntity( entityType, attrs );
   }
@@ -92,7 +92,7 @@ export class MongoDbResolver extends Resolver {
   /**
    *
    */
-	protected getFilter( entityType:EntityType, root:any, args:any ):FilterQuery<any> {
+	protected getFilter( entityType:EntityBuilder, root:any, args:any ):FilterQuery<any> {
 		const filter:FilterQuery<any> = {};
 		_.forEach( _.get( args, 'filter'), (condition, field) => {
 			const attribute = entityType.getAttribute(field);
@@ -115,7 +115,7 @@ export class MongoDbResolver extends Resolver {
 
 	//
 	//
-	protected async updateEntity( entityType:EntityType, attrs: any ):Promise<any> {
+	protected async updateEntity( entityType:EntityBuilder, attrs: any ):Promise<any> {
 		const id = new ObjectId( attrs.id );
     delete attrs.id;
     const collection = this.getCollection( entityType );
@@ -128,7 +128,7 @@ export class MongoDbResolver extends Resolver {
 
 	//
 	//
-	protected async createEntity( entityType:EntityType, attrs: any ):Promise<any> {
+	protected async createEntity( entityType:EntityBuilder, attrs: any ):Promise<any> {
     const collection = this.getCollection( entityType );
 		const result = await collection.insertOne( attrs );
 		const entity:any = await collection.findOne( new ObjectId(result.insertedId ) );
@@ -138,7 +138,7 @@ export class MongoDbResolver extends Resolver {
   /**
    *
    */
-	async deleteEntity( entityType:EntityType, root:any, args:any  ):Promise<boolean> {
+	async deleteEntity( entityType:EntityBuilder, root:any, args:any  ):Promise<boolean> {
     const collection = this.getCollection( entityType );
     const id = _.get( args, 'id' );
 		const result = await collection.updateOne( {"_id": new ObjectId( id )}, {

@@ -1,4 +1,4 @@
-import { GraphQLBoolean, GraphQLID, GraphQLInputObjectType, GraphQLList } from 'graphql';
+import { GraphQLBoolean, GraphQLID, GraphQLInputObjectType, GraphQLList, GraphQLEnumType } from 'graphql';
 import inflection from 'inflection';
 import _ from 'lodash';
 
@@ -35,9 +35,31 @@ export abstract class EntityBuilder extends SchemaBuilder {
     this.graphx.entities[this.name()] = this;
 	}
 
+
+	//
+	//
+	protected createEnums():void {
+		_.forEach( this.enums(), (keyValues:any, name:string) => {
+			const values = {};
+			_.forEach( keyValues, (value,key) => _.set( values, key, { value }));
+			this.graphx.type( name, { name, values, from: GraphQLEnumType	} );
+
+			this.createEnumFilter( name );
+		});
+	}
+
+	//
+	//
+	protected createEnumFilter( name:string ):void {
+		this.graphx.addEnumFilterAttributeType( name );
+	}
+
+
+
 	//
 	//
 	protected createObjectType():void {
+    this.createEnums();
 		const name = this.typeName();
 		this.graphx.type( name, { name, fields: () => {
 			const fields = {  id: { type: GraphQLID } };

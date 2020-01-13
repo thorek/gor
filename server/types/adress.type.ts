@@ -1,9 +1,9 @@
-import { EntityType } from 'graph-on-rails';
+import { EntityBuilder } from 'graph-on-rails';
 
 /**
  *
  */
-export class AddressType extends EntityType {
+export class AddressType extends EntityBuilder {
 
 	name() { return 'Address' }
 	attributes() { return {

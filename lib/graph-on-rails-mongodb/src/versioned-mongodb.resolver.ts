@@ -1,4 +1,4 @@
-import { EntityType, Resolver } from 'graph-on-rails';
+import { EntityBuilder, Resolver } from 'graph-on-rails';
 import _ from 'lodash';
 import { FilterQuery, ObjectId } from 'mongodb';
 
@@ -21,7 +21,7 @@ export class VersionedMongoDbResolver extends MongoDbResolver {
   /**
    *
    */
-  extendType( entityType:EntityType ):void {
+  extendType( entityType:EntityBuilder ):void {
     // const objectType = entityType.graphx.type(entityType.typeName());
 		// objectType.extend( () => (
     //   { versions: {
@@ -36,7 +36,7 @@ export class VersionedMongoDbResolver extends MongoDbResolver {
   /**
    *
    */
-  async resolveRefTypes( entityType:EntityType, refType:EntityType, root:any, args:any ):Promise<any[]> {
+  async resolveRefTypes( entityType:EntityBuilder, refType:EntityBuilder, root:any, args:any ):Promise<any[]> {
     const collection = this.getCollection( refType );
     const filter = _.set( {}, [`${entityType.singular()}Id`], _.toString( root.id ) );
 		const entities = await collection.find( filter ).toArray();
@@ -46,7 +46,7 @@ export class VersionedMongoDbResolver extends MongoDbResolver {
   /**
    *
    */
-	protected getFilter( entityType:EntityType, root:any, args:any ):FilterQuery<any> {
+	protected getFilter( entityType:EntityBuilder, root:any, args:any ):FilterQuery<any> {
 		const filter:FilterQuery<any> = {};
 		_.forEach( _.get( args, 'filter'), (condition, field) => {
 			const attribute = entityType.getAttribute(field);
@@ -69,7 +69,7 @@ export class VersionedMongoDbResolver extends MongoDbResolver {
 
 	//
 	//
-	protected async updateEntity( entityType:EntityType, attrs: any ):Promise<any> {
+	protected async updateEntity( entityType:EntityBuilder, attrs: any ):Promise<any> {
 		const id = new ObjectId( attrs.id );
     delete attrs.id;
     const collection = this.getCollection( entityType );
@@ -84,7 +84,7 @@ export class VersionedMongoDbResolver extends MongoDbResolver {
 
 	//
 	//
-	protected async createEntity( entityType:EntityType, attrs: any ):Promise<any> {
+	protected async createEntity( entityType:EntityBuilder, attrs: any ):Promise<any> {
     const doc = {attrs, versions: [{ attrs, createdAt: Date.now() }]};
     const collection = this.getCollection( entityType );
 		const result = await collection.insertOne(doc);
