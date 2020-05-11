@@ -1,6 +1,7 @@
 import _ from 'lodash';
 import { Collection, Db, FilterQuery, ObjectId, MongoClient } from 'mongodb';
 import { EntityBuilder, Resolver } from 'graph-on-rails';
+import { EnumFilterTypeBuilder } from './filter/enum-filter-type-builder';
 
 /**
  *
@@ -42,6 +43,24 @@ export class MongoDbResolver extends Resolver {
   /**
    *
    */
+  getScalarFilterTypes() {
+    return [];
+  }
+
+  /**
+   *
+   */
+  addEnumFilterAttributeType( name: string ) {
+    const efat =  new EnumFilterTypeBuilder( name );
+    // efat.init( this.g );
+    efat.createTypes();
+  }
+
+
+
+  /**
+   *
+   */
   async resolveType( entityType:EntityBuilder, root:any, args:any ):Promise<any> {
     const collection = this.getCollection( entityType );
     const id = _.get( args, 'id' );
@@ -75,7 +94,7 @@ export class MongoDbResolver extends Resolver {
    */
   async resolveTypes( entityType:EntityBuilder, root:any, args:any ):Promise<any[]> {
     const collection = this.getCollection( entityType );
-    const filter = this.getFilter( entityType, root, args );
+    const filter = this.getFilterQuery( entityType, root, args );
     _.set( filter, 'deleted', { $ne: true } );
 		const entities = await collection.find( filter ).toArray();
 		return _.map( entities, entity => this.getOutEntity( entity ) );
@@ -92,18 +111,18 @@ export class MongoDbResolver extends Resolver {
   /**
    *
    */
-	protected getFilter( entityType:EntityBuilder, root:any, args:any ):FilterQuery<any> {
-    const filter:FilterQuery<any> = {};
-		_.forEach( _.get( args, 'filter'), (condition, field) => {
+	protected getFilterQuery( entityType:EntityBuilder, root:any, args:any ):FilterQuery<any> {
+    const filter = _.get( args, 'filter');
+    const filterQuery:FilterQuery<any> = {};
+		_.forEach( filter, (condition, field) => {
       const attribute = entityType.getAttribute(field);
 			if( ! attribute ) return;
 			const filterType = attribute.getFilterAttributeType();
 			const expression = filterType ? filterType.getFilterExpression( condition, field ) : null;
-      console.info({condition, field, attribute, filterType, expression })
-			if( expression ) filter[`${field}`] = expression;
+			if( expression ) filterQuery[`${field}`] = expression;
     });
-    console.info( {filter} )
-		return filter;
+
+		return filterQuery;
 	}
 
 	//

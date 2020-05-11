@@ -9,6 +9,11 @@ export abstract class Resolver {
   /**
    *
    */
+  addEnumFilterAttributeType( name: string ) {}
+
+  /**
+   *
+   */
   init( EntityBuilder:SchemaBuilder ):void { }
 
   /**
@@ -45,4 +50,11 @@ export abstract class Resolver {
    *
    */
   abstract deleteEntity( EntityBuilder:EntityBuilder, root:any, args:any  ):Promise<boolean>;
+
+  /**
+   *
+   */
+  getScalarFilterTypes():SchemaBuilder[] {
+    return [];
+  }
 }

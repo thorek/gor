@@ -46,16 +46,9 @@ export abstract class EntityBuilder extends SchemaBuilder {
 			_.forEach( keyValues, (value,key) => _.set( values, key, { value }));
 			this.graphx.type( name, { name, values, from: GraphQLEnumType	} );
 
-			this.createEnumFilter( name );
+			this.resolver.addEnumFilterAttributeType( name );
 		});
 	}
-
-	//
-	//
-	protected createEnumFilter( name:string ):void {
-		this.graphx.addEnumFilterAttributeType( name );
-	}
-
 
 
 	//

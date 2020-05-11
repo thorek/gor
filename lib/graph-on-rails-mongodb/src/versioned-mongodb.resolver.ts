@@ -46,7 +46,7 @@ export class VersionedMongoDbResolver extends MongoDbResolver {
   /**
    *
    */
-	protected getFilter( entityType:EntityBuilder, root:any, args:any ):FilterQuery<any> {
+	protected getFilterQuery( entityType:EntityBuilder, root:any, args:any ):FilterQuery<any> {
 		const filter:FilterQuery<any> = {};
 		_.forEach( _.get( args, 'filter'), (condition, field) => {
 			const attribute = entityType.getAttribute(field);

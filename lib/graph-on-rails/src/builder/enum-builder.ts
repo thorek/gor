@@ -30,7 +30,7 @@ export abstract class EnumBuilder extends SchemaBuilder {
 	//
 	//
 	protected createEnumFilter( name:string ):void {
-		this.graphx.addEnumFilterAttributeType( name );
+		this.resolver.addEnumFilterAttributeType( name );
 	}
 
 

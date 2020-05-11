@@ -2,7 +2,6 @@ import { GraphQLList, GraphQLObjectType, GraphQLSchema, GraphQLString } from 'gr
 import * as _ from 'lodash';
 import { EntityBuilder } from '../builder/entity-builder';
 import { FilterTypeBuilder } from '../builder/filter-type-builder';
-import { EnumFilterTypeBuilder } from '../filter/enum-filter-type-builder';
 
 
 //
@@ -35,16 +34,6 @@ export class GraphX {
 				}
 			})
 		});
-	}
-
-  /**
-   *
-   * @param name
-   */
-	addEnumFilterAttributeType( name:string ):void {
-		const efat = new EnumFilterTypeBuilder( name );
-		efat.init( this );
-		efat.createTypes();
 	}
 
 	//

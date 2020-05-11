@@ -1,9 +1,10 @@
 import { EntityBuilder } from "../builder/entity-builder";
+import { Resolver } from "./resolver";
 
 /**
  *
  */
-export class NoResolver {
+export class NoResolver extends Resolver {
 
 
   /**

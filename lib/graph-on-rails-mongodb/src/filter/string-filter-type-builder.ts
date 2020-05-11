@@ -1,5 +1,5 @@
 import _ from 'lodash';
-import { FilterTypeBuilder } from '../builder/filter-type-builder';
+import { FilterTypeBuilder } from '../../../graph-on-rails/src/builder/filter-type-builder';
 
 /**
  *
@@ -14,7 +14,8 @@ export class StringFilterTypeBuilder extends FilterTypeBuilder{
 		notIn: { type: '[String]' },
 		contains: { type: 'String' },
 		notContains: { type: 'String' },
-		beginsWith: { type: 'String' }
+    beginsWith: { type: 'String' },
+    caseSensitive: { type: 'Boolean' }
 	}}
 
   //

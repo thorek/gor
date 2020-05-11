@@ -13,8 +13,6 @@ import { EntityBuilder } from '../builder/entity-builder';
 import { EntityConfigBuilder } from '../builder/entity-config-builder';
 import { EnumConfigBuilder } from '../builder/enum-config-builder';
 import { SchemaBuilder } from '../builder/schema-builder';
-import { IntFilterTypeBuilder } from '../filter/int-filter-type-builder';
-import { StringFilterTypeBuilder } from '../filter/string-filter-type-builder';
 
 /**
  *
@@ -46,7 +44,7 @@ export class Gor {
     if( this._schema ) return this._schema;
 
     const configEntities = this.getConfigTypes();
-    const defaultFilterTypes = this.getDefaultFilterTypes();
+    const defaultFilterTypes = this.getScalarFilterTypes();
 
     const types = [
       ...defaultFilterTypes,
@@ -82,12 +80,14 @@ export class Gor {
   /**
    *
    */
-  private getDefaultFilterTypes():SchemaBuilder[] {
-    return [
-      new IntFilterTypeBuilder(),
-      new StringFilterTypeBuilder()
-    ];
+  private getScalarFilterTypes():SchemaBuilder[] {
+    return _.flatten( _.map( this.configs, (resolver, folder) => {
+      if( ! resolver ) resolver = new NoResolver();
+      return resolver.getScalarFilterTypes();
+    }));
+
   }
+
 
   /**
    *
