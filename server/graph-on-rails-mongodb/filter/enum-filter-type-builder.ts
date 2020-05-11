@@ -1,6 +1,6 @@
 import _ from 'lodash';
 import { GraphQLInputObjectType, GraphQLList, GraphQLEnumType } from 'graphql';
-import { FilterTypeBuilder } from 'graph-on-rails'
+import { FilterTypeBuilder } from '../../graph-on-rails/builder/filter-type-builder';
 
 //
 //

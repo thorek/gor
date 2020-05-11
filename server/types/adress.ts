@@ -1,4 +1,5 @@
-import { EntityBuilder } from 'graph-on-rails';
+import { EntityBuilder } from '../graph-on-rails/builder/entity-builder';
+
 
 /**
  *

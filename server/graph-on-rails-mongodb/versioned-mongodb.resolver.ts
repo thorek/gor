@@ -1,4 +1,5 @@
-import { EntityBuilder, Resolver } from 'graph-on-rails';
+import { EntityBuilder } from '../graph-on-rails/builder/entity-builder';
+import { Resolver } from '../graph-on-rails/core/resolver';
 import _ from 'lodash';
 import { FilterQuery, ObjectId } from 'mongodb';
 

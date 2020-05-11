@@ -1,6 +1,7 @@
 import _ from 'lodash';
 import { Collection, Db, FilterQuery, ObjectId, MongoClient } from 'mongodb';
-import { EntityBuilder, Resolver } from 'graph-on-rails';
+import { EntityBuilder } from '../graph-on-rails/builder/entity-builder';
+import { Resolver } from '../graph-on-rails/core/resolver';
 import { EnumFilterTypeBuilder } from './filter/enum-filter-type-builder';
 
 /**

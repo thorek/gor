@@ -1,5 +1,5 @@
 import _ from 'lodash';
-import { FilterTypeBuilder } from '../../../graph-on-rails/src/builder/filter-type-builder';
+import { FilterTypeBuilder } from '../../graph-on-rails/builder/filter-type-builder';
 
 /**
  *
