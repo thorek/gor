@@ -56,7 +56,6 @@ export abstract class SchemaBuilder {
 	//
 	public getAttribute( name:string): Attribute {
 		return this.getAttributes()[name];
-	}
-
+  }
 }
 

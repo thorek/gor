@@ -23,7 +23,7 @@ export abstract class EntityBuilder extends SchemaBuilder {
   parent():string | null { return null }
 
   enum():{[name:string]:{[key:string]:string}} { return {} }
-
+  seeds():{[name:string]:any} { return {} }
 
 	//
 	//
@@ -238,6 +238,20 @@ export abstract class EntityBuilder extends SchemaBuilder {
 				resolve: (root:any, args:any ) => this.resolver.deleteEntity( this, root, args )
 			});
 		});
-	}
+  }
+
+  /**
+   *
+   */
+  public seed():void {
+    _.forEach( this.seeds(), seed => {
+      // IDEA check / validate seed attributes
+      try {
+        this.resolver.saveEntity( this, {}, seed );
+      } catch (error) {
+        console.error( `Entity '${this.name() }' could not seed an instance`, seed );
+      }
+    });
+  }
 
 }

@@ -16,4 +16,10 @@ export class AddressType extends EntityBuilder {
 		{ type: 'Person' }
 	]}
   parent() { return "foo" }
+  seeds() {
+    return [
+      {street: "Lindenstraße", zip: "12345", city: "Berlin", country: "Germany" },
+      {street: "Meisenweg", zip: "98765", city: "München", country: "Germany" }
+    ];
+  }
 }

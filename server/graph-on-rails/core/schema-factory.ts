@@ -8,7 +8,14 @@ export class SchemaFactory {
 
 	//
 	//
-	constructor( private types:SchemaBuilder[] ){}
+	private constructor( private types:SchemaBuilder[] ){}
+
+  /**
+   *
+   */
+  static create( types:SchemaBuilder[] ):SchemaFactory {
+    return new SchemaFactory( types );
+  }
 
 	//
 	//

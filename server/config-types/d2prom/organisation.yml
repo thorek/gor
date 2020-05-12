@@ -6,3 +6,7 @@ entity:
       - OrganisationalUnit
     belongsTo:
       - Client
+    seeds:
+      disphere:
+        name: disphere interactive GmbH
+        client: example

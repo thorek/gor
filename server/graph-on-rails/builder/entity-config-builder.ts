@@ -29,6 +29,7 @@ export type EntityConfig  = {
   parent?:string;
 
   enum:{[name:string]:{[key:string]:string}}
+  seeds:{[name:string]:any}
 }
 
 /**
@@ -90,4 +91,5 @@ export class EntityConfigBuilder extends EntityBuilder {
   label() { return this.config.label || super.label() }
   path() { return this.config.path || super.path() }
   parent() { return this.config.parent || super.parent() }
+  seeds() { return this.config.seeds || super.seeds() }
 }
