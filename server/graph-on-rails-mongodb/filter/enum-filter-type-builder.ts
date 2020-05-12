@@ -1,6 +1,7 @@
+import { GraphQLEnumType, GraphQLInputObjectType, GraphQLList } from 'graphql';
 import _ from 'lodash';
-import { GraphQLInputObjectType, GraphQLList, GraphQLEnumType } from 'graphql';
-import { FilterTypeBuilder } from '../../graph-on-rails/builder/filter-type-builder';
+
+import { FilterTypeBuilder } from '../../graph-on-rails/builder/filter-type-builder';
 
 //
 //
@@ -15,7 +16,10 @@ export class EnumFilterTypeBuilder extends FilterTypeBuilder {
 	//
 	//
 	createObjectType():void {
-		const filterName = `${this._name}Filter`;
+    const filterName = `${this._name}Filter`;
+    if( ! this.graphx ) {
+      console.error( `${filterName} - EnumFilterTypeBuilder.createObjectType no this.graphx` );
+    }
 		this.graphx.type( filterName, {
 			name: filterName,
 			from: GraphQLInputObjectType,

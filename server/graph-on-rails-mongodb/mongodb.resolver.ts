@@ -3,6 +3,9 @@ import { Collection, Db, FilterQuery, ObjectId, MongoClient } from 'mongodb';
 import { EntityBuilder } from '../graph-on-rails/builder/entity-builder';
 import { Resolver } from '../graph-on-rails/core/resolver';
 import { EnumFilterTypeBuilder } from './filter/enum-filter-type-builder';
+import { GraphX } from 'graph-on-rails/core/graphx';
+import { StringFilterTypeBuilder } from './filter/string-filter-type-builder';
+import { IntFilterTypeBuilder } from './filter/int-filter-type-builder';
 
 /**
  *
@@ -45,15 +48,18 @@ export class MongoDbResolver extends Resolver {
    *
    */
   getScalarFilterTypes() {
-    return [];
+    return [
+      new StringFilterTypeBuilder(),
+      new IntFilterTypeBuilder()
+    ];
   }
 
   /**
    *
    */
-  addEnumFilterAttributeType( name: string ) {
+  addEnumFilterAttributeType( name: string, graphx:GraphX ) {
     const efat =  new EnumFilterTypeBuilder( name );
-    // efat.init( this.g );
+    efat.init( graphx );
     efat.createTypes();
   }
 

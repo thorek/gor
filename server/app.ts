@@ -2,8 +2,8 @@ import compression from 'compression';
 import cors from 'cors';
 import express from 'express';
 import { createServer } from 'http';
-import { Gor } from 'graph-on-rails';
-import { MongoDbResolver } from 'graph-on-rails-mongodb';
+import { Gor } from './graph-on-rails/core/gor';
+import { MongoDbResolver } from './graph-on-rails-mongodb/mongodb.resolver';
 import { AddressType } from './types/adress';
 
 (async () => {

@@ -1,5 +1,6 @@
 import { EntityBuilder } from "../builder/entity-builder";
 import { SchemaBuilder } from "../builder/schema-builder";
+import { GraphX } from "./graphx";
 
 /**
  *
@@ -9,7 +10,7 @@ export abstract class Resolver {
   /**
    *
    */
-  addEnumFilterAttributeType( name: string ) {}
+  addEnumFilterAttributeType( name: string, graphx:GraphX ) {}
 
   /**
    *

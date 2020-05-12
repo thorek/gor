@@ -1,6 +1,5 @@
 import { EntityBuilder } from '../graph-on-rails/builder/entity-builder';
 
-
 /**
  *
  */
