@@ -13,7 +13,7 @@ import { AddressType } from './custom-types/adress';
   app.use(compression());
 
   const gor = new Gor();
-  const resolver = await MongoDbResolver.create( { url: 'mongodb://localhost:27017', dbName: 'gor1' } );
+  const resolver = await MongoDbResolver.create( { url: 'mongodb://localhost:27017', dbName: 'd2prom' } );
   gor.addConfigs( './server/config-types/d2prom', resolver );
   // gor.addCustomEntities( new AddressType( resolver ) );
 

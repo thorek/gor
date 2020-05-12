@@ -135,7 +135,7 @@ export class MongoDbResolver extends Resolver {
 	//
 	//
 	protected getOutEntity( entity:any ):any {
-    _.set( entity, 'id', entity._id );
+    _.set( entity, 'id', _.toString( entity._id ) );
     _.unset( entity, '_id' );
     return entity;
 	}
@@ -173,5 +173,13 @@ export class MongoDbResolver extends Resolver {
 			$set: { "deleted": true }
 		});
 		return true;
-	}
+  }
+
+  /**
+   *
+   */
+  async dropCollection( entityType:EntityBuilder ):Promise<boolean> {
+    const collection = this.getCollection( entityType );
+    return collection.drop();
+  }
 }

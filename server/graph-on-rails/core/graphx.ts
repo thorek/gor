@@ -1,7 +1,8 @@
-import { GraphQLList, GraphQLObjectType, GraphQLSchema, GraphQLString } from 'graphql';
+import { GraphQLList, GraphQLObjectType, GraphQLSchema, GraphQLString, GraphQLBoolean } from 'graphql';
 import * as _ from 'lodash';
 import { EntityBuilder } from '../builder/entity-builder';
 import { FilterTypeBuilder } from '../builder/filter-type-builder';
+import { Seeder } from './seeder';
 
 
 //
@@ -16,7 +17,7 @@ export class GraphX {
 
 	//
 	//
-	constructor(){
+	init(){
 		this.createType('query', {
 			name: 'Query',
 			fields: () => ({
@@ -31,7 +32,12 @@ export class GraphX {
 					type: GraphQLString,
 					args: {  some: { type: GraphQLString } },
 					resolve: (root:any, args:any ) => `pong, ${args.some}!`
-				}
+        },
+        seed: {
+					type: GraphQLString,
+					args: {  truncate: { type: GraphQLBoolean } },
+          resolve: (root:any, args:any ) => Seeder.create(_.values(this.entities)).seed(args.truncate)
+        }
 			})
 		});
 	}

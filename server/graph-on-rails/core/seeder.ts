@@ -18,8 +18,11 @@ export class Seeder {
 
 	//
 	//
-	seed():void {
-    const entities = _.filter( this.types, type => ( type instanceof EntityBuilder ) );
-		_.forEach( entities, type => (type as EntityBuilder).seed() );
+	async seed( truncate:boolean ):Promise<number> {
+    const entities = _.filter( this.types, type => ( type instanceof EntityBuilder ) ) as EntityBuilder[];
+    if( truncate ) await Promise.all( _.map( entities, entity => entity.truncate() ) );
+    const idsMap = {};
+    await Promise.all( _.map( entities, async entity => _.merge( idsMap, await entity.seedAttributes() ) ) );
+    return _.sum( _.map( idsMap, entityIdsMap => _.size( _.values( entityIdsMap ) ) ) );
 	}
 }

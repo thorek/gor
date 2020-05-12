@@ -8,7 +8,8 @@
     "test": "ng test",
     "lint": "ng lint",
     "e2e": "ng e2e",
-    "start:dev": "node bin/start.dev.js"
+    "start:dev": "node bin/start.dev.js",
+    "debug": "./server/node_modules/.bin/ts-node-dev -P ./server/tsconfig.json --no-notify --inspect -- ./server/app.ts --watch ./server"
   },
   "private": true,
   "dependencies": {

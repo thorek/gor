@@ -21,7 +21,8 @@ export class SchemaFactory {
 	//
 	createSchema():GraphQLSchema {
 
-		const graphx = new GraphX();
+    const graphx = new GraphX();
+    graphx.init();
 
 		_.forEach( this.types, type => type.init( graphx ) );
 		_.forEach( this.types, type => type.createTypes() );

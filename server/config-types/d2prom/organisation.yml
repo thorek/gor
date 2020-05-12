@@ -10,3 +10,6 @@ entity:
       disphere:
         name: disphere interactive GmbH
         client: example
+      funstuff:
+        name: Fun the Funny Company
+        client: example

@@ -243,15 +243,36 @@ export abstract class EntityBuilder extends SchemaBuilder {
   /**
    *
    */
-  public seed():void {
-    _.forEach( this.seeds(), seed => {
-      // IDEA check / validate seed attributes
-      try {
-        this.resolver.saveEntity( this, {}, seed );
-      } catch (error) {
-        console.error( `Entity '${this.name() }' could not seed an instance`, seed );
-      }
-    });
+  public async truncate():Promise<boolean> {
+    return this.resolver.dropCollection( this );
+  }
+
+  /**
+   *
+   */
+  public async seedAttributes():Promise<any> {
+    const ids = {};
+    await Promise.all( _.map( this.seeds(), (seed, name) => this.seedInstanceAttributes( name, seed, ids ) ) );
+    return _.set( {}, this.singular(), ids );
+  }
+
+  /**
+   *
+   */
+  private async seedInstanceAttributes( name:string, seed:any, ids:any ):Promise<any> {
+    try {
+      const args = _.set( {}, this.singular(), _.pick( seed, _.keys( this.attributes() ) ) );
+      const entity = await this.resolver.saveEntity( this, {}, args );
+      _.set( ids, name, entity.id );
+    } catch (error) {
+      console.error( `Entity '${this.name() }' could not seed an instance`, seed, error );
+    }
+  }
+
+  public async seedReferences( idsMap:any ):Promise<void> {
+    _.forEach( this.belongsTo(), belongsTo => {
+
+    } );
   }
 
 }

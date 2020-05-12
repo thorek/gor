@@ -10,11 +10,6 @@ export abstract class Resolver {
   /**
    *
    */
-  addEnumFilterAttributeType( name: string, graphx:GraphX ) {}
-
-  /**
-   *
-   */
   init( EntityBuilder:SchemaBuilder ):void { }
 
   /**
@@ -55,7 +50,16 @@ export abstract class Resolver {
   /**
    *
    */
-  getScalarFilterTypes():SchemaBuilder[] {
-    return [];
-  }
+  abstract dropCollection( EntityBuilder:EntityBuilder ):Promise<boolean>;
+
+  /**
+   *
+   */
+  getScalarFilterTypes():SchemaBuilder[] { return [] }
+
+  /**
+   *
+   */
+  addEnumFilterAttributeType( name: string, graphx:GraphX ) {}
+
 }
