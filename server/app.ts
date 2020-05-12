@@ -4,7 +4,7 @@ import express from 'express';
 import { createServer } from 'http';
 import { Gor } from './graph-on-rails/core/gor';
 import { MongoDbResolver } from './graph-on-rails-mongodb/mongodb.resolver';
-import { AddressType } from './types/adress';
+import { AddressType } from './custom-types/adress';
 
 (async () => {
 
@@ -14,7 +14,7 @@ import { AddressType } from './types/adress';
 
   const gor = new Gor();
   const resolver = await MongoDbResolver.create( { url: 'mongodb://localhost:27017', dbName: 'gor1' } );
-  gor.addConfigs( './server/types', resolver );
+  gor.addConfigs( './server/config-types/d2prom', resolver );
   gor.addCustomEntities( new AddressType( resolver ) );
 
   const server = await gor.server();

@@ -1,0 +1,6 @@
+entity:
+  Organisation:
+    attributes:
+
+    belongsTo:
+      - Person
