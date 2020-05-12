@@ -73,6 +73,10 @@ export class EntityConfigBuilder extends EntityBuilder {
 
   hasMany(){
     if( ! this.config.hasMany ) return super.hasMany();
+    if( ! _.isArray( this.config.hasMany ) ){
+      console.warn(`'${this.name()}' hasMany must be an array but is: `, this.config.hasMany );
+      return super.hasMany();
+    }
     return _.map( this.config.hasMany, hm => {
       return _.isString(hm) ? { type: hm } : hm;
     });

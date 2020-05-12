@@ -1,0 +1,6 @@
+entity:
+  DataProcessingCategory:
+    attributes:
+      name: string
+    hasMany:
+      - DataProcessingChapter

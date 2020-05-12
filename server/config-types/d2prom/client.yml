@@ -2,7 +2,8 @@ entity:
   Client:
     attributes:
       name: string
-    hasMany: Organisation
+    hasMany:
+      - Organisation
     seeds:
       example:
         name: An Example Client

@@ -1,7 +1,7 @@
 import _ from 'lodash';
 
 import { SchemaBuilder } from '../builder/schema-builder';
-import { EntityBuilder } from 'graph-on-rails/builder/entity-builder';
+import { EntityBuilder } from '../builder/entity-builder';
 
 export class Seeder {
 
