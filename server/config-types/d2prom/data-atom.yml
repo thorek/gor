@@ -1,0 +1,9 @@
+entity:
+  DataAtom:
+    attributes:
+      description: string
+    hasMany:
+      - ProcessedData
+      - DataSubject
+    belongsTo:
+      - DataProcessing

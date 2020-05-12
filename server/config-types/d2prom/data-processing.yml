@@ -1,0 +1,9 @@
+entity:
+  DataProcessing:
+    attributes:
+      name: string
+      description: string
+    hasMany:
+      - OrganisationalUnitDataProcessing
+    belongsTo:
+      - AutomatedDescisionMaking

@@ -1,0 +1,6 @@
+entity:
+  AutomatedDescisionMaking:
+    attributes:
+      description: string
+    hasMany:
+      - DataProcessing

@@ -1,0 +1,6 @@
+entity:
+  PersonCategory:
+    attributes:
+      description: string
+    hasMany:
+      - DataSubject

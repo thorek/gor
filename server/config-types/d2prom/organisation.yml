@@ -1,6 +1,8 @@
 entity:
   Organisation:
     attributes:
-
+      name: string
+    hasMany:
+      - OrganisationalUnit
     belongsTo:
-      - Person
+      - Client

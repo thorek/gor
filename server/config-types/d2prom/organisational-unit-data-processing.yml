@@ -1,0 +1,7 @@
+entity:
+  OrganisationalUnitDataProcessing:
+    attributes:
+      name: string
+    belongsTo:
+      - DataProcessing
+      - OrganisationalUnit

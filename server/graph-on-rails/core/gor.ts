@@ -94,11 +94,19 @@ export class Gor {
    */
   private getConfigFiles( folder:string ):string[] {
     try {
-      return _.filter( fs.readdirSync( folder ), file => _.toLower( path.extname( file )) === '.yaml' );
+      return _.filter( fs.readdirSync( folder ), file => this.isConfigFile(file) );
     } catch (error) {
       console.error( `cannot read files from folder '${folder}'`, error );
       return [];
     }
+  }
+
+  /**
+   *
+   */
+  private isConfigFile( file:string ):boolean {
+    const extension = _.toLower( path.extname( file ));
+    return _.includes( ['.yaml', '.yml'], extension );
   }
 
   /**

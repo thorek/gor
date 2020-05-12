@@ -1,0 +1,7 @@
+entity:
+  DataSubject:
+    attributes:
+      description: string
+    belongsTo:
+      - DataAtom
+      - PersonCategory

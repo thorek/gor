@@ -1,0 +1,6 @@
+entity:
+  DataCategory:
+    attributes:
+      description: string
+    hasMany:
+      - ProcessedData

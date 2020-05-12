@@ -15,7 +15,7 @@ import { AddressType } from './custom-types/adress';
   const gor = new Gor();
   const resolver = await MongoDbResolver.create( { url: 'mongodb://localhost:27017', dbName: 'gor1' } );
   gor.addConfigs( './server/config-types/d2prom', resolver );
-  gor.addCustomEntities( new AddressType( resolver ) );
+  // gor.addCustomEntities( new AddressType( resolver ) );
 
   const server = await gor.server();
   server.applyMiddleware({ app, path: '/graphql' });
