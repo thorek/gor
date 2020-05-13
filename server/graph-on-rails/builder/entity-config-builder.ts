@@ -29,6 +29,7 @@ export type EntityConfig  = {
   parent?:string;
 
   enum:{[name:string]:{[key:string]:string}}
+  seeds:{[name:string]:any}
 }
 
 /**
@@ -72,6 +73,10 @@ export class EntityConfigBuilder extends EntityBuilder {
 
   hasMany(){
     if( ! this.config.hasMany ) return super.hasMany();
+    if( ! _.isArray( this.config.hasMany ) ){
+      console.warn(`'${this.name()}' hasMany must be an array but is: `, this.config.hasMany );
+      return super.hasMany();
+    }
     return _.map( this.config.hasMany, hm => {
       return _.isString(hm) ? { type: hm } : hm;
     });
@@ -90,4 +95,5 @@ export class EntityConfigBuilder extends EntityBuilder {
   label() { return this.config.label || super.label() }
   path() { return this.config.path || super.path() }
   parent() { return this.config.parent || super.parent() }
+  seeds() { return this.config.seeds || super.seeds() }
 }

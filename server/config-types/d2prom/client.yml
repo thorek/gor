@@ -1,0 +1,9 @@
+entity:
+  Client:
+    attributes:
+      name: string
+    hasMany:
+      - Organisation
+    seeds:
+      example:
+        name: An Example Client

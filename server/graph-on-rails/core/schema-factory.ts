@@ -8,13 +8,21 @@ export class SchemaFactory {
 
 	//
 	//
-	constructor( private types:SchemaBuilder[] ){}
+	private constructor( private types:SchemaBuilder[] ){}
+
+  /**
+   *
+   */
+  static create( types:SchemaBuilder[] ):SchemaFactory {
+    return new SchemaFactory( types );
+  }
 
 	//
 	//
 	createSchema():GraphQLSchema {
 
-		const graphx = new GraphX();
+    const graphx = new GraphX();
+    graphx.init();
 
 		_.forEach( this.types, type => type.init( graphx ) );
 		_.forEach( this.types, type => type.createTypes() );

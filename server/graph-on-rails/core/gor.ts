@@ -13,12 +13,14 @@ import { EntityBuilder } from '../builder/entity-builder';
 import { EntityConfigBuilder } from '../builder/entity-config-builder';
 import { EnumConfigBuilder } from '../builder/enum-config-builder';
 import { SchemaBuilder } from '../builder/schema-builder';
+import { Seeder } from './seeder';
 
 /**
  *
  */
 export class Gor {
 
+  private _types?:SchemaBuilder[];
   private _schema?:GraphQLSchema;
   private configs:{[folder:string]:Resolver} = {};
   private customEntities:EntityBuilder[] = [];
@@ -42,19 +44,17 @@ export class Gor {
    */
   async schema():Promise<GraphQLSchema> {
     if( this._schema ) return this._schema;
-
-    const configEntities = this.getConfigTypes();
-    const defaultFilterTypes = this.getScalarFilterTypes();
-
-    const types = [
-      ...defaultFilterTypes,
-      ...this.customEntities,
-      ...configEntities,
-    ]
-
-    const factory = new SchemaFactory( types );
+    const factory = SchemaFactory.create( this.types() );
     this._schema = factory.createSchema();
     return this._schema;
+  }
+
+  /**
+   *
+   */
+  async seed():Promise<void> {
+    const seeder = Seeder.create( this.types() );
+    seeder.seed();
   }
 
 	/**
@@ -64,7 +64,22 @@ export class Gor {
     config.schema = await this.schema();
     _.defaults( config, { validationRules: [depthLimit(7)] } );
     return new ApolloServer( config );
-	}
+  }
+
+  /**
+   *
+   */
+  private types() {
+    if( this._types ) return this._types;
+    const configEntities = this.getConfigTypes();
+    const defaultFilterTypes = this.getScalarFilterTypes();
+    this._types = [
+      ...defaultFilterTypes,
+      ...this.customEntities,
+      ...configEntities,
+    ];
+    return this._types;
+  }
 
   /**
    *
