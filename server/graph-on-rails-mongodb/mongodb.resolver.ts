@@ -85,7 +85,6 @@ export class MongoDbResolver extends Resolver {
 		return this.getOutEntity( entity );
   }
 
-
   /**
    *
    */
@@ -135,7 +134,7 @@ export class MongoDbResolver extends Resolver {
 	//
 	//
 	protected getOutEntity( entity:any ):any {
-    _.set( entity, 'id', _.toString( entity._id ) );
+    _.set( entity, 'id', entity._id );
     _.unset( entity, '_id' );
     return entity;
 	}
@@ -144,14 +143,11 @@ export class MongoDbResolver extends Resolver {
 	//
 	//
 	protected async updateEntity( entityType:EntityBuilder, attrs: any ):Promise<any> {
-		const id = new ObjectId( attrs.id );
+    const _id = new ObjectId( attrs.id );
     delete attrs.id;
     const collection = this.getCollection( entityType );
-		const entity:any = await collection.findOne( id );
-		if( ! entity ) return null;
-		_.merge( entity, attrs );
-		const result = await collection.findOneAndReplace( id, entity );
-		return this.getOutEntity( entity );
+    const result = await collection.updateOne( { _id }, { $set: attrs }, { upsert: false } );
+		return this.resolveType( entityType, {}, { id: _id } );
 	}
 
 	//

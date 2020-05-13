@@ -244,7 +244,7 @@ export abstract class EntityBuilder extends SchemaBuilder {
    *
    */
   public async truncate():Promise<boolean> {
-    return this.resolver.dropCollection( this );
+    return await this.resolver.dropCollection( this );
   }
 
   /**
@@ -269,10 +269,42 @@ export abstract class EntityBuilder extends SchemaBuilder {
     }
   }
 
+  /**
+   *
+   */
   public async seedReferences( idsMap:any ):Promise<void> {
-    _.forEach( this.belongsTo(), belongsTo => {
-
-    } );
+    await Promise.all( _.map( this.seeds(), async (seed, name) => {
+      await Promise.all( _.map( this.belongsTo(), async belongsTo => {
+        await this.seedReference( belongsTo, seed, idsMap, name );
+      }));
+    }));
   }
 
+  /**
+   *
+   */
+  private async seedReference( belongsTo: EntityReference, seed: any, idsMap: any, name: string ):Promise<void> {
+    try {
+      const refEntity = this.graphx.entities[belongsTo.type];
+      if ( refEntity && _.has( seed, refEntity.singular() ) ) {
+        const refName = _.get( seed, refEntity.singular() );
+        const refId = _.get( idsMap, [refEntity.singular(), refName] );
+        if ( refId ) await this.updateReference( idsMap, name, refEntity, refId );
+      }
+    }
+    catch ( error ) {
+      console.error( `Entity '${this.name()}' could not seed a reference`, belongsTo, name, error );
+    }
+  }
+
+  /**
+   *
+   */
+  private async updateReference( idsMap: any, name: string, refEntity: EntityBuilder, refId: string ) {
+    const id = _.get( idsMap, [this.singular(), name] );
+    const entity = await this.resolver.resolveType( this, {}, { id } );
+    _.set( entity, `${refEntity.singular()}Id`, _.toString(refId) );
+    const args = _.set( {}, this.singular(), entity );
+    await this.resolver.saveEntity( this, {}, args );
+  }
 }
