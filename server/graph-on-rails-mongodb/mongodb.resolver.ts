@@ -175,7 +175,21 @@ export class MongoDbResolver extends Resolver {
    *
    */
   async dropCollection( entityType:EntityBuilder ):Promise<boolean> {
-    const collection = this.getCollection( entityType );
-    return collection.drop();
+    const collectionName = entityType.plural();
+    if( await this.collectionExist( collectionName ) ) try {
+      await this.db.dropCollection( collectionName );
+      return true;
+    } catch (error) {
+      console.error( error );
+    }
+    return false;
+  }
+
+  /**
+   *
+   */
+  async collectionExist( name:string ):Promise<boolean> {
+    const collection = await this.db.listCollections({name}).next();
+    return collection != null;
   }
 }
