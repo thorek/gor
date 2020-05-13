@@ -134,6 +134,7 @@ export class MongoDbResolver extends Resolver {
 	//
 	//
 	protected getOutEntity( entity:any ):any {
+    if( ! _.has( entity, '_id' ) ) return null;
     _.set( entity, 'id', entity._id );
     _.unset( entity, '_id' );
     return entity;

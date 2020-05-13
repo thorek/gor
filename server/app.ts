@@ -2,9 +2,10 @@ import compression from 'compression';
 import cors from 'cors';
 import express from 'express';
 import { createServer } from 'http';
-import { Gor } from './graph-on-rails/core/gor';
+
+import { OrganisationalUnit } from './custom-types/organisational-unit';
 import { MongoDbResolver } from './graph-on-rails-mongodb/mongodb.resolver';
-import { AddressType } from './custom-types/adress';
+import { Gor } from './graph-on-rails/core/gor';
 
 (async () => {
 
@@ -14,8 +15,9 @@ import { AddressType } from './custom-types/adress';
 
   const gor = new Gor();
   const resolver = await MongoDbResolver.create( { url: 'mongodb://localhost:27017', dbName: 'd2prom' } );
-  gor.addConfigs( './server/config-types/d2prom', resolver );
-  // gor.addCustomEntities( new AddressType( resolver ) );
+  const validator = null;
+  gor.addConfigs( './server/config-types/d2prom', resolver, validator );
+  gor.addCustomEntities( new OrganisationalUnit( resolver, validator ) );
 
   const server = await gor.server();
   server.applyMiddleware({ app, path: '/graphql' });

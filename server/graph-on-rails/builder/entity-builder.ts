@@ -223,10 +223,18 @@ export abstract class EntityBuilder extends SchemaBuilder {
       return _.set( {}, `save${this.typeName()}`, {
 				type: this.graphx.type( this.typeName() ),
 				args,
-				resolve: (root:any, args:any ) => this.resolver.saveEntity( this, root, args )
+				resolve: (root:any, args:any ) => this.saveEntity( root, args )
 			});
 		});
 	}
+
+  /**
+   *
+   */
+  private saveEntity( root: any, args: any ) {
+
+    return this.resolver.saveEntity( this, root, args );
+  }
 
 	//
 	//

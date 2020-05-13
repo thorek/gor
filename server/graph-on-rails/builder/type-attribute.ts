@@ -17,8 +17,9 @@ import { FilterTypeBuilder } from './filter-type-builder';
 //
 //
 export type TypeAttribute = {
+  type:string;
 	filterType?:string;
-	type:string;
+  validation?:any; // todo validation type
 }
 
 //
