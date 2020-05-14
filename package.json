@@ -28,6 +28,7 @@
     "apollo-cache-inmemory": "^1.6.3",
     "apollo-client": "^2.6.4",
     "bootstrap": "^4.4.1",
+    "class-validator": "^0.12.2",
     "concurrently": "^5.2.0",
     "graphql": "^14.5.8",
     "graphql-tag": "^2.10.1",
@@ -39,6 +40,7 @@
     "popper.js": "^1.16.0",
     "rxjs": "~6.4.0",
     "tslib": "^1.10.0",
+    "validator.js": "^2.0.4",
     "yaml": "^1.7.2",
     "zone.js": "~0.9.1"
   },

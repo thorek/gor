@@ -1,6 +1,7 @@
 import _ from 'lodash';
 import { EntityBuilder } from './entity-builder';
 import { Resolver } from '../core/resolver';
+import { ValidatorFactory } from '../validation/validator';
 
 /**
  *
@@ -40,8 +41,8 @@ export class EntityConfigBuilder extends EntityBuilder {
   /**
    *
    */
-  static create( name:string, resolver:Resolver, config:EntityConfig ):EntityConfigBuilder {
-    return new EntityConfigBuilder( name, resolver, config );
+  static create( name:string, resolver:Resolver, validatorFactory:ValidatorFactory, config:EntityConfig ):EntityConfigBuilder {
+    return new EntityConfigBuilder( name, resolver, validatorFactory, config );
   }
 
   /**
@@ -50,8 +51,9 @@ export class EntityConfigBuilder extends EntityBuilder {
 	protected constructor(
       protected readonly _name:string,
       protected readonly resolver:Resolver,
+      validatorFactory:ValidatorFactory,
       protected readonly config:EntityConfig ){
-    super( resolver);
+    super( resolver, validatorFactory );
   }
 
   name() { return this._name }

@@ -1,3 +1,4 @@
+import { registerSchema, validate, ValidationSchema } from "class-validator";
 import compression from 'compression';
 import cors from 'cors';
 import express from 'express';
@@ -6,6 +7,7 @@ import { createServer } from 'http';
 import { OrganisationalUnit } from './custom-types/organisational-unit';
 import { MongoDbResolver } from './graph-on-rails-mongodb/mongodb.resolver';
 import { Gor } from './graph-on-rails/core/gor';
+import { ValidatorJsFactory } from './graph-on-rails/validation/validator-js';
 
 (async () => {
 
@@ -15,9 +17,9 @@ import { Gor } from './graph-on-rails/core/gor';
 
   const gor = new Gor();
   const resolver = await MongoDbResolver.create( { url: 'mongodb://localhost:27017', dbName: 'd2prom' } );
-  const validator = null;
-  gor.addConfigs( './server/config-types/d2prom', resolver, validator );
-  gor.addCustomEntities( new OrganisationalUnit( resolver, validator ) );
+  const validatorFactory = new ValidatorJsFactory();
+  gor.addConfigs( './server/config-types/d2prom', resolver, validatorFactory );
+  gor.addCustomEntities( new OrganisationalUnit( resolver, validatorFactory ) );
 
   const server = await gor.server();
   server.applyMiddleware({ app, path: '/graphql' });

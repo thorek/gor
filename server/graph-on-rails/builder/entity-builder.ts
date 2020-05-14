@@ -1,10 +1,11 @@
-import { GraphQLBoolean, GraphQLID, GraphQLInputObjectType, GraphQLList, GraphQLEnumType } from 'graphql';
+import { GraphQLBoolean, GraphQLID, GraphQLInputObjectType, GraphQLList, GraphQLEnumType, GraphQLObjectType, GraphQLNonNull, GraphQLString } from 'graphql';
 import inflection from 'inflection';
 import _ from 'lodash';
 
 import { GraphX } from '../core/graphx';
 import { Resolver } from '../core/resolver';
 import { EntityReference, SchemaBuilder } from './schema-builder';
+import { Validator, ValidatorFactory } from '../validation/validator';
 
 /**
  * Base class for all Entities
@@ -13,8 +14,8 @@ export abstract class EntityBuilder extends SchemaBuilder {
 
 	belongsTo(): EntityReference[] { return [] }
 	hasMany(): EntityReference[] { return [] }
-	plural() { return inflection.pluralize( _.toLower( this.name() ) ) }
-	singular() { return _.toLower( this.name() ) }
+	singular() { return `${_.toLower(this.typeName().substring(0,1))}${this.typeName().substring(1)}` }
+	plural() { return inflection.pluralize( this.singular() ) }
 
   collection() { return this.plural() }
   instance() { return this.singular() }
@@ -25,9 +26,15 @@ export abstract class EntityBuilder extends SchemaBuilder {
   enum():{[name:string]:{[key:string]:string}} { return {} }
   seeds():{[name:string]:any} { return {} }
 
+  protected validator?:Validator;
+
 	//
 	//
-	constructor( protected resolver:Resolver ){ super() }
+	constructor(
+      protected readonly resolver:Resolver,
+      protected validatorFactory:ValidatorFactory ){
+    super();
+  }
 
 	//
 	//
@@ -35,6 +42,7 @@ export abstract class EntityBuilder extends SchemaBuilder {
     super.init( graphx );
     this.resolver.init( this );
     this.graphx.entities[this.name()] = this;
+    this.validator = this.validatorFactory.createValidator( this );
 	}
 
 
@@ -219,11 +227,14 @@ export abstract class EntityBuilder extends SchemaBuilder {
 	//
 	protected addSaveMutation():void {
 		this.graphx.type( 'mutation' ).extend( () => {
-      const args = _.set( {}, this.singular(), { type: this.graphx.type(`${this.typeName()}Input`)} );
-      return _.set( {}, `save${this.typeName()}`, {
-				type: this.graphx.type( this.typeName() ),
-				args,
-				resolve: (root:any, args:any ) => this.saveEntity( root, args )
+      const typeName = this.typeName();
+      const singular = this.singular();
+      const args = _.set( {}, this.singular(), { type: this.graphx.type(`${typeName}Input`)} );
+      let fields = { errors: {type: new GraphQLNonNull(new GraphQLList(GraphQLString)) } };
+      fields = _.set( fields, singular, {type: this.graphx.type(typeName) } );
+      const type = new GraphQLObjectType( { name: `Save${typeName}MutationResult`, fields } );
+      return _.set( {}, `save${typeName}`, {
+				type,	args, resolve: (root:any, args:any ) => this.saveEntity( root, args )
 			});
 		});
 	}
@@ -231,9 +242,19 @@ export abstract class EntityBuilder extends SchemaBuilder {
   /**
    *
    */
-  private saveEntity( root: any, args: any ) {
+  private async saveEntity( root: any, args: any ) {
+    const errors = await this.validate( root, args );
+    if( _.size( errors ) ) return { errors };
+    return _.set( {errors: []}, this.singular(), this.resolver.saveEntity( this, root, args ) );
+  }
 
-    return this.resolver.saveEntity( this, root, args );
+  /**
+   *
+   */
+  protected async validate( root: any, args: any ):Promise<string[]> {
+    if( ! this.validator ) return [];
+    const foo = await this.validator.validate( root, args );
+    return foo;
   }
 
 	//

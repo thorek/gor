@@ -6,14 +6,19 @@ import _ from 'lodash';
 import path from 'path';
 import YAML from 'yaml';
 
-import { Resolver } from './resolver';
-import { SchemaFactory } from './schema-factory';
-import { NoResolver } from './no-resolver';
 import { EntityBuilder } from '../builder/entity-builder';
 import { EntityConfigBuilder } from '../builder/entity-config-builder';
 import { EnumConfigBuilder } from '../builder/enum-config-builder';
 import { SchemaBuilder } from '../builder/schema-builder';
-import { Seeder } from './seeder';
+import { ValidatorFactory } from '../validation/validator';
+import { NoResolver } from './no-resolver';
+import { Resolver } from './resolver';
+import { SchemaFactory } from './schema-factory';
+
+type FolderConfig = {
+  resolver:Resolver
+  validatorFactory:ValidatorFactory
+}
 
 /**
  *
@@ -22,14 +27,14 @@ export class Gor {
 
   private _types?:SchemaBuilder[];
   private _schema?:GraphQLSchema;
-  private configs:{[folder:string]:Resolver} = {};
+  private configs:{[folder:string]:FolderConfig} = {};
   private customEntities:EntityBuilder[] = [];
 
   /**
    *
    */
-  addConfigs( folder:string, resolver:Resolver ):void {
-    this.configs[folder] = resolver;
+  addConfigs( folder:string, resolver:Resolver, validatorFactory:ValidatorFactory ):void {
+    this.configs[folder] = {resolver, validatorFactory};
   }
 
   /**
@@ -47,14 +52,6 @@ export class Gor {
     const factory = SchemaFactory.create( this.types() );
     this._schema = factory.createSchema();
     return this._schema;
-  }
-
-  /**
-   *
-   */
-  async seed():Promise<void> {
-    const seeder = Seeder.create( this.types() );
-    seeder.seed();
   }
 
 	/**
@@ -85,10 +82,10 @@ export class Gor {
    *
    */
   private getConfigTypes():SchemaBuilder[] {
-    return _.flatten( _.map( this.configs, (resolver, folder) => {
-      if( ! resolver ) resolver = new NoResolver();
+    return _.flatten( _.map( this.configs, (config, folder) => {
+      if( ! config.resolver ) config.resolver = new NoResolver();
       const files = this.getConfigFiles( folder );
-      return _.compact( _.flatten( _.map( files, file => this.createConfigurationTypes( folder, file, resolver ) ) ) );
+      return _.compact( _.flatten( _.map( files, file => this.createConfigurationTypes( folder, file, config ) ) ) );
     }));
   }
 
@@ -96,9 +93,9 @@ export class Gor {
    *
    */
   private getScalarFilterTypes():SchemaBuilder[] {
-    return _.flatten( _.map( this.configs, (resolver, folder) => {
-      if( ! resolver ) resolver = new NoResolver();
-      return resolver.getScalarFilterTypes();
+    return _.flatten( _.map( this.configs, (config, folder) => {
+      if( ! config.resolver ) config.resolver = new NoResolver();
+      return config.resolver.getScalarFilterTypes();
     }));
 
   }
@@ -127,14 +124,16 @@ export class Gor {
   /**
    *
    */
-  private createConfigurationTypes( folder:string, file:string, resolver:Resolver ):SchemaBuilder[] {
+  private createConfigurationTypes( folder:string, file:string, folderConfig:FolderConfig ):SchemaBuilder[] {
     const builder:SchemaBuilder[] = [];
     try {
       file = path.join( folder, file );
       const content = fs.readFileSync( file).toString();
       const configs = YAML.parse(content);
-      builder.push( ... _.map( configs['entity'], (config, name) => EntityConfigBuilder.create( name, resolver, config ) ) );
-      builder.push( ... _.map( configs['enum'], (config, name) => EnumConfigBuilder.create( name, resolver, config ) ) );
+      builder.push( ... _.map( configs['entity'], (config, name) => EntityConfigBuilder.create(
+        name, folderConfig.resolver, folderConfig.validatorFactory, config ) ) );
+      builder.push( ... _.map( configs['enum'], (config, name) => EnumConfigBuilder.create(
+        name, folderConfig.resolver, config ) ) );
     } catch ( e ){
       console.warn( `[${file}]: ${e}`);
     }

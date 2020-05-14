@@ -12,7 +12,8 @@ export class OrganisationalUnit extends EntityBuilder {
         "ofLength": { min: 2, max: 50 }
       }},
       email: { type: "String", validation: {
-        "email": true
+        "email": true,
+        "ofLength": { min: 5 }
       }},
       additionalInfo: { type: "String", validation: {
         "ofLength": { min: 2, max: 100 }
