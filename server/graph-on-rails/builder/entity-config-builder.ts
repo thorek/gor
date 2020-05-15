@@ -8,6 +8,7 @@ import { ValidatorFactory } from '../validation/validator';
  */
 export type AttributeConfig = { 
   type:string;
+  validation:any;
 }
 
 /**

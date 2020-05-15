@@ -1,9 +1,27 @@
 entity:
   Client:
     attributes:
-      name: string
+      name:
+        type: string
+        validation:
+          required: true
+          ofLength:
+            min: 2
+            max: 50
+      description:
+        type: string
+        validation:
+          ofLength:
+            max: 10
+      email:
+        type: string
+        validation:
+          email: true
+          ofLength:
+            min: 2
+
     hasMany:
       - Organisation
     seeds:
       example:
-        name: An Example Client
+        name: D2PROM Client
