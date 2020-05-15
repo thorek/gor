@@ -253,8 +253,7 @@ export abstract class EntityBuilder extends SchemaBuilder {
    */
   protected async validate( root: any, args: any ):Promise<string[]> {
     if( ! this.validator ) return [];
-    const foo = await this.validator.validate( root, args );
-    return foo;
+    return await this.validator.validate( root, args );
   }
 
 	//
