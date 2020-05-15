@@ -8,6 +8,7 @@ import { OrganisationalUnit } from './custom-types/organisational-unit';
 import { MongoDbResolver } from './graph-on-rails-mongodb/mongodb.resolver';
 import { Gor } from './graph-on-rails/core/gor';
 import { ValidatorJsFactory } from './graph-on-rails/validation/validator-js';
+import { ValidateJsFactory } from "./graph-on-rails/validation/validate-js";
 
 (async () => {
 
@@ -17,7 +18,7 @@ import { ValidatorJsFactory } from './graph-on-rails/validation/validator-js';
 
   const gor = new Gor();
   const resolver = await MongoDbResolver.create( { url: 'mongodb://localhost:27017', dbName: 'd2prom' } );
-  const validatorFactory = new ValidatorJsFactory();
+  const validatorFactory = new ValidateJsFactory();
   gor.addConfigs( './server/config-types/d2prom', resolver, validatorFactory );
   gor.addCustomEntities( new OrganisationalUnit( resolver, validatorFactory ) );
 

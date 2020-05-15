@@ -8,15 +8,14 @@ export class OrganisationalUnit extends EntityBuilder {
 	name() { return 'OrganisationalUnit' }
 	attributes() { return {
       name: { type: "String", validation: {
-        "notBlank": true,
-        "ofLength": { min: 2, max: 50 }
+        "presence": true,
+        "length": { minimum: 2, maximum: 50 }
       }},
       email: { type: "String", validation: {
-        "email": true,
-        "ofLength": { min: 5 }
+        "email": true
       }},
       additionalInfo: { type: "String", validation: {
-        "ofLength": { min: 2, max: 100 }
+        "length": { minimum: 10, maximum: 100 }
       }}
 	}}
 	belongsTo() { return [
