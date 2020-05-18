@@ -7,7 +7,6 @@ import { createServer } from 'http';
 import { OrganisationalUnit } from './custom-types/organisational-unit';
 import { MongoDbResolver } from './graph-on-rails-mongodb/mongodb.resolver';
 import { Gor } from './graph-on-rails/core/gor';
-import { ValidatorJsFactory } from './graph-on-rails/validation/validator-js';
 import { ValidateJsFactory } from "./graph-on-rails/validation/validate-js";
 
 (async () => {

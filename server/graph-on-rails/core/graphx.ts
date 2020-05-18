@@ -1,4 +1,4 @@
-import { GraphQLList, GraphQLObjectType, GraphQLSchema, GraphQLString, GraphQLBoolean } from 'graphql';
+import { GraphQLList, GraphQLObjectType, GraphQLSchema, GraphQLString, GraphQLBoolean, GraphQLNonNull, GraphQLScalarType } from 'graphql';
 import * as _ from 'lodash';
 import { EntityBuilder } from '../builder/entity-builder';
 import { FilterTypeBuilder } from '../builder/filter-type-builder';
@@ -18,29 +18,43 @@ export class GraphX {
 	//
 	//
 	init(){
-		this.createType('query', {
-			name: 'Query',
-			fields: () => ({
-				ping: { type: GraphQLString, resolve: () => 'pong' }
-			})
-		});
+		this.createQueryType();
+		this.createMutationType();
+	}
 
-		this.createType('mutation', {
-			name: 'Mutation',
-			fields: () => ({
-				ping: {
-					type: GraphQLString,
-					args: {  some: { type: GraphQLString } },
-					resolve: (root:any, args:any ) => `pong, ${args.some}!`
+  /**
+   *
+   */
+  private createMutationType() {
+    this.createType( 'mutation', {
+      name: 'Mutation',
+      fields: () => ( {
+        ping: {
+          type: GraphQLString,
+          args: { some: { type: GraphQLString } },
+          resolve: ( root: any, args: any ) => `pong, ${args.some}!`
         },
         seed: {
-					type: GraphQLString,
-					args: {  truncate: { type: GraphQLBoolean } },
-          resolve: (root:any, args:any ) => Seeder.create(_.values(this.entities)).seed(args.truncate)
+          type: GraphQLString,
+          args: { truncate: { type: GraphQLBoolean } },
+          resolve: ( root: any, args: any ) => Seeder.create( _.values( this.entities ) ).seed( args.truncate )
         }
-			})
-		});
-	}
+      } )
+    } );
+  }
+
+  /**
+   *
+   */
+  private createQueryType() {
+    this.createType( 'query', {
+      name: 'Query',
+      fields: () => ( {
+        ping: { type: GraphQLString, resolve: () => 'pong' }
+      } )
+    } );
+  }
+
 
 	//
 	//
