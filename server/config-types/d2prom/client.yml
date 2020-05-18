@@ -14,7 +14,6 @@ entity:
               - Google
               - Huwai
             message: "who would work for '%{value}'"
-
       description:
         type: string
         validation:
@@ -24,9 +23,11 @@ entity:
         type: string
         validation:
           email: true
-
     hasMany:
       - Organisation
     seeds:
       example:
         name: D2PROM Client
+    permissions:
+      [user, dsbo]:
+        read: id $eq user.clientId

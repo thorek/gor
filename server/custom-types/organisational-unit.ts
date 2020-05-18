@@ -28,4 +28,17 @@ export class OrganisationalUnit extends EntityBuilder {
       marketing: { name: "Marketing", organisation: "disphere" }
     };
   }
+
+  permissions() {
+    return {
+      user: {
+        read: "user.client.id $eq organisationalUnit.id"
+      },
+      dsbo: {
+        extend: 'user',
+        ['create,update'] : "(user.client.id $eq organisationalUnit.clientId) $and (organisationalUnit.clientId $neq '00001')"
+      },
+      admin: true
+    };
+  }
 }
