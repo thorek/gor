@@ -22,27 +22,15 @@ import { AuthenticationError } from 'apollo-server-express';
   gor.addCustomEntities( new OrganisationalUnit( resolver, validatorFactory ) );
 
   const users:{[token:string]:any} = {
-    admin: {
-    id: 100,
-    username: "Admin",
-    roles: ['admin']
-    },
-    thorek: {
-      id: 101,
-      username: "Thorek",
-      roles: ["dsb","user"]
-    },
-    guest: {
-      id: 102,
-      username: "Guest",
-      roles: ["guest"]
-    }
+    admin: { id: 100, username: "Admin", roles: ['admin'] },
+    thorek: { id: 101, username: "Thorek", roles: ["dsb","user"] },
+    guest: { id: 102, username: "Guest", roles: ["guest"] }
   };
 
   const context = (contextExpress: {req: express.Request }) => {
     const token:string = contextExpress.req.headers.authorization || '';
     const user:any = users[token];
-    if( ! user ) throw new AuthenticationError( `token '${token}' cannot be resolved to a valid user`);
+    if( ! user ) throw new AuthenticationError( `Token '${token}' cannot be resolved to a valid user.`);
     return { user };
   }
 
