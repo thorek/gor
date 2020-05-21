@@ -6,4 +6,4 @@ entity:
       - ProcessedData
       - DataSubject
     belongsTo:
-      - DataProcessing
+      - ProcessingActivity

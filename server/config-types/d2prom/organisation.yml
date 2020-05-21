@@ -13,3 +13,21 @@ entity:
       funstuff:
         name: Fun the Funny Company
         client: example
+      boring:
+        name: A Boring Company
+        client: another
+
+    permissions:
+      admin:
+        all: true
+      dsbo:
+        all: Client.read
+      user:
+        read:
+          - Client.read
+        update:
+          - read
+          - "name $ne 'TemplateOrganisation'"
+        delete:
+          - update
+

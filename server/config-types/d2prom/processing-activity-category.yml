@@ -1,0 +1,6 @@
+entity:
+  ProcessingActivityCategory:
+    attributes:
+      name: string
+    hasMany:
+      - ProcessingActivityChapter

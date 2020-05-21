@@ -18,12 +18,15 @@ import { AuthenticationError } from 'apollo-server-express';
   const gor = new Gor();
   const resolver = await MongoDbResolver.create( { url: 'mongodb://localhost:27017', dbName: 'd2prom' } );
   const validatorFactory = new ValidateJsFactory();
-  gor.addConfigs( './server/config-types/d2prom', resolver, validatorFactory );
-  gor.addCustomEntities( new OrganisationalUnit( resolver, validatorFactory ) );
+
+  const config = { resolver, validatorFactory, user: "user", roles: "roles" };
+
+  gor.addConfigs( './server/config-types/d2prom', config );
+  gor.addCustomEntities( new OrganisationalUnit( config ) );
 
   const users:{[token:string]:any} = {
-    admin: { id: 100, username: "Admin", roles: ['admin'] },
-    thorek: { id: 101, username: "Thorek", roles: ["dsb","user"] },
+    admin: { id: 100, username: "Admin", roles: ["admin"], clientId: "5ec3b745d3a47f8284414125" },
+    thorek: { id: 101, username: "Thorek", roles: ["dsb","user"], clientId: "5ec3b745d3a47f8284414125"  },
     guest: { id: 102, username: "Guest", roles: ["guest"] }
   };
 

@@ -28,6 +28,8 @@ entity:
     seeds:
       example:
         name: D2PROM Client
+      another:
+        name: Another Client
     permissions:
-      [user, dsbo]:
-        read: id $eq user.clientId
+      user, dsbo:
+        all: id $eq user.clientId

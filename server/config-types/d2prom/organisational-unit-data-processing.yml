@@ -1,7 +1,23 @@
 entity:
-  OrganisationalUnitDataProcessing:
+  OrganisationalUnitProcessingActivity:
     attributes:
       name: string
     belongsTo:
-      - DataProcessing
+      - ProcessingActivity
       - OrganisationalUnit
+    seeds:
+      "1":
+        ProcessingActivity: madb
+        organisationalUnit: it
+      "2":
+        ProcessingActivity: madb
+        organisationalUnit: hr
+      "3":
+        ProcessingActivity: kdb
+        organisationalUnit: it
+      "4":
+        ProcessingActivity: kdb
+        organisationalUnit: hr
+      "5":
+        ProcessingActivity: kdb
+        organisationalUnit: marketing

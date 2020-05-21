@@ -1,0 +1,33 @@
+enum:
+  ProcessingActivityStatus:
+    DRAFT: draft
+    ACTIVE: active
+    INACTIVE: inactive
+
+entity:
+  ProcessingActivity:
+    attributes:
+      name: string
+      description: string
+      status: ProcessingActivityStatus
+    hasMany:
+      - OrganisationalUnitProcessingActivity
+    belongsTo:
+      - Organisation
+      - AutomatedDescisionMaking
+    seeds:
+      madb:
+        name: "Mitarbeiterdatenbank"
+      kdb:
+        name: "Kundendatenbank"
+    permissions:
+      user:
+        read,create,update: Organisation.read
+        delete:
+          - Organisation.read
+          - "status $nin ['active']"
+
+
+
+
+

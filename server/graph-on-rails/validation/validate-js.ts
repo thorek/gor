@@ -59,7 +59,6 @@ export class ValidateJs extends Validator {
     _.forEach( this.entityBuilder.attributes(), (attribute, name:string) => {
       if( _.isObject( attribute.validation ) ) this.constraints[name] = attribute.validation
     });
-    if(this.entityBuilder.name() == 'Client' ) console.log( this.constraints );
   }
 
 }

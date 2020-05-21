@@ -15,9 +15,12 @@ import { NoResolver } from './no-resolver';
 import { Resolver } from './resolver';
 import { SchemaFactory } from './schema-factory';
 
-type FolderConfig = {
-  resolver:Resolver
-  validatorFactory:ValidatorFactory
+
+export type GorConfig = {
+  resolver: Resolver,
+  validatorFactory:ValidatorFactory,
+  contextUser?:string,
+  contextRoles?:string
 }
 
 /**
@@ -27,14 +30,14 @@ export class Gor {
 
   private _types?:SchemaBuilder[];
   private _schema?:GraphQLSchema;
-  private configs:{[folder:string]:FolderConfig} = {};
+  private configs:{[folder:string]:GorConfig} = {};
   private customEntities:EntityBuilder[] = [];
 
   /**
    *
    */
-  addConfigs( folder:string, resolver:Resolver, validatorFactory:ValidatorFactory ):void {
-    this.configs[folder] = {resolver, validatorFactory};
+  addConfigs( folder:string, gorConfig:GorConfig ):void {
+    this.configs[folder] = gorConfig;
   }
 
   /**
@@ -124,16 +127,17 @@ export class Gor {
   /**
    *
    */
-  private createConfigurationTypes( folder:string, file:string, folderConfig:FolderConfig ):SchemaBuilder[] {
+  private createConfigurationTypes( folder:string, file:string, gorConfig:GorConfig ):SchemaBuilder[] {
     const builder:SchemaBuilder[] = [];
     try {
       file = path.join( folder, file );
       const content = fs.readFileSync( file).toString();
       const configs = YAML.parse(content);
-      builder.push( ... _.map( configs['entity'], (config, name) => EntityConfigBuilder.create(
-        name, folderConfig.resolver, folderConfig.validatorFactory, config ) ) );
-      builder.push( ... _.map( configs['enum'], (config, name) => EnumConfigBuilder.create(
-        name, folderConfig.resolver, config ) ) );
+      if( _.get( configs, "entity.Client.permissions" ) ) console.log( configs.entity.Client )
+      builder.push( ... _.map( configs['entity'], (entityConfig, name) => EntityConfigBuilder.create(
+        name, gorConfig, entityConfig ) ) );
+      builder.push( ... _.map( configs['enum'], (enumConfig, name) => EnumConfigBuilder.create(
+        name, gorConfig, enumConfig ) ) );
     } catch ( e ){
       console.warn( `[${file}]: ${e}`);
     }

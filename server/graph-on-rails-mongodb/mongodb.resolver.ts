@@ -68,7 +68,7 @@ export class MongoDbResolver extends Resolver {
   /**
    *
    */
-  async resolveType( entityType:EntityBuilder, root:any, args:any ):Promise<any> {
+  async resolveType( entityType:EntityBuilder, root:any, args:any, context:any ):Promise<any> {
     const collection = this.getCollection( entityType );
     const id = _.get( args, 'id' );
 		const entity = await collection.findOne( new ObjectId(id));
@@ -78,7 +78,7 @@ export class MongoDbResolver extends Resolver {
   /**
    *
    */
-  async resolveRefType( refType:EntityBuilder, root:any, args:any ):Promise<any> {
+  async resolveRefType( refType:EntityBuilder, root:any, args:any, context:any ):Promise<any> {
     const collection = this.getCollection( refType );
     const id = _.get( root, `${refType.singular()}Id`);
 		const entity = await collection.findOne( new ObjectId(id) );
@@ -88,7 +88,7 @@ export class MongoDbResolver extends Resolver {
   /**
    *
    */
-  async resolveRefTypes( entityType:EntityBuilder, refType:EntityBuilder, root:any, args:any ):Promise<any[]> {
+  async resolveRefTypes( entityType:EntityBuilder, refType:EntityBuilder, root:any, args:any, context:any ):Promise<any[]> {
     const collection = this.getCollection( refType );
     const filter = _.set( {}, [`${entityType.singular()}Id`], _.toString( root.id ) );
 		const entities = await collection.find( filter ).toArray();
@@ -98,10 +98,12 @@ export class MongoDbResolver extends Resolver {
   /**
    *
    */
-  async resolveTypes( entityType:EntityBuilder, root:any, args:any ):Promise<any[]> {
+  async resolveTypes( entityType:EntityBuilder, root:any, args:any, context:any ):Promise<any[]> {
     const collection = this.getCollection( entityType );
-    const filter = this.getFilterQuery( entityType, root, args );
+    const filter = this.getFilterQuery( entityType, root, args, context );
     _.set( filter, 'deleted', { $ne: true } );
+    const clientId = _.get(context, "user.clientId", null );
+    // _.set( filter, '_id', { $in: [new ObjectId(clientId)] } );
 		const entities = await collection.find( filter ).toArray();
 		return _.map( entities, entity => this.getOutEntity( entity ) );
   }
@@ -109,15 +111,17 @@ export class MongoDbResolver extends Resolver {
   /**
    *
    */
-  async saveEntity( entityType:EntityBuilder, root:any, args:any ):Promise<any> {
+  async saveEntity( entityType:EntityBuilder, root:any, args:any, context:any ):Promise<any> {
     const attrs = _.get( args, entityType.singular() );
-    return _.has( attrs, 'id' ) ? this.updateEntity( entityType, attrs ) : this.createEntity( entityType, attrs );
+    return _.has( attrs, 'id' ) ?
+      this.updateEntity( entityType, attrs, context ) :
+      this.createEntity( entityType, attrs, context );
   }
 
   /**
    *
    */
-	protected getFilterQuery( entityType:EntityBuilder, root:any, args:any ):FilterQuery<any> {
+	protected getFilterQuery( entityType:EntityBuilder, root:any, args:any, context:any ):FilterQuery<any> {
     const filter = _.get( args, 'filter');
     const filterQuery:FilterQuery<any> = {};
 		_.forEach( filter, (condition, field) => {
@@ -143,17 +147,17 @@ export class MongoDbResolver extends Resolver {
 
 	//
 	//
-	protected async updateEntity( entityType:EntityBuilder, attrs: any ):Promise<any> {
+	protected async updateEntity( entityType:EntityBuilder, attrs: any, context: any ):Promise<any> {
     const _id = new ObjectId( attrs.id );
     delete attrs.id;
     const collection = this.getCollection( entityType );
     const result = await collection.updateOne( { _id }, { $set: attrs }, { upsert: false } );
-		return this.resolveType( entityType, {}, { id: _id } );
+		return this.resolveType( entityType, {}, { id: _id }, context );
 	}
 
 	//
 	//
-	protected async createEntity( entityType:EntityBuilder, attrs: any ):Promise<any> {
+	protected async createEntity( entityType:EntityBuilder, attrs: any, context: any ):Promise<any> {
     const collection = this.getCollection( entityType );
 		const result = await collection.insertOne( attrs );
 		const entity:any = await collection.findOne( new ObjectId(result.insertedId ) );
@@ -163,7 +167,7 @@ export class MongoDbResolver extends Resolver {
   /**
    *
    */
-	async deleteEntity( entityType:EntityBuilder, root:any, args:any  ):Promise<boolean> {
+	async deleteEntity( entityType:EntityBuilder, root:any, args:any, context:any  ):Promise<boolean> {
     const collection = this.getCollection( entityType );
     const id = _.get( args, 'id' );
 		const result = await collection.updateOne( {"_id": new ObjectId( id )}, {

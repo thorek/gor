@@ -1,0 +1,12 @@
+@startuml D2PROM
+
+class ProcessingActivity {
+  user.clientId in
+}
+
+ProcessingActivity "1" -- DpOu
+DpOu -- "1" OrganisationalUnit
+OrganisationalUnit -- "1" Organisation
+Organisation -- "1" Client
+
+@enduml

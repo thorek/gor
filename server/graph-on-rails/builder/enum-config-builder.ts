@@ -1,4 +1,4 @@
-import { Resolver } from '../core/resolver';
+import { GorConfig } from '../core/gor';
 import { EnumBuilder } from './enum-builder';
 
 /**
@@ -21,18 +21,17 @@ export class EnumConfigBuilder extends EnumBuilder {
   /**
    *
    */
-  static create( name:string, resolver:Resolver, config:EnumConfig ):EnumConfigBuilder {
-    return new EnumConfigBuilder( name, resolver, config );
+  static create( name:string, gorConfig:GorConfig, enumConfig:EnumConfig ):EnumConfigBuilder {
+    return new EnumConfigBuilder( name, gorConfig, enumConfig );
   }
 
 	//
 	//
 	constructor(
       protected readonly _name:string,
-      protected readonly resolver:Resolver,
+      protected readonly gorConfig:GorConfig,
       protected readonly config:EnumConfig )
   {
-    super( resolver );
-    console.log( _name, config );
+    super( gorConfig );
   }
 }

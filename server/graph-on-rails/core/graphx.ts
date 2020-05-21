@@ -37,7 +37,8 @@ export class GraphX {
         seed: {
           type: GraphQLString,
           args: { truncate: { type: GraphQLBoolean } },
-          resolve: ( root: any, args: any ) => Seeder.create( _.values( this.entities ) ).seed( args.truncate )
+          resolve: ( root: any, args: any, context:any ) => Seeder.create(
+            _.values( this.entities ) ).seed( args.truncate, context )
         }
       } )
     } );

@@ -20,32 +20,32 @@ export abstract class Resolver {
   /**
    *
    */
-  abstract resolveType( EntityBuilder:EntityBuilder, root:any, args:any ):Promise<any>;
+  abstract resolveType( EntityBuilder:EntityBuilder, root:any, args:any, context:any ):Promise<any>;
 
   /**
    *
    */
-  abstract resolveTypes( EntityBuilder:EntityBuilder, root:any, args:any ):Promise<any[]>;
+  abstract resolveTypes( EntityBuilder:EntityBuilder, root:any, args:any, context:any ):Promise<any[]>;
 
   /**
    *
    */
-  abstract resolveRefType( refType:EntityBuilder, root:any, args:any ):Promise<any>;
+  abstract resolveRefType( refType:EntityBuilder, root:any, args:any, context:any ):Promise<any>;
 
   /**
    *
    */
-  abstract resolveRefTypes( EntityBuilder:EntityBuilder, refType:EntityBuilder, root:any, args:any ):Promise<any[]>;
+  abstract resolveRefTypes( EntityBuilder:EntityBuilder, refType:EntityBuilder, root:any, args:any, context:any ):Promise<any[]>;
 
   /**
    *
    */
-  abstract saveEntity( EntityBuilder:EntityBuilder, root:any, args:any ):Promise<any>;
+  abstract saveEntity( EntityBuilder:EntityBuilder, root:any, args:any, context:any ):Promise<any>;
 
   /**
    *
    */
-  abstract deleteEntity( EntityBuilder:EntityBuilder, root:any, args:any  ):Promise<boolean>;
+  abstract deleteEntity( EntityBuilder:EntityBuilder, root:any, args:any, context:any  ):Promise<boolean>;
 
   /**
    *

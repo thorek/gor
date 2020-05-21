@@ -3,4 +3,4 @@ entity:
     attributes:
       description: string
     hasMany:
-      - DataProcessing
+      - ProcessingActivity

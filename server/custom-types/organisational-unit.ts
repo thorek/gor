@@ -24,21 +24,14 @@ export class OrganisationalUnit extends EntityBuilder {
   seeds() {
     return {
       hr: { name: "HR", additionalInfo: "HR department incl. trainee office", organisation: "disphere" },
-      id: { name: "IT", additionalInfo: "excluding our freelance Windows Admin", organisation: "disphere" },
-      marketing: { name: "Marketing", organisation: "disphere" }
+      it: { name: "IT", additionalInfo: "excluding our freelance Windows Admin", organisation: "disphere" },
+      marketing: { name: "Marketing", organisation: "disphere" },
+      sales: { name: "Sales", organisation: "disphere" },
+      hrfs: { name: "HR", additionalInfo: "HR department incl. trainee office", organisation: "funstuff" },
+      itfs: { name: "IT", additionalInfo: "excluding our freelance Windows Admin", organisation: "funstuff" },
+      marketingfs: { name: "Marketing", organisation: "funstuff" },
+
     };
   }
 
-  permissions() {
-    return {
-      user: {
-        read: "user.client.id $eq organisationalUnit.id"
-      },
-      dsbo: {
-        extend: 'user',
-        ['create,update'] : "(user.client.id $eq organisationalUnit.clientId) $and (organisationalUnit.clientId $neq '00001')"
-      },
-      admin: true
-    };
-  }
 }

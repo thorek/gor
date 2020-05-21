@@ -1,8 +1,0 @@
-entity:
-  DataProcessingChapter:
-    attributes:
-      name: string
-    hasMany:
-      - DataProcessing
-    belongsTo:
-      - DataProcessingCategory

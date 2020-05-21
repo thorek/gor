@@ -3,9 +3,12 @@ import inflection from 'inflection';
 import _ from 'lodash';
 
 import { GraphX } from '../core/graphx';
-import { Resolver } from '../core/resolver';
 import { EntityReference, SchemaBuilder } from './schema-builder';
 import { Validator, ValidatorFactory } from '../validation/validator';
+import { GorConfig } from '../core/gor';
+import { AuthenticationError } from 'apollo-server-express';
+
+type CrudAction = "read" | "create" | "update" | "delete";
 
 /**
  * Base class for all Entities
@@ -25,14 +28,16 @@ export abstract class EntityBuilder extends SchemaBuilder {
 
   enum():{[name:string]:{[key:string]:string}} { return {} }
   seeds():{[name:string]:any} { return {} }
+  permissions():null|{[role:string]:{[permisions:string]:string|string[]}} { return null }
+
+  get resolver() { return this.gorConfig.resolver }
+  get validatorFactory() { return this.gorConfig.validatorFactory }
 
   protected validator?:Validator;
 
 	//
 	//
-	constructor(
-      protected readonly resolver:Resolver,
-      protected validatorFactory:ValidatorFactory ){
+	constructor( protected readonly gorConfig:GorConfig){
     super();
   }
 
@@ -126,7 +131,7 @@ export abstract class EntityBuilder extends SchemaBuilder {
     const refObjectType = this.graphx.type(refEntity.typeName());
     return _.set( fields, refEntity.singular(), {
       type: refObjectType,
-      resolve: (root:any, args:any ) => this.resolver.resolveRefType( refEntity, root, args )
+      resolve: (root:any, args:any, context:any ) => this.resolver.resolveRefType( refEntity, root, args, context )
     });
   }
 
@@ -146,7 +151,7 @@ export abstract class EntityBuilder extends SchemaBuilder {
     const refObjectType = this.graphx.type(refEntity.typeName())
     return _.set( fields, refEntity.plural(), {
       type: new GraphQLList( refObjectType ),
-      resolve: (root:any, args:any ) => this.resolver.resolveRefTypes( this, refEntity, root, args )
+      resolve: (root:any, args:any, context:any ) => this.resolver.resolveRefTypes( this, refEntity, root, args, context )
     });
   }
 
@@ -206,7 +211,7 @@ export abstract class EntityBuilder extends SchemaBuilder {
 			return _.set( {}, this.singular(), {
 				type: this.graphx.type(this.typeName()),
 				args: { id: { type: GraphQLID } },
-				resolve: (root:any, args:any) => this.resolver.resolveType( this, root, args )
+				resolve: (root:any, args:any, context:any) => this.resolver.resolveType( this, root, args, context )
 			});
     });
 	}
@@ -218,7 +223,7 @@ export abstract class EntityBuilder extends SchemaBuilder {
 			return _.set( {}, this.plural(), {
 				type: new GraphQLList( this.graphx.type(this.typeName()) ),
 				args: { filter: { type: this.graphx.type(`${this.typeName()}Filter`) } },
-        resolve: (root:any, args:any) => this.resolver.resolveTypes( this, root, args )
+        resolve: (root:any, args:any, context:any) => this.resolver.resolveTypes( this, root, args, context )
 			});
 		});
 	}
@@ -234,7 +239,7 @@ export abstract class EntityBuilder extends SchemaBuilder {
       fields = _.set( fields, singular, {type: this.graphx.type(typeName) } );
       const type = new GraphQLObjectType( { name: `Save${typeName}MutationResult`, fields } );
       return _.set( {}, `save${typeName}`, {
-				type,	args, resolve: (root:any, args:any ) => this.saveEntity( root, args )
+				type,	args, resolve: (root:any, args:any, context:any ) => this.saveEntity( root, args, context )
 			});
 		});
 	}
@@ -242,10 +247,10 @@ export abstract class EntityBuilder extends SchemaBuilder {
   /**
    *
    */
-  private async saveEntity( root: any, args: any ) {
+  private async saveEntity( root: any, args: any, context:any ) {
     const errors = await this.validate( root, args );
     if( _.size( errors ) ) return { errors };
-    return _.set( {errors: []}, this.singular(), this.resolver.saveEntity( this, root, args ) );
+    return _.set( {errors: []}, this.singular(), this.resolver.saveEntity( this, root, args, context ) );
   }
 
   /**
@@ -263,7 +268,7 @@ export abstract class EntityBuilder extends SchemaBuilder {
 			return _.set( {}, `delete${this.typeName()}`, {
 				type: GraphQLBoolean,
 				args: { id: { type: GraphQLID } },
-				resolve: (root:any, args:any ) => this.resolver.deleteEntity( this, root, args )
+				resolve: (root:any, args:any, context:any ) => this.resolver.deleteEntity( this, root, args, context )
 			});
 		});
   }
@@ -278,19 +283,19 @@ export abstract class EntityBuilder extends SchemaBuilder {
   /**
    *
    */
-  public async seedAttributes():Promise<any> {
+  public async seedAttributes( context:any ):Promise<any> {
     const ids = {};
-    await Promise.all( _.map( this.seeds(), (seed, name) => this.seedInstanceAttributes( name, seed, ids ) ) );
+    await Promise.all( _.map( this.seeds(), (seed, name) => this.seedInstanceAttributes( name, seed, ids, context ) ) );
     return _.set( {}, this.singular(), ids );
   }
 
   /**
    *
    */
-  private async seedInstanceAttributes( name:string, seed:any, ids:any ):Promise<any> {
+  private async seedInstanceAttributes( name:string, seed:any, ids:any, context:any ):Promise<any> {
     try {
       const args = _.set( {}, this.singular(), _.pick( seed, _.keys( this.attributes() ) ) );
-      const entity = await this.resolver.saveEntity( this, {}, args );
+      const entity = await this.resolver.saveEntity( this, {}, args, context );
       _.set( ids, name, entity.id );
     } catch (error) {
       console.error( `Entity '${this.name() }' could not seed an instance`, seed, error );
@@ -300,10 +305,10 @@ export abstract class EntityBuilder extends SchemaBuilder {
   /**
    *
    */
-  public async seedReferences( idsMap:any ):Promise<void> {
+  public async seedReferences( idsMap:any, context:any ):Promise<void> {
     await Promise.all( _.map( this.seeds(), async (seed, name) => {
       await Promise.all( _.map( this.belongsTo(), async belongsTo => {
-        await this.seedReference( belongsTo, seed, idsMap, name );
+        await this.seedReference( belongsTo, seed, idsMap, name, context );
       }));
     }));
   }
@@ -311,13 +316,13 @@ export abstract class EntityBuilder extends SchemaBuilder {
   /**
    *
    */
-  private async seedReference( belongsTo: EntityReference, seed: any, idsMap: any, name: string ):Promise<void> {
+  private async seedReference( belongsTo: EntityReference, seed: any, idsMap: any, name: string, context:any ):Promise<void> {
     try {
       const refEntity = this.graphx.entities[belongsTo.type];
       if ( refEntity && _.has( seed, refEntity.singular() ) ) {
         const refName = _.get( seed, refEntity.singular() );
         const refId = _.get( idsMap, [refEntity.singular(), refName] );
-        if ( refId ) await this.updateReference( idsMap, name, refEntity, refId );
+        if ( refId ) await this.updateReference( idsMap, name, refEntity, refId, context );
       }
     }
     catch ( error ) {
@@ -328,11 +333,51 @@ export abstract class EntityBuilder extends SchemaBuilder {
   /**
    *
    */
-  private async updateReference( idsMap: any, name: string, refEntity: EntityBuilder, refId: string ) {
+  private async updateReference( idsMap: any, name: string, refEntity: EntityBuilder, refId: string, context:any ) {
     const id = _.get( idsMap, [this.singular(), name] );
-    const entity = await this.resolver.resolveType( this, {}, { id } );
+    const entity = await this.resolver.resolveType( this, {}, { id }, context );
     _.set( entity, `${refEntity.singular()}Id`, _.toString(refId) );
     const args = _.set( {}, this.singular(), entity );
-    await this.resolver.saveEntity( this, {}, args );
+    await this.resolver.saveEntity( this, {}, args, context );
+  }
+
+  /**
+   *
+   */
+  protected getPermittedIds( action:CrudAction, context:any ){
+    if( ! this.isUserAndRolesDefined() ) return;
+    if( this.permissions() == null ) return;
+    const roles = this.getUserRoles( context );
+    const ids = _.map( roles, role => this.getPermittedIdsForRole( role, action ) );
+    return _.uniq( _.flatten( ids ) );
+  }
+
+  /**
+   *
+   */
+  protected getPermittedIdsForRole( role:string, action:CrudAction ):number[] {
+    const permision = _.get( this.permissions, role );
+    let actionPermission = _.get( permision, action );
+    if( ! actionPermission ) actionPermission = _.get( permision, "all" );
+    if( ! actionPermission ) return [];
+    return [1,2,3];
+  }
+
+  /**
+   *
+   */
+  protected isUserAndRolesDefined():boolean {
+    return this.gorConfig.contextUser === null || this.gorConfig.contextRoles === null;
+  }
+
+  /**
+   *
+   */
+  protected getUserRoles( context:any ):string[] {
+    const user = _.get( context, this.gorConfig.contextUser as string );
+    if( user === null ) throw "should not happen, no user in context";
+    let roles:any = _.get( user, this.gorConfig.contextRoles as string );
+    if( roles === null ) throw new AuthenticationError( `User has no role - ${JSON.stringify( user ) }` );
+    return _.isArray( roles ) ? roles : [roles];
   }
 }

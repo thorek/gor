@@ -3,14 +3,17 @@ import { SchemaBuilder } from "./schema-builder";
 import { Resolver } from "../core/resolver";
 import { GraphX } from "../core/graphx";
 import { GraphQLEnumType } from 'graphql';
+import { GorConfig } from '../core/gor';
 
 export abstract class EnumBuilder extends SchemaBuilder {
 
 	//
 	//
-	constructor( protected resolver:Resolver ){ super() }
+	constructor( protected gorConfig:GorConfig ){ super() }
 
   abstract enum():{[name:string]:{[key:string]:string}}
+
+  get resolver() { return this.gorConfig.resolver }
 
 	//
 	//
