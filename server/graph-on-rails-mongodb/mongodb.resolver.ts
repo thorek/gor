@@ -100,9 +100,9 @@ export class MongoDbResolver extends Resolver {
    */
   async resolveTypes( entityType:EntityBuilder, root:any, args:any, context:any ):Promise<any[]> {
     const collection = this.getCollection( entityType );
-    const filter = this.getFilterQuery( entityType, root, args, context );
+    let filter = this.getFilterQuery( entityType, root, args, context );
     _.set( filter, 'deleted', { $ne: true } );
-    await this.addPermissions( entityType, filter, context );
+    filter = await this.addPermissions( entityType, filter, context );
 		const entities = await collection.find( filter ).toArray();
 		return _.map( entities, entity => this.getOutEntity( entity ) );
   }
@@ -213,9 +213,10 @@ export class MongoDbResolver extends Resolver {
   /**
    *
    */
-  protected async addPermissions( entityType:EntityBuilder, filter:any, context:any ) {
+  protected async addPermissions( entityType:EntityBuilder, filter:any, context:any ):Promise<any> {
     let ids = await entityType.getPermittedIds( 'read', context );
+    if( ids === true ) return filter;
     if( ids === false ) ids = [];
-    if( _.isArray( ids ) ) _.set( filter, '_id', { $in: ids } );
+    return { $and: [ { _id: { $in: ids } }, filter ] };
   }
 }
