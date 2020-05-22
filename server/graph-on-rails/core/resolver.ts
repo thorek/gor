@@ -62,4 +62,8 @@ export abstract class Resolver {
    */
   addEnumFilterAttributeType( name: string, graphx:GraphX ) {}
 
+  /**
+   *
+   */
+  abstract query( entityType:EntityBuilder, expression:any ):Promise<any>;
 }

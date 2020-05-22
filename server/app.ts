@@ -5,7 +5,7 @@ import { createServer } from 'http';
 
 import { OrganisationalUnit } from './custom-types/organisational-unit';
 import { MongoDbResolver } from './graph-on-rails-mongodb/mongodb.resolver';
-import { Gor } from './graph-on-rails/core/gor';
+import { Gor, GorConfig } from './graph-on-rails/core/gor';
 import { ValidateJsFactory } from './graph-on-rails/validation/validate-js';
 import { AuthenticationError } from 'apollo-server-express';
 
@@ -19,7 +19,7 @@ import { AuthenticationError } from 'apollo-server-express';
   const resolver = await MongoDbResolver.create( { url: 'mongodb://localhost:27017', dbName: 'd2prom' } );
   const validatorFactory = new ValidateJsFactory();
 
-  const config = { resolver, validatorFactory, user: "user", roles: "roles" };
+  const config:GorConfig = { resolver, validatorFactory, contextUser: "user", contextRoles: "roles" };
 
   gor.addConfigs( './server/config-types/d2prom', config );
   gor.addCustomEntities( new OrganisationalUnit( config ) );

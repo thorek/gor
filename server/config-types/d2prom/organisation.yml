@@ -27,7 +27,7 @@ entity:
           - Client.read
         update:
           - read
-          - "name $ne 'TemplateOrganisation'"
+          - "name: { $ne 'TemplateOrganisation' }"
         delete:
           - update
 

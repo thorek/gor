@@ -1,4 +1,4 @@
-import { GraphQLBoolean, GraphQLID, GraphQLInputObjectType, GraphQLList, GraphQLEnumType, GraphQLObjectType, GraphQLNonNull, GraphQLString } from 'graphql';
+import { GraphQLBoolean, GraphQLID, GraphQLInputObjectType, GraphQLList, GraphQLEnumType, GraphQLObjectType, GraphQLNonNull, GraphQLString, BreakingChangeType } from 'graphql';
 import inflection from 'inflection';
 import _ from 'lodash';
 
@@ -28,7 +28,7 @@ export abstract class EntityBuilder extends SchemaBuilder {
 
   enum():{[name:string]:{[key:string]:string}} { return {} }
   seeds():{[name:string]:any} { return {} }
-  permissions():null|{[role:string]:{[permisions:string]:string|string[]}} { return null }
+  permissions():null|{[role:string]:{[action:string]:boolean|string|string[]}} { return null }
 
   get resolver() { return this.gorConfig.resolver }
   get validatorFactory() { return this.gorConfig.validatorFactory }
@@ -342,32 +342,90 @@ export abstract class EntityBuilder extends SchemaBuilder {
   }
 
   /**
-   *
+   * Anfang
    */
-  protected getPermittedIds( action:CrudAction, context:any ){
-    if( ! this.isUserAndRolesDefined() ) return;
-    if( this.permissions() == null ) return;
+  async getPermittedIds( action:CrudAction, context:any ):Promise<boolean|number[]> {
+    if( ! this.isUserAndRolesDefined() ) return true;
+    if( this.permissions() === null ) return true;
     const roles = this.getUserRoles( context );
-    const ids = _.map( roles, role => this.getPermittedIdsForRole( role, action ) );
-    return _.uniq( _.flatten( ids ) );
+    let ids:number[] = [];
+    for( const role of roles ){
+      const roleIds = await this.getPermittedIdsForRole( role, action );
+      if( roleIds === true ) return true;
+      if( roleIds ) ids = _.concat( ids, roleIds );
+    }
+    return _.uniq( ids );
   }
 
   /**
    *
    */
-  protected getPermittedIdsForRole( role:string, action:CrudAction ):number[] {
-    const permision = _.get( this.permissions, role );
-    let actionPermission = _.get( permision, action );
-    if( ! actionPermission ) actionPermission = _.get( permision, "all" );
-    if( ! actionPermission ) return [];
-    return [1,2,3];
+  protected async getPermittedIdsForRole( role:string, action:CrudAction ):Promise<boolean|number[]> {
+    let permissions = this.getActionPermissions( role, action );
+    if( _.isBoolean( permissions ) ) return permissions;
+    if( ! _.isArray( permissions ) ) permissions = [permissions];
+    let ids:number[][] = [];
+    for( const permission of permissions as (string|object)[] ){
+      const actionIds = await this.getIdsForActionPermission( role, permission );
+      if( _.isBoolean( actionIds) ) return actionIds;
+      ids.push( actionIds );
+    }
+    return _.intersection( ...ids );
+  }
+
+  /**
+   *
+   */
+  protected async getIdsForActionPermission( role:string, permission:string|object ):Promise<boolean|number[]> {
+    if( _.isString( permission ) ) {
+      if( _.size( _.words( permission) ) === 1 ) return this.getIdsForReference( role, permission );
+      try {
+        permission = JSON.parse( permission );
+      } catch (error) {
+        console.error(`'${this.name()}' cannot parse JSON from permission for role '${role}'`, permission, error );
+        return false;
+      }
+    }
+    const ids = await this.resolver.query( this, permission );
+    return ids;
+  }
+
+  /**
+   *
+   */
+  protected async getIdsForReference( role:string, permissionReference:string ):Promise<boolean|number[]> {
+    const entityAction = _.split( permissionReference, '.' );
+    const action = _.last( entityAction );
+    const entity = _.size( entityAction ) === 1 ? this : this.getBelongsToEntity( _.first( entityAction ) );
+    return entity ? entity.getPermittedIdsForRole( role, action as CrudAction ) : false;
+  }
+
+  /**
+   *
+   */
+  protected getBelongsToEntity( entity:undefined|string ):null|EntityBuilder {
+    const entityIsBelongsTo = _.find( this.belongsTo(), refEntity => refEntity.type === entity );
+    if( entityIsBelongsTo ) return this.graphx.entities[ entity as string ];
+    console.warn(`'${entity}' is not a belongsTo of '${this.name}'`);
+    return null;
+  }
+
+  /**
+   *
+   */
+  protected getActionPermissions(role:string, action:CrudAction):boolean | string | object | (string|object)[]  {
+    const permissions = _.get( this.permissions(), role );
+    let actionPermission = _.get( permissions, action );
+    if( ! actionPermission ) actionPermission = _.get( permissions, "all" );
+    if( _.isNil( actionPermission ) ) return false;
+    return actionPermission;
   }
 
   /**
    *
    */
   protected isUserAndRolesDefined():boolean {
-    return this.gorConfig.contextUser === null || this.gorConfig.contextRoles === null;
+    return this.gorConfig.contextUser != null && this.gorConfig.contextRoles != null;
   }
 
   /**
@@ -375,9 +433,9 @@ export abstract class EntityBuilder extends SchemaBuilder {
    */
   protected getUserRoles( context:any ):string[] {
     const user = _.get( context, this.gorConfig.contextUser as string );
-    if( user === null ) throw "should not happen, no user in context";
+    if( ! user ) throw "should not happen, no user in context";
     let roles:any = _.get( user, this.gorConfig.contextRoles as string );
-    if( roles === null ) throw new AuthenticationError( `User has no role - ${JSON.stringify( user ) }` );
+    if( ! roles ) throw new AuthenticationError( `User has no role - ${JSON.stringify( user ) }` );
     return _.isArray( roles ) ? roles : [roles];
   }
 }

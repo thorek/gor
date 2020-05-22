@@ -102,8 +102,7 @@ export class MongoDbResolver extends Resolver {
     const collection = this.getCollection( entityType );
     const filter = this.getFilterQuery( entityType, root, args, context );
     _.set( filter, 'deleted', { $ne: true } );
-    const clientId = _.get(context, "user.clientId", null );
-    // _.set( filter, '_id', { $in: [new ObjectId(clientId)] } );
+    await this.addPermissions( entityType, filter, context );
 		const entities = await collection.find( filter ).toArray();
 		return _.map( entities, entity => this.getOutEntity( entity ) );
   }
@@ -196,5 +195,27 @@ export class MongoDbResolver extends Resolver {
   async collectionExist( name:string ):Promise<boolean> {
     const collection = await this.db.listCollections({name}).next();
     return collection != null;
+  }
+
+  /**
+   *
+   */
+  async query( entityType:EntityBuilder, expression:any ):Promise<any> {
+    try {
+      expression = { _id: { $eq: new ObjectId("5ec42368f0d6ec10681dec79") } };
+      const result = await this.getCollection( entityType ).find( expression ).toArray();
+      return _.map( result, item => _.get(item, '_id' ) );
+    } catch (error) {
+      console.error( `could not query on collection '${entityType.name}'`, expression, error );
+    }
+  }
+
+  /**
+   *
+   */
+  protected async addPermissions( entityType:EntityBuilder, filter:any, context:any ) {
+    let ids = await entityType.getPermittedIds( 'read', context );
+    if( ids === false ) ids = [];
+    if( _.isArray( ids ) ) _.set( filter, '_id', { $in: ids } );
   }
 }

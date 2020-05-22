@@ -32,6 +32,7 @@ export type EntityConfig  = {
 
   enum:{[name:string]:{[key:string]:string}}
   seeds:{[name:string]:any}
+  permissions:null|{[role:string]:{[action:string]:boolean|string|string[]}}
 }
 
 /**
@@ -98,4 +99,6 @@ export class EntityConfigBuilder extends EntityBuilder {
   path() { return this.entityConfig.path || super.path() }
   parent() { return this.entityConfig.parent || super.parent() }
   seeds() { return this.entityConfig.seeds || super.seeds() }
+
+  permissions() { return this.entityConfig.permissions || super.permissions() }
 }
