@@ -8,18 +8,19 @@ import YAML from 'yaml';
 
 import { EntityBuilder } from '../builder/entity-builder';
 import { EntityConfigBuilder } from '../builder/entity-config-builder';
+import { EntityPermissions } from '../builder/entity-permissions';
 import { EnumConfigBuilder } from '../builder/enum-config-builder';
 import { SchemaBuilder } from '../builder/schema-builder';
-import { ValidatorFactory } from '../validation/validator';
-import { NoResolver } from './no-resolver';
+import { Validator } from '../validation/validator';
 import { Resolver } from './resolver';
 import { SchemaFactory } from './schema-factory';
 
 
 export type GorConfig = {
-  resolver: Resolver,
-  validatorFactory:ValidatorFactory,
-  contextUser?:string,
+  resolver: (entity?:EntityBuilder) => Resolver
+  validator:(entity:EntityBuilder) => Validator
+  entityPermissions:(entity:EntityBuilder) => EntityPermissions
+  contextUser?:string
   contextRoles?:string
 }
 
@@ -86,7 +87,6 @@ export class Gor {
    */
   private getConfigTypes():SchemaBuilder[] {
     return _.flatten( _.map( this.configs, (config, folder) => {
-      if( ! config.resolver ) config.resolver = new NoResolver();
       const files = this.getConfigFiles( folder );
       return _.compact( _.flatten( _.map( files, file => this.createConfigurationTypes( folder, file, config ) ) ) );
     }));
@@ -97,8 +97,7 @@ export class Gor {
    */
   private getScalarFilterTypes():SchemaBuilder[] {
     return _.flatten( _.map( this.configs, (config, folder) => {
-      if( ! config.resolver ) config.resolver = new NoResolver();
-      return config.resolver.getScalarFilterTypes();
+      return config.resolver().getScalarFilterTypes();
     }));
 
   }

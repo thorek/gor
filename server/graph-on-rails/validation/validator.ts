@@ -14,15 +14,6 @@ export abstract class Validator {
   abstract validate( root:any, args:any ):Promise<string[]>
 }
 
-/**
- *
- */
-export class ValidatorFactory {
-
-  createValidator( entityBuilder:EntityBuilder ):Validator {
-    return new NonValidator( entityBuilder );
-  }
-}
 
 /**
  *

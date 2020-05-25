@@ -37,4 +37,7 @@ entity:
           _id: user.clientId
         delete: false
       user: dsb
+      some:
+        extend: dsb
+        delete: true
 

@@ -2,10 +2,11 @@ import _ from 'lodash';
 import ts from 'es6-template-strings';
 
 import { Collection, Db, FilterQuery, ObjectId, MongoClient } from 'mongodb';
-import { EntityBuilder, CrudAction } from '../graph-on-rails/builder/entity-builder';
+import { EntityBuilder } from '../graph-on-rails/builder/entity-builder';
+import { CrudAction } from '../graph-on-rails/builder/entity-permissions';
 import { Resolver } from '../graph-on-rails/core/resolver';
 import { EnumFilterTypeBuilder } from './filter/enum-filter-type-builder';
-import { GraphX } from 'graph-on-rails/core/graphx';
+import { GraphX } from '../graph-on-rails/core/graphx';
 import { StringFilterTypeBuilder } from './filter/string-filter-type-builder';
 import { IntFilterTypeBuilder } from './filter/int-filter-type-builder';
 
@@ -224,15 +225,15 @@ export class MongoDbResolver extends Resolver {
   /**
    *
    */
-  async getPermittedIds( entityType:EntityBuilder, permission:object, context:any ):Promise<any> {
+  async getPermittedIds( entity:EntityBuilder, permission:object, context:any ):Promise<any> {
     let expression:string|object = _.get( permission, 'filter' );
     if( _.isString( expression ) ) {
       expression = ts( expression, context );
       expression = JSON.parse( expression as string );
     } else {
-      expression = this.buildPermittedIdsFilter( permission, context );
+      expression = this.buildPermittedIdsFilter( entity, permission, context );
     }
-    const result = await this.query( entityType, expression );
+    const result = await this.query( entity, expression );
     return _.map( result, item => _.get(item, '_id' ) );
   }
 
@@ -244,17 +245,26 @@ export class MongoDbResolver extends Resolver {
    *        - open
    *      name: user.assignedContracts  # will be resolved with context
    */
-  private buildPermittedIdsFilter( permission:object, context:any ):object {
+  private buildPermittedIdsFilter( entity:EntityBuilder, permission:object, context:any ):object {
     const conditions:any[] = [];
     _.forEach( permission, (values:any|any[], attribute:string) => {
       if( _.isArray( values ) ) {
-        values = _.map( values, value => ts( value, context ) );
+        values = _.map( values, value => _.get( context, value, value ) );
         conditions.push( _.set( {}, attribute, { $in: values } ) );
       } else {
-        values = ts( values, context );
+        values = this.resolvePermissionValue( entity, attribute, values, context );
+        if( attribute === '_id' ) values = new ObjectId(values);
         conditions.push( _.set( {}, attribute, { $eq: values } ) );
       }
     });
     return _.size( conditions ) > 1 ? { $and: conditions } : _.first( conditions );
+  }
+
+  /**
+   *
+   */
+  private resolvePermissionValue( entity:EntityBuilder, attribute:string, value:any, context:any ):any {
+    value = _.get( context, value, value );
+    return attribute === '_id' || entity.isBelongsToAttribute( attribute ) ? new ObjectId( value ) : value;
   }
 }

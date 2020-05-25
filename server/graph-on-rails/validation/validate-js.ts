@@ -1,20 +1,8 @@
 import _ from 'lodash';
-
-import { EntityBuilder } from '../builder/entity-builder';
-import { Validator, ValidatorFactory } from './validator';
 import validate from 'validate.js';
 
-
-/**
- *
- */
-export class ValidateJsFactory extends ValidatorFactory {
-
-  createValidator( entityBuilder:EntityBuilder ):Validator {
-    return new ValidateJs( entityBuilder );
-  }
-
-}
+import { EntityBuilder } from '../builder/entity-builder';
+import { Validator } from './validator';
 
 /**
  *

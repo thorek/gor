@@ -13,7 +13,7 @@ export abstract class EnumBuilder extends SchemaBuilder {
 
   abstract enum():{[name:string]:{[key:string]:string}}
 
-  get resolver() { return this.gorConfig.resolver }
+  get resolver() { return this.gorConfig.resolver() }
 
 	//
 	//

@@ -1,21 +1,12 @@
 import _ from 'lodash';
 
 import { EntityBuilder } from '../builder/entity-builder';
-import { Validator, ValidatorFactory } from './validator';
+import { Validator } from './validator';
+
 const is = require( 'validator.js' ).Assert;
 const validator = require( 'validator.js' ).validator();
 
 
-/**
- *
- */
-export class ValidatorJsFactory extends ValidatorFactory {
-
-  createValidator( entityBuilder:EntityBuilder ):Validator {
-    return new ValidatorJs( entityBuilder );
-  }
-
-}
 
 /**
  *
