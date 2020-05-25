@@ -31,7 +31,10 @@ entity:
       another:
         name: Another Client
     permissions:
-      admin:
-        all: true
-      user:
-        all: { _id: { $eq: "5ec42368f0d6ec10681dec79" } }
+      admin: true
+      dsb:
+        all:
+          _id: user.clientId
+        delete: false
+      user: dsb
+

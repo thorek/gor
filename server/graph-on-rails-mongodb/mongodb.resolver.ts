@@ -1,6 +1,8 @@
 import _ from 'lodash';
+import ts from 'es6-template-strings';
+
 import { Collection, Db, FilterQuery, ObjectId, MongoClient } from 'mongodb';
-import { EntityBuilder } from '../graph-on-rails/builder/entity-builder';
+import { EntityBuilder, CrudAction } from '../graph-on-rails/builder/entity-builder';
 import { Resolver } from '../graph-on-rails/core/resolver';
 import { EnumFilterTypeBuilder } from './filter/enum-filter-type-builder';
 import { GraphX } from 'graph-on-rails/core/graphx';
@@ -102,7 +104,7 @@ export class MongoDbResolver extends Resolver {
     const collection = this.getCollection( entityType );
     let filter = this.getFilterQuery( entityType, root, args, context );
     _.set( filter, 'deleted', { $ne: true } );
-    filter = await this.addPermissions( entityType, filter, context );
+    filter = await this.addPermissions( entityType, "read", filter, context );
 		const entities = await collection.find( filter ).toArray();
 		return _.map( entities, entity => this.getOutEntity( entity ) );
   }
@@ -200,23 +202,59 @@ export class MongoDbResolver extends Resolver {
   /**
    *
    */
-  async query( entityType:EntityBuilder, expression:any ):Promise<any> {
+  async query( entityType:EntityBuilder, expression:any ):Promise<any[]> {
     try {
-      expression = { _id: { $eq: new ObjectId("5ec42368f0d6ec10681dec79") } };
-      const result = await this.getCollection( entityType ).find( expression ).toArray();
-      return _.map( result, item => _.get(item, '_id' ) );
+      return await this.getCollection( entityType ).find( expression ).toArray();
     } catch (error) {
       console.error( `could not query on collection '${entityType.name}'`, expression, error );
     }
+    return [];
   }
 
   /**
    *
    */
-  protected async addPermissions( entityType:EntityBuilder, filter:any, context:any ):Promise<any> {
-    let ids = await entityType.getPermittedIds( 'read', context );
+  protected async addPermissions( entityType:EntityBuilder, action:CrudAction, filter:any, context:any ):Promise<any> {
+    let ids = await entityType.getPermittedIds( action, context );
     if( ids === true ) return filter;
     if( ids === false ) ids = [];
     return { $and: [ { _id: { $in: ids } }, filter ] };
+  }
+
+  /**
+   *
+   */
+  async getPermittedIds( entityType:EntityBuilder, permission:object, context:any ):Promise<any> {
+    let expression:string|object = _.get( permission, 'filter' );
+    if( _.isString( expression ) ) {
+      expression = ts( expression, context );
+      expression = JSON.parse( expression as string );
+    } else {
+      expression = this.buildPermittedIdsFilter( permission, context );
+    }
+    const result = await this.query( entityType, expression );
+    return _.map( result, item => _.get(item, '_id' ) );
+  }
+
+  /**
+   *  all:
+   *    - read
+   *    - status:
+   *        - draft
+   *        - open
+   *      name: user.assignedContracts  # will be resolved with context
+   */
+  private buildPermittedIdsFilter( permission:object, context:any ):object {
+    const conditions:any[] = [];
+    _.forEach( permission, (values:any|any[], attribute:string) => {
+      if( _.isArray( values ) ) {
+        values = _.map( values, value => ts( value, context ) );
+        conditions.push( _.set( {}, attribute, { $in: values } ) );
+      } else {
+        values = ts( values, context );
+        conditions.push( _.set( {}, attribute, { $eq: values } ) );
+      }
+    });
+    return _.size( conditions ) > 1 ? { $and: conditions } : _.first( conditions );
   }
 }

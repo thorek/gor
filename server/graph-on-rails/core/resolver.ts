@@ -66,4 +66,10 @@ export abstract class Resolver {
    *
    */
   abstract query( entityType:EntityBuilder, expression:any ):Promise<any>;
+
+  /**
+   *
+   */
+  abstract getPermittedIds( entityType:EntityBuilder, expression:object, context:any ):Promise<any>;
+
 }

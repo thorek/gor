@@ -26,7 +26,7 @@ import { AuthenticationError } from 'apollo-server-express';
 
   const users:{[token:string]:any} = {
     admin: { id: 100, username: "Admin", roles: ["admin"], clientId: "5ec3b745d3a47f8284414125" },
-    thorek: { id: 101, username: "Thorek", roles: ["dsb","user"], clientId: "5ec3b745d3a47f8284414125"  },
+    thorek: { id: 101, username: "Thorek", roles: ["dsb","user"], clientId: "5ec42368f0d6ec10681dec79"  },
     guest: { id: 102, username: "Guest", roles: ["guest"] }
   };
 
