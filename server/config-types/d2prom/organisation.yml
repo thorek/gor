@@ -20,14 +20,6 @@ entity:
     permissions:
       admin:
         all: true
-      dsbo:
+      dsb:
         all: Client.read
-      user:
-        read:
-          - Client.read
-        update:
-          - read
-          - "name: { $ne 'TemplateOrganisation' }"
-        delete:
-          - update
-
+      user: dsb

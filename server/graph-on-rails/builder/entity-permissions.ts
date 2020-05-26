@@ -36,7 +36,7 @@ export class EntityPermissions {
   protected async getPermittedIdsForRole( role:string, action:CrudAction, context:any ):Promise<boolean|number[]> {
     let permissions = this.getActionPermissionsForRole( role, action );
     if( _.isBoolean( permissions ) ) return permissions;
-    if( _.isString( permissions ) ) return this.getPermittedIdsForRole( permissions, action, context );
+    if( _.isString( permissions ) ) return await this.getPermittedIdsForRole( permissions, action, context );
     let ids:number[][] = [];
     for( const permission of permissions as (string|object)[] ){
       const actionIds = await this.getIdsForActionPermission( role, permission, context );
@@ -53,8 +53,20 @@ export class EntityPermissions {
    *  permitted ids
    */
   protected async getIdsForActionPermission( role:string, permission:string|object, context:any ):Promise<boolean|number[]> {
-    if( _.isString( permission ) ) return this.getIdsForReference( role, permission, context );
-    return this.entity.resolver.getPermittedIds( this.entity, permission, context );
+    if( _.isString( permission ) ) return await this.getIdsForReference( role, permission, context );
+    return this.resolvePermittedIds( permission, context );
+  }
+
+  /**
+   *
+   */
+  private async resolvePermittedIds( permission:object, context:any ):Promise<boolean|number[]>{
+    try {
+      return await this.entity.resolver.getPermittedIds( this.entity, permission, context );
+    } catch (error) {
+      console.error(`'${this.entity.name()}' resolver could not resolve permission`, permission, error);
+      return false;
+    }
   }
 
   /**
@@ -62,10 +74,24 @@ export class EntityPermissions {
    */
   protected async getIdsForReference( role:string, permissionReference:string, context:any ):Promise<boolean|number[]> {
     const entityAction = _.split( permissionReference, '.' );
-    const action = _.last( entityAction );
+    const action = _.last( entityAction ) as string;
     const entity = _.size( entityAction ) === 1 ? this.entity : this.getBelongsToEntity( _.first( entityAction ) );
-    if( entity ) entity.entityPermissions.getPermittedIdsForRole( role, action as CrudAction, context );
-    return false;
+    return entity ? this.resolvePermittedIdsForBelongsTo( entity, role, action, context ) : false;
+  }
+
+  /**
+   *
+   */
+  private async resolvePermittedIdsForBelongsTo( entity:EntityBuilder, role:string, action:string, context:any ):Promise<boolean|number[]>{
+    const ids = await entity.entityPermissions.getPermittedIdsForRole( role, action as CrudAction, context );
+    if( _.isBoolean( ids ) ) return ids;
+    try {
+      return await this.entity.resolver.getPermittedIdsForForeignKeys( this.entity, entity.foreignKey(), ids );
+    } catch (error) {
+      console.error(`'${this.entity.name()}' resolver could not resolve permission for foreign keys for`,
+        entity.foreignKey(), error);
+      return false;
+    }
   }
 
   /**
@@ -179,6 +205,7 @@ export class EntityPermissions {
     let actionPermission = _.get( permissions, action );
     if( ! actionPermission ) actionPermission = _.get( permissions, "all" );
     if( ! actionPermission ) return false;
+    if( _.isBoolean( actionPermission ) ) return actionPermission;
     if( _.isArray( actionPermission ) ) return actionPermission;
     if( _.isObject( actionPermission ) || _.isString( actionPermission) ) return [actionPermission];
     console.warn(`unexpected permission for role '${role}', action '${action}'`, actionPermission );

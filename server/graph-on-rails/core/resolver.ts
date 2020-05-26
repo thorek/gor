@@ -70,6 +70,11 @@ export abstract class Resolver {
   /**
    *
    */
-  abstract getPermittedIds( entityType:EntityBuilder, expression:object, context:any ):Promise<any>;
+  abstract getPermittedIds( entityType:EntityBuilder, expression:object, context:any ):Promise<number[]>;
+
+  /**
+   *
+   */
+  abstract getPermittedIdsForForeignKeys( entity:EntityBuilder, belongsTo:string, foreignKeys:number[] ):Promise<number[]>;
 
 }

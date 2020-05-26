@@ -225,7 +225,7 @@ export class MongoDbResolver extends Resolver {
   /**
    *
    */
-  async getPermittedIds( entity:EntityBuilder, permission:object, context:any ):Promise<any> {
+  async getPermittedIds( entity:EntityBuilder, permission:object, context:any ):Promise<number[]> {
     let expression:string|object = _.get( permission, 'filter' );
     if( _.isString( expression ) ) {
       expression = ts( expression, context );
@@ -233,6 +233,16 @@ export class MongoDbResolver extends Resolver {
     } else {
       expression = this.buildPermittedIdsFilter( entity, permission, context );
     }
+    const result = await this.query( entity, expression );
+    return _.map( result, item => _.get(item, '_id' ) );
+  }
+
+  /**
+   *
+   */
+  async getPermittedIdsForForeignKeys( entity:EntityBuilder, belongsTo:string, foreignKeys:any[] ):Promise<number[]> {
+    foreignKeys = _.map( foreignKeys, key => key.toString() );
+    const expression = _.set({}, belongsTo, { $in: foreignKeys } );
     const result = await this.query( entity, expression );
     return _.map( result, item => _.get(item, '_id' ) );
   }
