@@ -1,7 +1,5 @@
 entity:
   OrganisationalUnitProcessingActivity:
-    attributes:
-      name: string
     belongsTo:
       - type: ProcessingActivity
         required: true

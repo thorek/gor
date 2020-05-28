@@ -420,18 +420,24 @@ export abstract class EntityBuilder extends SchemaBuilder {
    *
    */
   private validateSameRelationIds( context:any ):string[] {
-    const errors:string[] = [];
-    _.forEach( this.sameRelation(), (types, typeToEnsure) => {
+    return _.compact( _.map( this.sameRelation(), (types, typeToEnsure) => {
       const entityToEnsure = this.graphx.entities[typeToEnsure];
-      if( ! entityToEnsure ) return console.warn(`validate Relation no such type '${typeToEnsure}'`);
-      const foreignKeys = _.uniq( _.map( types, typeName => {
-        const item = _.get( context.relatedEntities, typeName );
-        if( ! item ) return console.warn(`validate Relation could not resolve type '${typeName}'`);
-        return _.get( item, entityToEnsure.foreignKey() );
-      }));
-      if( _.size(foreignKeys ) === 1 ) return;
-      errors.push(`[${_.join( types, ', ')}] should refer to same '${typeToEnsure}' but they refer to [${foreignKeys}]`);
-    })
-    return errors;
+      if( entityToEnsure ) return this.validateSameRelationId( entityToEnsure, types, context );
+      console.warn(`validate Relation no such type '${typeToEnsure}'`);
+      return undefined;
+    }));
+  }
+
+  /**
+   *
+   */
+  private validateSameRelationId( entityToEnsure:EntityBuilder, types:string[], context:any ):string|undefined{
+    const foreignKeys = _.uniq( _.map( types, typeName => {
+      const item = _.get( context.relatedEntities, typeName );
+      if( ! item ) return console.warn(`validate Relation could not resolve type '${typeName}'`);
+      return _.get( item, entityToEnsure.foreignKey() );
+    }));
+    if( _.size(foreignKeys ) === 1 ) return undefined;
+    return `[${_.join( types, ', ')}] should refer to same '${entityToEnsure.typeName()}' but they refer to [${foreignKeys}]`;
   }
 }
