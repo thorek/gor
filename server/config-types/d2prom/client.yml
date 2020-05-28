@@ -25,11 +25,15 @@ entity:
           email: true
     hasMany:
       - Organisation
+
+
+
     seeds:
       example:
         name: D2PROM Client
       another:
         name: Another Client
+
     permissions:
       admin: true
       dsb:

@@ -36,7 +36,8 @@ export abstract class EntityBuilder extends SchemaBuilder {
 
   enum():{[name:string]:{[key:string]:string}} { return {} }
   seeds():{[name:string]:any} { return {} }
-  permissions():null|{[role:string]:{[action:string]:boolean|string|string[]}} { return null }
+  permissions():null|{[role:string]:boolean|string|{[action:string]:string|object|(string|object)[]}} { return null }
+  sameRelation():{[typeName:string]:string[]} {return {}}
 
   get resolver() { return this.gorConfig.resolver() }
   get validator() { if( this._validator ) return this._validator; throw "no validator" }
@@ -44,6 +45,8 @@ export abstract class EntityBuilder extends SchemaBuilder {
 
   private _entityPermissions?:EntityPermissions;
   private _validator:Validator|undefined;
+
+  protected lockRelation:{[typeName:string]:string[]}[] = [];
 
 
 	//
@@ -94,6 +97,7 @@ export abstract class EntityBuilder extends SchemaBuilder {
 		this.addReferences();
 		this.addQueries();
     this.addMutations();
+    this.addLockRelations();
     this.resolver.extendType( this );
 	}
 
@@ -124,21 +128,21 @@ export abstract class EntityBuilder extends SchemaBuilder {
 	protected addBelongsTo():void {
     const belongsTo = _.filter( this.belongsTo(), bt => this.checkReference( 'belongsTo', bt ) );
 		this.graphx.type(this.typeName()).extend(
-      () => _.reduce( belongsTo, (fields, ref) => this.addBelongsToReference( fields, ref ), {} ));
+      () => _.reduce( belongsTo, (fields, ref) => this.addBelongsToReferenceToType( fields, ref ), {} ));
     this.graphx.type(`${this.typeName()}Input`).extend(
-      () => _.reduce( belongsTo, (fields, ref) => this.addBelongsToId( fields, ref ), {} ));
+      () => _.reduce( belongsTo, (fields, ref) => this.addBelongsToForeignKeyToInput( fields, ref ), {} ));
 	}
 
   //
   //
-  private addBelongsToId( fields:any, ref:EntityReference ):any {
+  private addBelongsToForeignKeyToInput( fields:any, ref:EntityReference ):any {
     const refEntity = this.graphx.entities[ref.type];
     return _.set( fields, refEntity.foreignKey(), { type: GraphQLID });
   }
 
   //
   //
-  private addBelongsToReference( fields:any, ref:EntityReference ):any {
+  private addBelongsToReferenceToType( fields:any, ref:EntityReference ):any {
     const refEntity = this.graphx.entities[ref.type];
     const refObjectType = this.graphx.type(refEntity.typeName());
     return _.set( fields, refEntity.singular(), {
@@ -147,18 +151,17 @@ export abstract class EntityBuilder extends SchemaBuilder {
     });
   }
 
-
 	//
 	//
 	protected addHasMany():void {
     const hasMany = _.filter( this.hasMany(), hm => this.checkReference( 'hasMany', hm ) );
 		this.graphx.type(this.typeName()).extend(
-      () => _.reduce( hasMany, (fields, ref) => this.addHasManyReference( fields, ref ), {} ));
+      () => _.reduce( hasMany, (fields, ref) => this.addHasManyReferenceToType( fields, ref ), {} ));
   }
 
   //
   //
-  private addHasManyReference(fields:any, ref:EntityReference):any {
+  private addHasManyReferenceToType(fields:any, ref:EntityReference):any {
     const refEntity = this.graphx.entities[ref.type];
     const refObjectType = this.graphx.type(refEntity.typeName())
     return _.set( fields, refEntity.plural(), {
@@ -259,8 +262,8 @@ export abstract class EntityBuilder extends SchemaBuilder {
   /**
    *
    */
-  private async saveEntity( root: any, args: any, context:any ) {
-    const errors = await this.validate( root, args );
+  private async  saveEntity( root: any, args: any, context:any ) {
+    let errors = await this.validate( root, args, context );
     if( _.size( errors ) ) return { errors };
     return _.set( {errors: []}, this.singular(), this.resolver.saveEntity( this, root, args, context ) );
   }
@@ -268,9 +271,10 @@ export abstract class EntityBuilder extends SchemaBuilder {
   /**
    *
    */
-  protected async validate( root: any, args: any ):Promise<string[]> {
-    if( ! this.validator ) return [];
-    return await this.validator.validate( root, args );
+  protected async validate( root: any, args: any, context:any ):Promise<string[]> {
+    const errors = await this.validateRelations( root, args, context );
+    if( ! this.validator ) return errors;
+    return _.concat( errors, await this.validator.validate( root, args ) );
   }
 
 	//
@@ -298,7 +302,7 @@ export abstract class EntityBuilder extends SchemaBuilder {
   public async seedAttributes( context:any ):Promise<any> {
     const ids = {};
     await Promise.all( _.map( this.seeds(), (seed, name) => this.seedInstanceAttributes( name, seed, ids, context ) ) );
-    return _.set( {}, this.singular(), ids );
+    return _.set( {}, this.typeName(), ids );
   }
 
   /**
@@ -331,9 +335,9 @@ export abstract class EntityBuilder extends SchemaBuilder {
   private async seedReference( belongsTo: EntityReference, seed: any, idsMap: any, name: string, context:any ):Promise<void> {
     try {
       const refEntity = this.graphx.entities[belongsTo.type];
-      if ( refEntity && _.has( seed, refEntity.singular() ) ) {
-        const refName = _.get( seed, refEntity.singular() );
-        const refId = _.get( idsMap, [refEntity.singular(), refName] );
+      if ( refEntity && _.has( seed, refEntity.typeName() ) ) {
+        const refName = _.get( seed, refEntity.typeName() );
+        const refId = _.get( idsMap, [refEntity.typeName(), refName] );
         if ( refId ) await this.updateReference( idsMap, name, refEntity, refId, context );
       }
     }
@@ -346,9 +350,9 @@ export abstract class EntityBuilder extends SchemaBuilder {
    *
    */
   private async updateReference( idsMap: any, name: string, refEntity: EntityBuilder, refId: string, context:any ) {
-    const id = _.get( idsMap, [this.singular(), name] );
+    const id = _.get( idsMap, [this.typeName(), name] );
     const entity = await this.resolver.resolveType( this, {}, { id }, context );
-    _.set( entity, `${refEntity.singular()}Id`, _.toString(refId) );
+    _.set( entity, refEntity.foreignKey(), _.toString(refId) );
     const args = _.set( {}, this.singular(), entity );
     await this.resolver.saveEntity( this, {}, args, context );
   }
@@ -371,4 +375,49 @@ export abstract class EntityBuilder extends SchemaBuilder {
     return this.entityPermissions.getPermittedIds( action, context );
   }
 
+  /**
+   *
+   */
+  protected addLockRelations():void {
+    _.forEach( this.sameRelation(), (types, typeToEnsure) => {
+      _.forEach( types, entityName => {
+        const entity = this.graphx.entities[entityName];
+        if( ! entity ) return console.warn(`addSameRelation no such entity '${entityName}'`);
+        entity.lockRelation.push( _.set( {}, typeToEnsure, [this.typeName(), ..._.without(types, entityName)]));
+      });
+    });
+  }
+
+  /**
+   *
+   */
+  protected async validateRelations(root: any, args: any, context:any  ):Promise<string[]> {
+    const errors:string[] = [];
+    const input = _.get( args, this.singular() );
+    const relatedEntities:{[typeName:string]:any} = {};
+    for( const key of _.keys( input ) ){
+      const entity = _.find( this.graphx.entities, entity => entity.foreignKey() === key );
+      if( ! entity ) continue;
+      const value = _.get(input, key);
+      const item = await this.resolver.resolveType( entity, {}, {id: value}, context );
+      if( item ) {
+        relatedEntities[entity.typeName()] = item;
+      } else errors.push(`${key} - no ${entity.typeName()} with id '${value}' does exist.`);
+    }
+
+    if( _.size( errors ) ) return errors;
+
+    _.forEach( this.sameRelation(), (types, typeToEnsure) => {
+      const entityToEnsure = this.graphx.entities[typeToEnsure];
+      if( ! entityToEnsure ) return console.warn(`validate Relation no such type '${typeToEnsure}'`);
+      const foreignKeys = _.uniq( _.map( types, typeName => {
+        const item = _.get( relatedEntities, typeName );
+        if( ! item ) return console.warn(`validate Relation could not resolve type '${typeName}'`);
+        return _.get( item, entityToEnsure.foreignKey() );
+      }));
+      if( _.size(foreignKeys ) === 1 ) return;
+      errors.push(`[${_.join( types, ', ')}] should refer to same '${typeToEnsure}' but they refer to [${foreignKeys}]`);
+    })
+    return errors;
+  }
 }

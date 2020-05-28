@@ -23,15 +23,24 @@ export class OrganisationalUnit extends EntityBuilder {
 	]}
   seeds() {
     return {
-      hr: { name: "HR", additionalInfo: "HR department incl. trainee office", organisation: "disphere" },
-      it: { name: "IT", additionalInfo: "excluding our freelance Windows Admin", organisation: "disphere" },
-      marketing: { name: "Marketing", organisation: "disphere" },
-      sales: { name: "Sales", organisation: "disphere" },
-      hrfs: { name: "HR", additionalInfo: "HR department incl. trainee office", organisation: "funstuff" },
-      itfs: { name: "IT", additionalInfo: "excluding our freelance Windows Admin", organisation: "funstuff" },
-      marketingfs: { name: "Marketing", organisation: "funstuff" },
-
+      hr: { name: "HR", additionalInfo: "HR department incl. trainee office", Organisation: "disphere" },
+      it: { name: "IT", additionalInfo: "excluding our freelance Windows Admin", Organisation: "disphere" },
+      marketing: { name: "Marketing", Organisation: "disphere" },
+      sales: { name: "Sales", Organisation: "disphere" },
+      hrfs: { name: "HR", additionalInfo: "HR department incl. trainee office", Organisation: "funstuff" },
+      itfs: { name: "IT", additionalInfo: "excluding our freelance Windows Admin", Organisation: "funstuff" },
+      marketingfs: { name: "Marketing", Organisation: "funstuff" },
+      gfBoring: { name: "GF", Organisation: "boring" },
+      productionBoring: { name: "Produktion", Organisation: "boring" },
     };
+  }
+  permissions() {
+    return {
+      admin: true,
+      user: {
+        all: "Organisation.read"
+      }
+    }
   }
 
 }

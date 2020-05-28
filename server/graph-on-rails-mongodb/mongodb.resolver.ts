@@ -73,8 +73,8 @@ export class MongoDbResolver extends Resolver {
    */
   async resolveType( entityType:EntityBuilder, root:any, args:any, context:any ):Promise<any> {
     const collection = this.getCollection( entityType );
-    const id = _.get( args, 'id' );
-		const entity = await collection.findOne( new ObjectId(id));
+    const id = this.getObjectId( _.get( args, 'id' ) );
+		const entity = await collection.findOne( id );
 		return this.getOutEntity( entity );
   }
 
@@ -83,8 +83,8 @@ export class MongoDbResolver extends Resolver {
    */
   async resolveRefType( refType:EntityBuilder, root:any, args:any, context:any ):Promise<any> {
     const collection = this.getCollection( refType );
-    const id = _.get( root, `${refType.singular()}Id`);
-		const entity = await collection.findOne( new ObjectId(id) );
+    const id = this.getObjectId( _.get( root, refType.foreignKey() ) );
+		const entity = await collection.findOne( id );
 		return this.getOutEntity( entity );
   }
 
@@ -277,4 +277,17 @@ export class MongoDbResolver extends Resolver {
     value = _.get( context, value, value );
     return attribute === '_id' || entity.isBelongsToAttribute( attribute ) ? new ObjectId( value ) : value;
   }
+
+  /**
+   *
+   */
+  getObjectId( id:any ):ObjectId {
+    try {
+      return new ObjectId( _.toString( id ) );
+    } catch (error) {
+      console.error( `could not convert '${id}' to an ObjectId` );
+    }
+    return new ObjectId(Number.MAX_SAFE_INTEGER * -1);
+  }
+
 }

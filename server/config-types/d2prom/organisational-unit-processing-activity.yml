@@ -1,0 +1,32 @@
+entity:
+  OrganisationalUnitProcessingActivity:
+    attributes:
+      name: string
+    belongsTo:
+      - type: ProcessingActivity
+        required: true
+      - type: OrganisationalUnit
+        required: true
+    sameRelation:
+      Organisation:
+        - ProcessingActivity
+        - OrganisationalUnit
+
+
+
+    seeds:
+      "1":
+        ProcessingActivity: madb
+        OrganisationalUnit: it
+      "2":
+        ProcessingActivity: madb
+        OrganisationalUnit: hr
+      "3":
+        ProcessingActivity: kdb
+        OrganisationalUnit: it
+      "4":
+        ProcessingActivity: kdb
+        OrganisationalUnit: hr
+      "5":
+        ProcessingActivity: kdb
+        OrganisationalUnit: marketing

@@ -32,7 +32,8 @@ export type EntityConfig  = {
 
   enum:{[name:string]:{[key:string]:string}}
   seeds:{[name:string]:any}
-  permissions:null|{[role:string]:{[action:string]:boolean|string|string[]}}
+  permissions:null|{[role:string]:boolean|string|{[action:string]:string|object|(string|object)[]}}
+  sameRelation:null|string|{[typeName:string]:string[]}
 }
 
 /**
@@ -52,8 +53,8 @@ export class EntityConfigBuilder extends EntityBuilder {
    */
 	protected constructor(
       protected readonly _name:string,
-      protected readonly gorConfig:GorConfig,
-      protected readonly entityConfig:EntityConfig ){
+      public readonly gorConfig:GorConfig,
+      public readonly entityConfig:EntityConfig ){
     super( gorConfig );
   }
 
@@ -101,4 +102,10 @@ export class EntityConfigBuilder extends EntityBuilder {
   seeds() { return this.entityConfig.seeds || super.seeds() }
 
   permissions() { return this.entityConfig.permissions || super.permissions() }
+
+  sameRelation() {
+    const sr = this.entityConfig.sameRelation;
+    if( ! sr ) return super.sameRelation();
+    return _.isString( sr ) ? _.set( {}, sr, _.map( this.belongsTo(), bt => bt.type ) ) : sr;
+  }
 }

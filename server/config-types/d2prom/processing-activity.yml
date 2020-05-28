@@ -18,16 +18,7 @@ entity:
     seeds:
       madb:
         name: "Mitarbeiterdatenbank"
+        Organisation: disphere
       kdb:
         name: "Kundendatenbank"
-    permissions:
-      user:
-        read,create,update: Organisation.read
-        delete:
-          - Organisation.read
-          - "status $nin ['active']"
-
-
-
-
-
+        Organisation: boring

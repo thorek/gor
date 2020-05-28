@@ -2,5 +2,3 @@ entity:
   AutomatedDescisionMaking:
     attributes:
       description: string
-    hasMany:
-      - ProcessingActivity

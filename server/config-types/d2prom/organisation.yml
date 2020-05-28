@@ -4,18 +4,21 @@ entity:
       name: string
     hasMany:
       - OrganisationalUnit
+      - ProcessingActivity
     belongsTo:
       - Client
+
+
     seeds:
       disphere:
         name: disphere interactive GmbH
-        client: example
+        Client: example
       funstuff:
         name: Fun the Funny Company
-        client: example
+        Client: example
       boring:
         name: A Boring Company
-        client: another
+        Client: another
 
     permissions:
       admin:
