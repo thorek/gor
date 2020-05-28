@@ -392,26 +392,40 @@ export abstract class EntityBuilder extends SchemaBuilder {
    *
    */
   protected async validateRelations(root: any, args: any, context:any  ):Promise<string[]> {
-    const errors:string[] = [];
     const input = _.get( args, this.singular() );
-    const relatedEntities:{[typeName:string]:any} = {};
+    context.relatedEntities = {} as {[typeName:string]:any};
+    const errors:string[] = await this.validateExistingBelongsTo( input, context );
+    if( _.size( errors ) ) return errors;
+    return this.validateSameRelationIds( context );
+  }
+
+  /**
+   *
+   */
+  private async validateExistingBelongsTo( input:any, context:any ):Promise<string[]>{
+    const errors:string[] = [];
     for( const key of _.keys( input ) ){
       const entity = _.find( this.graphx.entities, entity => entity.foreignKey() === key );
       if( ! entity ) continue;
       const value = _.get(input, key);
       const item = await this.resolver.resolveType( entity, {}, {id: value}, context );
       if( item ) {
-        relatedEntities[entity.typeName()] = item;
+        context.relatedEntities[entity.typeName()] = item;
       } else errors.push(`${key} - no ${entity.typeName()} with id '${value}' does exist.`);
     }
+    return errors;
+  }
 
-    if( _.size( errors ) ) return errors;
-
+  /**
+   *
+   */
+  private validateSameRelationIds( context:any ):string[] {
+    const errors:string[] = [];
     _.forEach( this.sameRelation(), (types, typeToEnsure) => {
       const entityToEnsure = this.graphx.entities[typeToEnsure];
       if( ! entityToEnsure ) return console.warn(`validate Relation no such type '${typeToEnsure}'`);
       const foreignKeys = _.uniq( _.map( types, typeName => {
-        const item = _.get( relatedEntities, typeName );
+        const item = _.get( context.relatedEntities, typeName );
         if( ! item ) return console.warn(`validate Relation could not resolve type '${typeName}'`);
         return _.get( item, entityToEnsure.foreignKey() );
       }));
