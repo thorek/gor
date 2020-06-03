@@ -1,4 +1,4 @@
-import { GorConfig } from '../core/gor';
+import { GorContext } from '../core/gor-context';
 import { EnumBuilder } from './enum-builder';
 
 /**
@@ -21,17 +21,17 @@ export class EnumConfigBuilder extends EnumBuilder {
   /**
    *
    */
-  static create( name:string, gorConfig:GorConfig, enumConfig:EnumConfig ):EnumConfigBuilder {
-    return new EnumConfigBuilder( name, gorConfig, enumConfig );
+  static create( name:string, gorContext:GorContext, enumConfig:EnumConfig ):EnumConfigBuilder {
+    return new EnumConfigBuilder( name, gorContext, enumConfig );
   }
 
 	//
 	//
 	constructor(
       protected readonly _name:string,
-      protected readonly gorConfig:GorConfig,
+      protected readonly gorContext:GorContext,
       protected readonly config:EnumConfig )
   {
-    super( gorConfig );
+    super( gorContext );
   }
 }

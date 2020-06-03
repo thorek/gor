@@ -8,52 +8,22 @@ import {
   GraphQLObjectType,
   GraphQLString,
 } from 'graphql';
-import inflection from 'inflection';
 import _ from 'lodash';
 
-import { GorConfig } from '../core/gor';
 import { GraphX } from '../core/graphx';
-import { Validator } from '../validation/validator';
-import { EntityReference, SchemaBuilder } from './schema-builder';
-import { EntityPermissions, CrudAction } from './entity-permissions';
-import { EntityAccessor } from './entity-accessor';
+import { Entity, EntityReference } from '../entities/entity';
+import { SchemaBuilder } from './schema-builder';
 
-/**
- * Base class for all Entities
- */
-export abstract class EntityBuilder extends SchemaBuilder {
+//
+//
+export class EntityBuilder extends SchemaBuilder {
 
-	belongsTo(): EntityReference[] { return [] }
-	hasMany(): EntityReference[] { return [] }
-	singular() { return `${_.toLower(this.typeName().substring(0,1))}${this.typeName().substring(1)}` }
-  plural() { return inflection.pluralize( this.singular() ) }
-  foreignKey() { return `${this.singular()}Id` }
-
-  collection() { return this.plural() }
-  instance() { return this.singular() }
-  label() { return inflection.titleize(  this.plural() )  }
-  path() { return this.plural() }
-  parent():string | null { return null }
-
-  enum():{[name:string]:{[key:string]:string}} { return {} }
-  seeds():{[name:string]:any} { return {} }
-  permissions():null|{[role:string]:boolean|string|{[action:string]:string|object|(string|object)[]}} { return null }
-  equality():{[typeName:string]:string[]} {return {}}
-
-  get resolver() { return this.gorConfig.resolver() }
-  get validator() { if( this._validator ) return this._validator; throw "no validator" }
-  get entityPermissions() { if( this._entityPermissions ) return this._entityPermissions; throw "no entityPermissions" }
-
-  private _entityPermissions?:EntityPermissions;
-  private _validator:Validator|undefined;
-
-  protected lockRelation:{[typeName:string]:string[]}[] = [];
-  readonly accessor = new EntityAccessor();
-
+  name() { return this.entity.name }
+  get resolver() { return this.entity.gorContext.resolver() }
 
 	//
 	//
-	constructor( public readonly gorConfig:GorConfig){
+	constructor( public readonly entity:Entity ){
     super();
   }
 
@@ -61,17 +31,12 @@ export abstract class EntityBuilder extends SchemaBuilder {
 	//
 	init( graphx:GraphX ):void {
     super.init( graphx );
-    this.resolver.init( this );
-    this.graphx.entities[this.name()] = this;
-    this._validator = this.gorConfig.validator( this );
-    this._entityPermissions = this.gorConfig.entityPermissions(this);
 	}
-
 
 	//
 	//
 	protected createEnums():void {
-		_.forEach( this.enum(), (keyValues:any, name:string) => {
+		_.forEach( this.entity.enum, (keyValues:any, name:string) => {
 			const values = {};
 			_.forEach( keyValues, (value,key) => _.set( values, key, { value }));
 			this.graphx.type( name, { name, values, from: GraphQLEnumType	} );
@@ -84,7 +49,7 @@ export abstract class EntityBuilder extends SchemaBuilder {
 	//
 	protected createObjectType():void {
     this.createEnums();
-		const name = this.typeName();
+		const name = this.entity.typeName;
 		this.graphx.type( name, { name, fields: () => {
 			const fields = {  id: { type: GraphQLID } };
 			return this.setAttributes( fields );
@@ -99,8 +64,6 @@ export abstract class EntityBuilder extends SchemaBuilder {
 		this.addReferences();
 		this.addQueries();
     this.addMutations();
-    this.addLockRelations();
-    this.resolver.extendType( this );
 	}
 
 	//
@@ -128,10 +91,10 @@ export abstract class EntityBuilder extends SchemaBuilder {
 	//
 	//
 	protected addBelongsTo():void {
-    const belongsTo = _.filter( this.belongsTo(), bt => this.checkReference( 'belongsTo', bt ) );
-		this.graphx.type(this.typeName()).extend(
+    const belongsTo = _.filter( this.entity.belongsTo, bt => this.checkReference( 'belongsTo', bt ) );
+		this.graphx.type(this.entity.typeName).extend(
       () => _.reduce( belongsTo, (fields, ref) => this.addBelongsToReferenceToType( fields, ref ), {} ));
-    this.graphx.type(`${this.typeName()}Input`).extend(
+    this.graphx.type(this.entity.inputName).extend(
       () => _.reduce( belongsTo, (fields, ref) => this.addBelongsToForeignKeyToInput( fields, ref ), {} ));
 	}
 
@@ -139,15 +102,15 @@ export abstract class EntityBuilder extends SchemaBuilder {
   //
   private addBelongsToForeignKeyToInput( fields:any, ref:EntityReference ):any {
     const refEntity = this.graphx.entities[ref.type];
-    return _.set( fields, refEntity.foreignKey(), { type: GraphQLID });
+    return _.set( fields, refEntity.foreignKey, { type: GraphQLID });
   }
 
   //
   //
   private addBelongsToReferenceToType( fields:any, ref:EntityReference ):any {
     const refEntity = this.graphx.entities[ref.type];
-    const refObjectType = this.graphx.type(refEntity.typeName());
-    return _.set( fields, refEntity.singular(), {
+    const refObjectType = this.graphx.type(refEntity.typeName);
+    return _.set( fields, refEntity.singular, {
       type: refObjectType,
       resolve: (root:any, args:any, context:any ) => this.resolver.resolveRefType( refEntity, root, args, context )
     });
@@ -156,8 +119,8 @@ export abstract class EntityBuilder extends SchemaBuilder {
 	//
 	//
 	protected addHasMany():void {
-    const hasMany = _.filter( this.hasMany(), hm => this.checkReference( 'hasMany', hm ) );
-		this.graphx.type(this.typeName()).extend(
+    const hasMany = _.filter( this.entity.hasMany, hm => this.checkReference( 'hasMany', hm ) );
+		this.graphx.type(this.entity.typeName).extend(
       () => _.reduce( hasMany, (fields, ref) => this.addHasManyReferenceToType( fields, ref ), {} ));
   }
 
@@ -165,10 +128,10 @@ export abstract class EntityBuilder extends SchemaBuilder {
   //
   private addHasManyReferenceToType(fields:any, ref:EntityReference):any {
     const refEntity = this.graphx.entities[ref.type];
-    const refObjectType = this.graphx.type(refEntity.typeName())
-    return _.set( fields, refEntity.plural(), {
+    const refObjectType = this.graphx.type(refEntity.typeName)
+    return _.set( fields, refEntity.plural, {
       type: new GraphQLList( refObjectType ),
-      resolve: (root:any, args:any, context:any ) => this.resolver.resolveRefTypes( this, refEntity, root, args, context )
+      resolve: (root:any, args:any, context:any ) => this.resolver.resolveRefTypes( this.entity, refEntity, root, args, context )
     });
   }
 
@@ -177,41 +140,43 @@ export abstract class EntityBuilder extends SchemaBuilder {
   private checkReference( direction:'belongsTo'|'hasMany', ref:EntityReference ):boolean {
     const refEntity = this.graphx.entities[ref.type];
     if( ! (refEntity instanceof EntityBuilder) ) {
-      console.warn( `'${this.typeName()}:${direction}': no such entity type '${ref.type}'` );
+      console.warn( `'${this.entity.typeName}:${direction}': no such entity type '${ref.type}'` );
       return false;
     }
-    if( ! this.graphx.type(refEntity.typeName()) ) {
-      console.warn( `'${this.typeName()}:${direction}': no objectType in '${ref.type}'` );
+    if( ! this.graphx.type(refEntity.typeName) ) {
+      console.warn( `'${this.entity.typeName}:${direction}': no objectType in '${ref.type}'` );
       return false;
     }
     return true;
   }
 
-
-	//
-	//
-	protected createInputType():void {
-		const name = `${this.typeName()}Input`;
+  /**
+   *
+   */
+  protected createInputType():void {
+		const name = this.entity.inputName;
 		this.graphx.type( name, { name, from: GraphQLInputObjectType, fields: () => {
 			const fields = { id: { type: GraphQLID }};
 			return this.setAttributes( fields );
 		}});
 	}
 
-	//
-	//
-	protected setAttributes( fields:any ):any {
+  /**
+   *
+   * @param fields
+   */
+  protected setAttributes( fields:any ):any {
 		_.forEach( this.getAttributes(), (attribute,name) => {
 			_.set( fields, name, { type: attribute.getType()} );
     });
     return fields;
 	}
 
-
-	//
-	//
-	protected createFilterType():void {
-		const name = `${this.typeName()}Filter`;
+  /**
+   *
+   */
+  protected createFilterType():void {
+		const name = this.entity.filterName;
 		this.graphx.type( name, { name, from: GraphQLInputObjectType, fields: () => {
 			const fields = { id: { type: GraphQLID } };
 			_.forEach( this.getAttributes(), (attribute, name) => {
@@ -221,37 +186,40 @@ export abstract class EntityBuilder extends SchemaBuilder {
 		} });
 	}
 
-	//
-	//
+  /**
+   *
+   */
 	protected addTypeQuery(){
 		this.graphx.type( 'query' ).extend( () => {
-			return _.set( {}, this.singular(), {
-				type: this.graphx.type(this.typeName()),
+			return _.set( {}, this.entity.singular, {
+				type: this.graphx.type(this.entity.typeName),
 				args: { id: { type: GraphQLID } },
-				resolve: (root:any, args:any, context:any) => this.resolver.resolveType( this, root, args, context )
+				resolve: (root:any, args:any, context:any) => this.resolver.resolveType( this.entity, root, args, context )
 			});
     });
 	}
 
-	//
-	//
-	protected addTypesQuery(){
+  /**
+   *
+   */
+  protected addTypesQuery(){
 		this.graphx.type( 'query' ).extend( () => {
-			return _.set( {}, this.plural(), {
-				type: new GraphQLList( this.graphx.type(this.typeName()) ),
-				args: { filter: { type: this.graphx.type(`${this.typeName()}Filter`) } },
-        resolve: (root:any, args:any, context:any) => this.resolver.resolveTypes( this, root, args, context )
+			return _.set( {}, this.entity.plural, {
+				type: new GraphQLList( this.graphx.type(this.entity.typeName) ),
+				args: { filter: { type: this.graphx.type(this.entity.filterName) } },
+        resolve: (root:any, args:any, context:any) => this.resolver.resolveTypes( this.entity, root, args, context )
 			});
 		});
 	}
 
-	//
-	//
-	protected addSaveMutation():void {
+  /**
+   *
+   */
+  protected addSaveMutation():void {
 		this.graphx.type( 'mutation' ).extend( () => {
-      const typeName = this.typeName();
-      const singular = this.singular();
-      const args = _.set( {}, this.singular(), { type: this.graphx.type(`${typeName}Input`)} );
+      const typeName = this.entity.typeName;
+      const singular = this.entity.singular;
+      const args = _.set( {}, this.entity.singular, { type: this.graphx.type(this.entity.inputName)} );
       let fields = { errors: {type: new GraphQLNonNull(new GraphQLList(GraphQLString)) } };
       fields = _.set( fields, singular, {type: this.graphx.type(typeName) } );
       const type = new GraphQLObjectType( { name: `Save${typeName}MutationResult`, fields } );
@@ -265,200 +233,22 @@ export abstract class EntityBuilder extends SchemaBuilder {
    *
    */
   private async  saveEntity( root: any, args: any, context:any ) {
-    let errors = await this.validate( root, args, context );
+    let errors = await this.entity.validate( root, args, context );
     if( _.size( errors ) ) return { errors };
-    return _.set( {errors: []}, this.singular(), this.resolver.saveEntity( this, root, args, context ) );
+    return _.set( {errors: []}, this.entity.singular, this.resolver.saveEntity( this.entity, root, args, context ) );
   }
 
   /**
    *
    */
-  protected async validate( root: any, args: any, context:any ):Promise<string[]> {
-    const errors = await this.validateRelations( root, args, context );
-    if( ! this.validator ) return errors;
-    return _.concat( errors, await this.validator.validate( root, args ) );
-  }
-
-	//
-	//
 	protected addDeleteMutation():void {
 		this.graphx.type( 'mutation' ).extend( () => {
-			return _.set( {}, `delete${this.typeName()}`, {
+			return _.set( {}, `delete${this.entity.typeName}`, {
 				type: GraphQLBoolean,
 				args: { id: { type: GraphQLID } },
-				resolve: (root:any, args:any, context:any ) => this.resolver.deleteEntity( this, root, args, context )
+				resolve: (root:any, args:any, context:any ) => this.resolver.deleteEntity( this.entity, root, args, context )
 			});
 		});
   }
 
-  /**
-   *
-   */
-  public async truncate():Promise<boolean> {
-    return await this.resolver.dropCollection( this );
-  }
-
-  /**
-   *
-   */
-  public async seedAttributes( context:any ):Promise<any> {
-    const ids = {};
-    await Promise.all( _.map( this.seeds(), (seed, name) => this.seedInstanceAttributes( name, seed, ids, context ) ) );
-    return _.set( {}, this.typeName(), ids );
-  }
-
-  /**
-   *
-   */
-  private async seedInstanceAttributes( name:string, seed:any, ids:any, context:any ):Promise<any> {
-    try {
-      const args = _.set( {}, this.singular(), _.pick( seed, _.keys( this.attributes() ) ) );
-      const entity = await this.resolver.saveEntity( this, {}, args, context );
-      _.set( ids, name, entity.id );
-    } catch (error) {
-      console.error( `Entity '${this.name() }' could not seed an instance`, seed, error );
-    }
-  }
-
-  /**
-   *
-   */
-  public async seedReferences( idsMap:any, context:any ):Promise<void> {
-    await Promise.all( _.map( this.seeds(), async (seed, name) => {
-      await Promise.all( _.map( this.belongsTo(), async belongsTo => {
-        await this.seedReference( belongsTo, seed, idsMap, name, context );
-      }));
-    }));
-  }
-
-  /**
-   *
-   */
-  private async seedReference( belongsTo: EntityReference, seed: any, idsMap: any, name: string, context:any ):Promise<void> {
-    try {
-      const refEntity = this.graphx.entities[belongsTo.type];
-      if ( refEntity && _.has( seed, refEntity.typeName() ) ) {
-        const refName = _.get( seed, refEntity.typeName() );
-        const refId = _.get( idsMap, [refEntity.typeName(), refName] );
-        if ( refId ) await this.updateReference( idsMap, name, refEntity, refId, context );
-      }
-    }
-    catch ( error ) {
-      console.error( `Entity '${this.name()}' could not seed a reference`, belongsTo, name, error );
-    }
-  }
-
-  /**
-   *
-   */
-  private async updateReference( idsMap: any, name: string, refEntity: EntityBuilder, refId: string, context:any ) {
-    const id = _.get( idsMap, [this.typeName(), name] );
-    const entity = await this.resolver.resolveType( this, {}, { id }, context );
-    _.set( entity, refEntity.foreignKey(), _.toString(refId) );
-    const args = _.set( {}, this.singular(), entity );
-    await this.resolver.saveEntity( this, {}, args, context );
-  }
-
-  /**
-   *
-   */
-  isBelongsToAttribute( attribute:string ):boolean {
-    return _.find( this.belongsTo(), bt => {
-      const ref = this.graphx.entities[bt.type];
-      return ref && ref.foreignKey() === attribute;
-    }) != null;
-  }
-
-  /**
-   *
-   */
-  async getPermittedIds( action:CrudAction, context:any ):Promise<boolean|number[]> {
-    if( ! this.entityPermissions ) throw new Error("no EntityPermission provider" );
-    return this.entityPermissions.getPermittedIds( action, context );
-  }
-
-  /**
-   *
-   */
-  protected addLockRelations():void {
-    _.forEach( this.equality(), (types, typeToEnsure) => {
-      _.forEach( types, entityName => {
-        const entity = this.graphx.entities[entityName];
-        if( ! entity ) return console.warn(`addSameRelation no such entity '${entityName}'`);
-        entity.lockRelation.push( _.set( {}, typeToEnsure, [this.typeName(), ..._.without(types, entityName)]));
-      });
-    });
-  }
-
-  /**
-   *
-   */
-  protected async validateRelations(root: any, args: any, context:any  ):Promise<string[]> {
-    const input = _.get( args, this.singular() );
-    context.relatedEntities = {} as {[typeName:string]:any};  // to simple, wouldnt handle multiple relations to same type
-    let errors:string[] = await this.validateExistingBelongsTo( input, context );
-    if( _.size( errors ) ) return errors;
-    errors.push( ...this.validateEqualities( input, context ) );
-    errors.push( ...(await this.validateLockRelations( input, context )) );
-    return errors;
-  }
-
-  /**
-   *  checks if all belongsTo foreignKeys in the input refer to an existing id of the belongsTo type
-   */
-  private async validateExistingBelongsTo( input:any, context:any ):Promise<string[]>{
-    const errors:string[] = [];
-    for( const key of _.keys( input ) ){
-      const entity = _.find( this.graphx.entities, entity => entity.foreignKey() === key );
-      if( ! entity ) continue;
-      const value = _.get(input, key);
-      const item = await this.resolver.resolveType( entity, {}, {id: value}, context );
-      if( item ) {
-        context.relatedEntities[entity.typeName()] = item;
-      } else errors.push(`${key} - no ${entity.typeName()} with id '${value}' does exist.`);
-    }
-    return errors;
-  }
-
-  /**
-   * checks the equality conditions
-   */
-  private validateEqualities( input:any, context:any ):string[] {
-
-    return _.compact( _.map( this.equality(), (types, attribute) => {
-      const entity = this.graphx.entities[attribute];
-      return this.validateEqualValues( input, entity || attribute, types, context );
-    }));
-  }
-
-  /**
-   *
-   */
-  private validateEqualValues( input:any, entityOrAttribute:EntityBuilder|string, types:string[], context:any ):string|undefined{
-    const attribute = _.isString( entityOrAttribute ) ? entityOrAttribute : entityOrAttribute.foreignKey();
-    const values = _.uniq( _.map( types, typeChain => {
-      const item = this.accessor.getInstanceFromBelongsToChain( {entity: this, instance: input }, typeChain, context );
-      if( ! item ) return console.warn(`validate Relation could not resolve type '${typeChain}'`);
-      return _.get( item, attribute );
-    }));
-    if( _.size(values ) === 1 ) return undefined;
-    return `[${_.join( types, ', ')}] should have equal values for '${attribute}' but it is [${values}]`;
-  }
-
-
-
-  /**
-   *
-   */
-  private async validateLockRelations( input:any, context:any ):Promise<string[]> {
-    // _.forEach( this.lockRelation, (types, typeToLock) => {
-    //   const entity = this.graphx.entities[typeToLock];
-    //   if( ! entity ) return console.error(`validateLockRelations - no such entity '${typeToLock}'`);
-    //   const foreignKey = _.get( input, entity.foreignKey() );
-    //   _.forEach( types, typeToCheck => {
-
-    //   });
-    // });
-    return [];
-  }
 }

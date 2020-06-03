@@ -1,27 +1,22 @@
 import _ from 'lodash';
-import { Gor, GorConfig } from "../graph-on-rails/core/gor";
-import { EntityBuilder } from "../graph-on-rails/builder/entity-builder";
-import { MongoDbResolver } from "../graph-on-rails-mongodb/mongodb.resolver";
-import { ValidateJs } from "../graph-on-rails/validation/validate-js";
-import { EntityPermissions } from "../graph-on-rails/builder/entity-permissions";
-import { Seeder } from "../graph-on-rails/core/seeder";
+
+import { Gor } from '../graph-on-rails/core/gor';
+import { GorContext } from '../graph-on-rails/core/gor-context';
+import { Seeder } from '../graph-on-rails/core/seeder';
+import { Entity } from '../graph-on-rails/entities/entity';
+import { EntityAccessor } from '../graph-on-rails/entities/entity-accessor';
 
 describe('Relations', () => {
 
   let gor:Gor|null = null;
-  let alpha:EntityBuilder, beta:EntityBuilder, delta:EntityBuilder, gamma:EntityBuilder;
+  let alpha:Entity, beta:Entity, delta:Entity, gamma:Entity;
+  const accessor = new EntityAccessor();
 
   beforeAll( async () => {
     gor = new Gor();
-    const resolver = await MongoDbResolver.create( { url: 'mongodb://localhost:27017', dbName: 'd2prom' } );
-    const config:GorConfig = {
-      resolver: () => resolver,
-      validator: (entity:EntityBuilder) => new ValidateJs( entity ),
-      entityPermissions: (entity:EntityBuilder) => new EntityPermissions( entity ),
-      contextUser: "user",
-      contextRoles: "roles"
-    };
-    gor.addConfigs( './config-types/eins', config );
+
+    const context = await GorContext.create("test-relations");
+    gor.addConfigs( './config-types/eins', context );
     await gor.server({});
     await Seeder.create(_.values( gor.graphx.entities ) ).seed( true, {} );
     alpha = gor.graphx.entities['Alpha'];
@@ -47,10 +42,10 @@ describe('Relations', () => {
 
   it( 'finds items along a belongsToChain', async () =>{
     const a1 = _.first( await alpha.resolver.resolveTypes( alpha, {}, { filter: { name: { eq: "a1" } } }, {} ) );
-    const d1 = await alpha.accessor.getInstanceFromBelongsToChain( { entity:alpha, instance:a1}, "Delta", {} );
+    const d1 = await accessor.getItemFromBelongsToChain( { entity:alpha, item:a1}, "Delta", {} );
     expect( d1.name ).toEqual("d1");
     const a3 = _.first( await alpha.resolver.resolveTypes( alpha, {}, { filter: { name: { eq: "a3" } } }, {} ) );
-    const g2 = await alpha.accessor.getInstanceFromBelongsToChain( { entity:alpha, instance:a3 }, "Delta.Gamma", {} );
+    const g2 = await accessor.getItemFromBelongsToChain( { entity:alpha, item:a3 }, "Delta.Gamma", {} );
     expect( g2.name ).toEqual("g2");
   });
 

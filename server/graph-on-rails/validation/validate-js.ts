@@ -1,7 +1,7 @@
 import _ from 'lodash';
 import validate from 'validate.js';
 
-import { EntityBuilder } from '../builder/entity-builder';
+import { Entity } from '../entities/entity';
 import { Validator } from './validator';
 
 /**
@@ -14,8 +14,8 @@ export class ValidateJs extends Validator {
   /**
    *
    */
-  constructor( public readonly entityBuilder:EntityBuilder ){
-    super( entityBuilder );
+  constructor( public readonly entity:Entity ){
+    super( entity );
     this.buildConstraints();
   }
 
@@ -23,7 +23,7 @@ export class ValidateJs extends Validator {
    *
    */
   async validate( root:any, args:any ): Promise<string[]> {
-    const input = _.get( args, this.entityBuilder.singular() );
+    const input = _.get( args, this.entity.singular );
     const result = validate( input, this.constraints );
     return result === true ? [] : this.formatErrors( result );
   }
@@ -44,7 +44,7 @@ export class ValidateJs extends Validator {
    */
   private buildConstraints() {
     this.constraints = {};
-    _.forEach( this.entityBuilder.attributes(), (attribute, name:string) => {
+    _.forEach( this.entity.attributes, (attribute, name:string) => {
       if( _.isObject( attribute.validation ) ) this.constraints[name] = attribute.validation
     });
   }

@@ -1,3 +1,4 @@
+import { GraphX } from '../core/graphx';
 import {
   GraphQLBoolean,
   GraphQLFloat,
@@ -11,28 +12,20 @@ import {
 } from 'graphql';
 import _ from 'lodash';
 
-import { SchemaBuilder } from './schema-builder';
+import { TypeAttribute } from '../entities/entity';
 import { FilterTypeBuilder } from './filter-type-builder';
 
-//
-//
-export type TypeAttribute = {
-  type:string;
-	filterType?:string;
-  validation?:any; // todo validation type
-}
 
 //
 //
 export class Attribute {
 
-	get graphx() { return this.entity.graphx }
-
 	//
 	//
 	constructor(
+    public readonly name:string,
 		public readonly attr:TypeAttribute,
-		private entity:SchemaBuilder)
+		public readonly graphx:GraphX )
 	{}
 
 	//
@@ -50,7 +43,7 @@ export class Attribute {
 			case '[boolean]': return new GraphQLList( GraphQLBoolean );
 			default: {
 				const type = this.graphx.type( this.attr.type );
-				if( ! type ) console.warn( `${this.entity.name} no such type '${this.attr.type}'` );
+				if( ! type ) console.warn( `${this.name } no such type '${this.attr.type}'` );
 				return type;
 			}
 		};
@@ -69,7 +62,7 @@ export class Attribute {
         const filterTypeName = `${this.attr.type}Filter`;
 				const type = this.graphx.type( filterTypeName );
 				if( type instanceof GraphQLInputObjectType ) return type;
-        console.warn( `${this.entity.name} no such filter type '${filterTypeName}'` );
+        console.warn( `${this.name} no such filter type '${filterTypeName}'` );
 				return null;
 			}
 		};

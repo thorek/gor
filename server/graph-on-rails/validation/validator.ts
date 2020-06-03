@@ -1,4 +1,4 @@
-import { EntityBuilder } from "../builder/entity-builder";
+import { Entity } from "../entities/entity";
 
 
 /**
@@ -9,7 +9,7 @@ export abstract class Validator {
   /**
    *
    */
-  constructor( public readonly entityBuilder:EntityBuilder ){}
+  constructor( public readonly entity:Entity ){}
 
   abstract validate( root:any, args:any ):Promise<string[]>
 }

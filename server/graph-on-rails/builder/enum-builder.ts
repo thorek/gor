@@ -1,25 +1,24 @@
-import _ from 'lodash';
-import { SchemaBuilder } from "./schema-builder";
-import { Resolver } from "../core/resolver";
-import { GraphX } from "../core/graphx";
 import { GraphQLEnumType } from 'graphql';
-import { GorConfig } from '../core/gor';
+import _ from 'lodash';
+
+import { GraphX } from '../core/graphx';
+import { SchemaBuilder } from './schema-builder';
+import { GorContext } from '../core/gor-context';
 
 export abstract class EnumBuilder extends SchemaBuilder {
 
 	//
 	//
-	constructor( protected gorConfig:GorConfig ){ super() }
+	constructor( protected gorContext:GorContext ){ super() }
 
   abstract enum():{[name:string]:{[key:string]:string}}
 
-  get resolver() { return this.gorConfig.resolver() }
+  get resolver() { return this.gorContext.resolver() }
 
 	//
 	//
 	init( graphx:GraphX ):void {
     super.init( graphx );
-    this.resolver.init( this );
 	}
 
   protected createObjectType(): void {

@@ -1,27 +1,19 @@
-import { GraphQLEnumType } from 'graphql';
-import inflection from 'inflection';
 import _ from 'lodash';
 
 import { GraphX } from '../core/graphx';
-import { Attribute, TypeAttribute } from './type-attribute';
+import { TypeAttribute } from '../entities/entity';
+import { Attribute } from './attribute';
 
-//
-//
-export type EntityReference = {
-	type:string;
-}
 
 /**
  * Base class for any custom type that can occur in a GraphQL Schema
  */
 export abstract class SchemaBuilder {
 
-	abstract name():string;
-	typeName() { return inflection.camelize( this.name() ) }
-	attributes():{[name:string]:TypeAttribute} { return {} };
 
-	graphx!:GraphX;
-
+  graphx!:GraphX;
+  abstract name():string;
+  attributes():{[name:string]:TypeAttribute} { return {} };
 	protected _attributes?:{[name:string]:Attribute};
 
 
@@ -47,7 +39,7 @@ export abstract class SchemaBuilder {
 	//
 	protected getAttributes():{[name:string]:Attribute} {
 		if( ! this._attributes ) {
-			this._attributes = _.mapValues( this.attributes(), attribute => new Attribute( attribute, this ) );
+			this._attributes = _.mapValues( this.attributes(), (attribute, name) => new Attribute( name, attribute, this.graphx ) );
 		}
 		return this._attributes;
 	}

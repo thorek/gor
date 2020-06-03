@@ -1,6 +1,6 @@
 import _ from 'lodash';
 import { AuthenticationError } from 'apollo-server-express';
-import { EntityBuilder } from './entity-builder';
+import { Entity } from './entity';
 
 export type CrudAction = "read" | "create" | "update" | "delete";
 
@@ -12,14 +12,14 @@ export class EntityPermissions {
   /**
    *
    */
-  constructor( protected readonly entity:EntityBuilder ){}
+  constructor( protected readonly entity:Entity  ){}
 
   /**
-   * IDEA refactor out into seperate module
+   *
    */
   async getPermittedIds( action:CrudAction, context:any ):Promise<boolean|number[]> {
     if( ! this.isUserAndRolesDefined() ) return true;
-    if( this.entity.permissions() === null ) return true;
+    if( ! this.entity.permissions ) return true;
     const roles = this.getUserRoles( context );
     let ids:number[] = [];
     for( const role of roles ){
@@ -64,7 +64,7 @@ export class EntityPermissions {
     try {
       return await this.entity.resolver.getPermittedIds( this.entity, permission, context );
     } catch (error) {
-      console.error(`'${this.entity.name()}' resolver could not resolve permission`, permission, error);
+      console.error(`'${this.entity.name}' resolver could not resolve permission`, permission, error);
       return false;
     }
   }
@@ -82,14 +82,14 @@ export class EntityPermissions {
   /**
    *
    */
-  private async resolvePermittedIdsForBelongsTo( entity:EntityBuilder, role:string, action:string, context:any ):Promise<boolean|number[]>{
+  private async resolvePermittedIdsForBelongsTo( entity:Entity, role:string, action:string, context:any ):Promise<boolean|number[]>{
     const ids = await entity.entityPermissions.getPermittedIdsForRole( role, action as CrudAction, context );
     if( _.isBoolean( ids ) ) return ids;
     try {
-      return await this.entity.resolver.getPermittedIdsForForeignKeys( this.entity, entity.foreignKey(), ids );
+      return await this.entity.resolver.getPermittedIdsForForeignKeys( this.entity, entity.foreignKey, ids );
     } catch (error) {
-      console.error(`'${this.entity.name()}' resolver could not resolve permission for foreign keys for`,
-        entity.foreignKey(), error);
+      console.error(`'${this.entity.typeName}' resolver could not resolve permission for foreign keys for`,
+        entity.foreignKey, error);
       return false;
     }
   }
@@ -97,8 +97,8 @@ export class EntityPermissions {
   /**
    *
    */
-  protected getBelongsToEntity( entity:undefined|string ):null|EntityBuilder {
-    const entityIsBelongsTo = _.find( this.entity.belongsTo(), refEntity => refEntity.type === entity );
+  protected getBelongsToEntity( entity:undefined|string ):null|Entity {
+    const entityIsBelongsTo = _.find( this.entity.belongsTo, refEntity => refEntity.type === entity );
     if( entityIsBelongsTo ) return this.entity.graphx.entities[ entity as string ];
     console.warn(`'${entity}' is not a belongsTo of '${this.entity.name}'`);
     return null;
@@ -200,7 +200,7 @@ export class EntityPermissions {
    *
    */
   private getActionPermissionsForRole(role:string, action:CrudAction):boolean | string | (string|object)[]  {
-    const permissions = _.get( this.entity.permissions(), role );
+    const permissions = _.get( this.entity.permissions, role );
     if( _.isBoolean( permissions ) || _.isString( permissions ) ) return permissions;
     let actionPermission = _.get( permissions, action );
     if( ! actionPermission ) actionPermission = _.get( permissions, "all" );
@@ -216,16 +216,16 @@ export class EntityPermissions {
    *
    */
   protected isUserAndRolesDefined():boolean {
-    return this.entity.gorConfig.contextUser != null && this.entity.gorConfig.contextRoles != null;
+    return this.entity.gorContext.contextUser != null && this.entity.gorContext.contextRoles != null;
   }
 
   /**
    *
    */
   protected getUserRoles( context:any ):string[] {
-    const user = _.get( context, this.entity.gorConfig.contextUser as string );
+    const user = _.get( context, this.entity.gorContext.contextUser as string );
     if( ! user ) throw "should not happen, no user in context";
-    let roles:any = _.get( user, this.entity.gorConfig.contextRoles as string );
+    let roles:any = _.get( user, this.entity.gorContext.contextRoles as string );
     if( ! roles ) throw new AuthenticationError( `User has no role - ${JSON.stringify( user ) }` );
     return _.isArray( roles ) ? roles : [roles];
   }

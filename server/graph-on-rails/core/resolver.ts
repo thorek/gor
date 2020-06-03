@@ -1,6 +1,6 @@
-import { EntityBuilder } from "../builder/entity-builder";
-import { SchemaBuilder } from "../builder/schema-builder";
-import { GraphX } from "./graphx";
+import { SchemaBuilder } from '../builder/schema-builder';
+import { Entity } from '../entities/entity';
+import { GraphX } from './graphx';
 
 /**
  *
@@ -10,47 +10,37 @@ export abstract class Resolver {
   /**
    *
    */
-  init( EntityBuilder:SchemaBuilder ):void { }
+  abstract resolveType( entity:Entity, root:any, args:any, context:any ):Promise<any>;
 
   /**
    *
    */
-  extendType( EntityBuilder:EntityBuilder ):void { }
+  abstract resolveTypes( entity:Entity, root:any, args:any, context:any ):Promise<any[]>;
 
   /**
    *
    */
-  abstract resolveType( EntityBuilder:EntityBuilder, root:any, args:any, context:any ):Promise<any>;
+  abstract resolveRefType( refType:Entity, root:any, args:any, context:any ):Promise<any>;
 
   /**
    *
    */
-  abstract resolveTypes( EntityBuilder:EntityBuilder, root:any, args:any, context:any ):Promise<any[]>;
+  abstract resolveRefTypes( entity:Entity, refType:Entity, root:any, args:any, context:any ):Promise<any[]>;
 
   /**
    *
    */
-  abstract resolveRefType( refType:EntityBuilder, root:any, args:any, context:any ):Promise<any>;
+  abstract saveEntity( entity:Entity, root:any, args:any, context:any ):Promise<any>;
 
   /**
    *
    */
-  abstract resolveRefTypes( EntityBuilder:EntityBuilder, refType:EntityBuilder, root:any, args:any, context:any ):Promise<any[]>;
+  abstract deleteEntity( entity:Entity, root:any, args:any, context:any  ):Promise<boolean>;
 
   /**
    *
    */
-  abstract saveEntity( EntityBuilder:EntityBuilder, root:any, args:any, context:any ):Promise<any>;
-
-  /**
-   *
-   */
-  abstract deleteEntity( EntityBuilder:EntityBuilder, root:any, args:any, context:any  ):Promise<boolean>;
-
-  /**
-   *
-   */
-  abstract dropCollection( EntityBuilder:EntityBuilder ):Promise<boolean>;
+  abstract dropCollection( entity:Entity ):Promise<boolean>;
 
   /**
    *
@@ -65,16 +55,16 @@ export abstract class Resolver {
   /**
    *
    */
-  abstract query( entityType:EntityBuilder, expression:any ):Promise<any>;
+  abstract query( entity:Entity, expression:any ):Promise<any>;
 
   /**
    *
    */
-  abstract getPermittedIds( entityType:EntityBuilder, expression:object, context:any ):Promise<number[]>;
+  abstract getPermittedIds( entity:Entity, expression:object, context:any ):Promise<number[]>;
 
   /**
    *
    */
-  abstract getPermittedIdsForForeignKeys( entity:EntityBuilder, belongsTo:string, foreignKeys:number[] ):Promise<number[]>;
+  abstract getPermittedIdsForForeignKeys( entity:Entity, belongsTo:string, foreignKeys:number[] ):Promise<number[]>;
 
 }

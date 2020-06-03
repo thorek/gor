@@ -2,14 +2,15 @@ import { AuthenticationError } from 'apollo-server-express';
 import compression from 'compression';
 import cors from 'cors';
 import express from 'express';
-import { EntityBuilder } from './graph-on-rails/builder/entity-builder';
-import { EntityPermissions } from './graph-on-rails/builder/entity-permissions';
 import { createServer } from 'http';
 
 import { OrganisationalUnit } from './custom-types/organisational-unit';
 import { MongoDbResolver } from './graph-on-rails-mongodb/mongodb.resolver';
-import { Gor, GorConfig } from './graph-on-rails/core/gor';
+import { EntityBuilder } from './graph-on-rails/builder/entity-builder';
+import { Gor } from './graph-on-rails/core/gor';
+import { EntityPermissions } from './graph-on-rails/entities/entity-permissions';
 import { ValidateJs } from './graph-on-rails/validation/validate-js';
+import { GorContext } from 'graph-on-rails/core/gor-context';
 
 (async () => {
 
@@ -18,18 +19,9 @@ import { ValidateJs } from './graph-on-rails/validation/validate-js';
   app.use(compression());
 
   const gor = new Gor();
-  const resolver = await MongoDbResolver.create( { url: 'mongodb://localhost:27017', dbName: 'd2prom' } );
-
-  const config:GorConfig = {
-    resolver: () => resolver,
-    validator: (entity:EntityBuilder) => new ValidateJs( entity ),
-    entityPermissions: (entity:EntityBuilder) => new EntityPermissions( entity ),
-    contextUser: "user",
-    contextRoles: "roles"
-  };
-
-  gor.addConfigs( './server/config-types/d2prom', config );
-  gor.addCustomEntities( new OrganisationalUnit( config ) );
+  const gorContext = await GorContext.create( "d2prom" );
+  gor.addConfigs( './server/config-types/d2prom', gorContext );
+  gor.addCustomEntities( new OrganisationalUnit( gorContext ) );
 
   const users:{[token:string]:any} = {
     admin: { id: 100, username: "Admin", roles: ["admin"], clientId: "5ec3b745d3a47f8284414125" },

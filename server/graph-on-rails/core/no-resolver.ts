@@ -1,4 +1,4 @@
-import { EntityBuilder } from "../builder/entity-builder";
+import { Entity } from "../entities/entity";
 import { Resolver } from "./resolver";
 
 /**
@@ -6,62 +6,84 @@ import { Resolver } from "./resolver";
  */
 export class NoResolver extends Resolver {
 
-
   /**
    *
    */
-  init( EntityBuilder:EntityBuilder ):void { }
-
-  /**
-   *
-   */
-  extendType( EntityBuilder:EntityBuilder ):void { }
-
-  /**
-   *
-   */
-  async resolveType( EntityBuilder:EntityBuilder, root:any, args:any ):Promise<any> {
-    console.warn(`no resolver specified to resolve type '${EntityBuilder.name}'`);
+  async resolveType( entity:Entity, root:any, args:any ):Promise<any> {
+    console.warn(`no resolver specified to resolve type '${entity.name}'`);
     return {};
   }
 
   /**
    *
    */
-  async resolveTypes( EntityBuilder:EntityBuilder, root:any, args:any ):Promise<any[]>{
-    console.warn(`no resolver specified to resolve types for '${EntityBuilder.name}'`);
+  async resolveTypes( entity:Entity, root:any, args:any ):Promise<any[]>{
+    console.warn(`no resolver specified to resolve types for '${entity.name}'`);
     return [{}];
   }
 
   /**
    *
    */
-  async resolveRefType( EntityBuilder:EntityBuilder, root:any, args:any ):Promise<any> {
-    console.warn(`no resolver specified to resolve reference type '${EntityBuilder.name}'`);
+  async resolveRefType( entity:Entity, root:any, args:any ):Promise<any> {
+    console.warn(`no resolver specified to resolve reference type '${entity.name}'`);
     return {};
   }
 
   /**
    *
    */
-  async resolveRefTypes( EntityBuilder:EntityBuilder, refType:EntityBuilder, root:any, args:any ):Promise<any[]> {
-    console.warn(`no resolver specified to resolve reference types for '${EntityBuilder.name}'`);
+  async resolveRefTypes( entity:Entity, refType:Entity, root:any, args:any ):Promise<any[]> {
+    console.warn(`no resolver specified to resolve reference types for '${entity.name}'`);
     return [{}];
   }
 
   /**
    *
    */
-  async saveEntity( EntityBuilder:EntityBuilder, root:any, args:any ):Promise<any> {
-    console.warn(`no resolver specified to save type '${EntityBuilder.name}'`);
+  async saveEntity( entity:Entity, root:any, args:any ):Promise<any> {
+    console.warn(`no resolver specified to save type '${entity.name}'`);
     return {};
   }
 
   /**
    *
    */
-  async deleteEntity( EntityBuilder:EntityBuilder, root:any, args:any  ):Promise<boolean> {
-    console.warn(`no resolver specified to delete type '${EntityBuilder.name}'`);
+  async deleteEntity( entity:Entity, root:any, args:any  ):Promise<boolean> {
+    console.warn(`no resolver specified to delete type '${entity.name}'`);
     return false;
   }
+
+  /**
+   *
+   */
+  async dropCollection( entity: Entity ): Promise<boolean> {
+    console.warn(`no resolver specified to drop collection '${entity.name}'`);
+    return false;
+  }
+
+  /**
+   *
+   */
+  async query( entity: Entity, expression: any ): Promise<any> {
+    console.warn(`no resolver specified to query '${entity.name}'`);
+    return false;
+  }
+
+  /**
+   *
+   */
+  async getPermittedIds( entity: Entity, expression: object, context: any ): Promise<number[]> {
+    console.warn(`no resolver specified to get permissions '${entity.name}'`);
+    return [];
+  }
+
+  /**
+   *
+   */
+  async getPermittedIdsForForeignKeys( entity: Entity, belongsTo: string, foreignKeys: number[] ): Promise<number[]> {
+    console.warn(`no resolver specified to get permissions '${entity.name}'`);
+    return [];
+  }
+
 }

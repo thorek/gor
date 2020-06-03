@@ -1,20 +1,20 @@
+import { GraphQLSchema } from 'graphql';
 import _ from 'lodash';
 
-import { GraphX } from './graphx';
-import { GraphQLSchema } from 'graphql';
 import { SchemaBuilder } from '../builder/schema-builder';
+import { GraphX } from './graphx';
 
 export class SchemaFactory {
 
 	//
 	//
-	private constructor( private types:SchemaBuilder[] ){}
+	private constructor( private builders:SchemaBuilder[] ){}
 
   /**
    *
    */
-  static create( types:SchemaBuilder[] ):SchemaFactory {
-    return new SchemaFactory( types );
+  static create( builders:SchemaBuilder[] ):SchemaFactory {
+    return new SchemaFactory( builders );
   }
 
 	//
@@ -23,9 +23,9 @@ export class SchemaFactory {
 
     graphx.init();
 
-		_.forEach( this.types, type => type.init( graphx ) );
-		_.forEach( this.types, type => type.createTypes() );
-		_.forEach( this.types, type => type.extendTypes() );
+		_.forEach( this.builders, type => type.init( graphx ) );
+		_.forEach( this.builders, type => type.createTypes() );
+		_.forEach( this.builders, type => type.extendTypes() );
 
 		const schema = graphx.generate();
 		return schema;

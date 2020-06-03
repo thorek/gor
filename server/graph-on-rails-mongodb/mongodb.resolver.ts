@@ -2,13 +2,13 @@ import _ from 'lodash';
 import ts from 'es6-template-strings';
 
 import { Collection, Db, FilterQuery, ObjectId, MongoClient } from 'mongodb';
-import { EntityBuilder } from '../graph-on-rails/builder/entity-builder';
-import { CrudAction } from '../graph-on-rails/builder/entity-permissions';
+import { CrudAction } from '../graph-on-rails/entities/entity-permissions';
 import { Resolver } from '../graph-on-rails/core/resolver';
 import { EnumFilterTypeBuilder } from './filter/enum-filter-type-builder';
 import { GraphX } from '../graph-on-rails/core/graphx';
 import { StringFilterTypeBuilder } from './filter/string-filter-type-builder';
 import { IntFilterTypeBuilder } from './filter/int-filter-type-builder';
+import { Entity } from '../graph-on-rails/entities/entity';
 
 /**
  *
@@ -43,8 +43,8 @@ export class MongoDbResolver extends Resolver {
   /**
    *
    */
-  protected getCollection( entityType:EntityBuilder ):Collection {
-    return this.db.collection( entityType.plural()  );
+  protected getCollection( entity:Entity ):Collection {
+    return this.db.collection( entity.plural  );
   }
 
   /**
@@ -71,9 +71,9 @@ export class MongoDbResolver extends Resolver {
   /**
    *
    */
-  async resolveType( entityType:EntityBuilder, root:any, args:any, context:any ):Promise<any> {
-    const collection = this.getCollection( entityType );
-    const id = this.getObjectId( _.get( args, 'id' ), entityType );
+  async resolveType( entity:Entity, root:any, args:any, context:any ):Promise<any> {
+    const collection = this.getCollection( entity );
+    const id = this.getObjectId( _.get( args, 'id' ), entity );
 		const item = await collection.findOne( id );
 		return this.buildOutItem( item );
   }
@@ -81,9 +81,9 @@ export class MongoDbResolver extends Resolver {
   /**
    *
    */
-  async resolveRefType( refType:EntityBuilder, root:any, args:any, context:any ):Promise<any> {
+  async resolveRefType( refType:Entity, root:any, args:any, context:any ):Promise<any> {
     const collection = this.getCollection( refType );
-    const id = this.getObjectId( _.get( root, refType.foreignKey() ), refType );
+    const id = this.getObjectId( _.get( root, refType.foreignKey ), refType );
 		const item = await collection.findOne( id );
 		return this.buildOutItem( item );
   }
@@ -91,9 +91,9 @@ export class MongoDbResolver extends Resolver {
   /**
    *
    */
-  async resolveRefTypes( entityType:EntityBuilder, refType:EntityBuilder, root:any, args:any, context:any ):Promise<any[]> {
+  async resolveRefTypes( entity:Entity, refType:Entity, root:any, args:any, context:any ):Promise<any[]> {
     const collection = this.getCollection( refType );
-    const filter = _.set( {}, [`${entityType.singular()}Id`], _.toString( root.id ) );
+    const filter = _.set( {}, [entity.foreignKey], _.toString( root.id ) );
 		const items = await collection.find( filter ).toArray();
 		return _.map( items, item => this.buildOutItem( item ) );
   }
@@ -101,11 +101,11 @@ export class MongoDbResolver extends Resolver {
   /**
    *
    */
-  async resolveTypes( entityType:EntityBuilder, root:any, args:any, context:any ):Promise<any[]> {
-    const collection = this.getCollection( entityType );
-    let filter = this.getFilterQuery( entityType, root, args, context );
+  async resolveTypes( entity:Entity, root:any, args:any, context:any ):Promise<any[]> {
+    const collection = this.getCollection( entity );
+    let filter = this.getFilterQuery( entity, root, args, context );
     _.set( filter, 'deleted', { $ne: true } );
-    filter = await this.addPermissions( entityType, "read", filter, context );
+    filter = await this.addPermissions( entity, "read", filter, context );
 		const items = await collection.find( filter ).toArray();
 		return _.map( items, item => this.buildOutItem( item ) );
   }
@@ -113,21 +113,21 @@ export class MongoDbResolver extends Resolver {
   /**
    *
    */
-  async saveEntity( entityType:EntityBuilder, root:any, args:any, context:any ):Promise<any> {
-    const attrs = _.get( args, entityType.singular() );
+  async saveEntity( entity:Entity, root:any, args:any, context:any ):Promise<any> {
+    const attrs = _.get( args, entity.singular );
     return _.has( attrs, 'id' ) ?
-      this.updateEntity( entityType, attrs, context ) :
-      this.createEntity( entityType, attrs, context );
+      this.updateEntity( entity, attrs, context ) :
+      this.createEntity( entity, attrs, context );
   }
 
   /**
    *
    */
-	protected getFilterQuery( entityType:EntityBuilder, root:any, args:any, context:any ):FilterQuery<any> {
+	protected getFilterQuery( entity:Entity, root:any, args:any, context:any ):FilterQuery<any> {
     const filter = _.get( args, 'filter');
     const filterQuery:FilterQuery<any> = {};
 		_.forEach( filter, (condition, field) => {
-      const attribute = entityType.getAttribute(field);
+      const attribute = entity.getAttribute(field);
 			if( ! attribute ) return;
 			const filterType = attribute.getFilterAttributeType();
 			const expression = filterType ? filterType.getFilterExpression( condition, field ) : null;
@@ -149,27 +149,27 @@ export class MongoDbResolver extends Resolver {
 
 	//
 	//
-	protected async updateEntity( entityType:EntityBuilder, attrs: any, context: any ):Promise<any> {
+	protected async updateEntity( entity:Entity, attrs: any, context: any ):Promise<any> {
     const _id = new ObjectId( attrs.id );
     delete attrs.id;
-    const collection = this.getCollection( entityType );
+    const collection = this.getCollection( entity );
     const result = await collection.updateOne( { _id }, { $set: attrs }, { upsert: false } );
-		return this.resolveType( entityType, {}, { id: _id }, context );
+		return this.resolveType( entity, {}, { id: _id }, context );
 	}
 
 	//
 	//
-	protected async createEntity( entityType:EntityBuilder, attrs: any, context: any ):Promise<any> {
-    const collection = this.getCollection( entityType );
+	protected async createEntity( entity:Entity, attrs: any, context: any ):Promise<any> {
+    const collection = this.getCollection( entity );
 		const result = await collection.insertOne( attrs );
-		const entity:any = await collection.findOne( new ObjectId(result.insertedId ) );
-		return this.buildOutItem( entity );
+		const item:any = await collection.findOne( new ObjectId(result.insertedId ) );
+		return this.buildOutItem( item );
 	}
 
   /**
    *
    */
-	async deleteEntity( entityType:EntityBuilder, root:any, args:any, context:any  ):Promise<boolean> {
+	async deleteEntity( entityType:Entity, root:any, args:any, context:any  ):Promise<boolean> {
     const collection = this.getCollection( entityType );
     const id = _.get( args, 'id' );
 		const result = await collection.updateOne( {"_id": new ObjectId( id )}, {
@@ -181,8 +181,8 @@ export class MongoDbResolver extends Resolver {
   /**
    *
    */
-  async dropCollection( entityType:EntityBuilder ):Promise<boolean> {
-    const collectionName = entityType.plural();
+  async dropCollection( entity:Entity ):Promise<boolean> {
+    const collectionName = entity.plural;
     if( await this.collectionExist( collectionName ) ) try {
       await this.db.dropCollection( collectionName );
       return true;
@@ -203,11 +203,11 @@ export class MongoDbResolver extends Resolver {
   /**
    *
    */
-  async query( entityType:EntityBuilder, expression:any ):Promise<any[]> {
+  async query( entity:Entity, expression:any ):Promise<any[]> {
     try {
-      return await this.getCollection( entityType ).find( expression ).toArray();
+      return await this.getCollection( entity ).find( expression ).toArray();
     } catch (error) {
-      console.error( `could not query on collection '${entityType.name}'`, expression, error );
+      console.error( `could not query on collection '${entity.name}'`, expression, error );
     }
     return [];
   }
@@ -215,8 +215,8 @@ export class MongoDbResolver extends Resolver {
   /**
    *
    */
-  protected async addPermissions( entityType:EntityBuilder, action:CrudAction, filter:any, context:any ):Promise<any> {
-    let ids = await entityType.getPermittedIds( action, context );
+  protected async addPermissions( entity:Entity, action:CrudAction, filter:any, context:any ):Promise<any> {
+    let ids = await entity.getPermittedIds( action, context );
     if( ids === true ) return filter;
     if( ids === false ) ids = [];
     return { $and: [ { _id: { $in: ids } }, filter ] };
@@ -225,7 +225,7 @@ export class MongoDbResolver extends Resolver {
   /**
    *
    */
-  async getPermittedIds( entity:EntityBuilder, permission:object, context:any ):Promise<number[]> {
+  async getPermittedIds( entity:Entity, permission:object, context:any ):Promise<number[]> {
     let expression:string|object = _.get( permission, 'filter' );
     if( _.isString( expression ) ) {
       expression = ts( expression, context );
@@ -240,7 +240,7 @@ export class MongoDbResolver extends Resolver {
   /**
    *
    */
-  async getPermittedIdsForForeignKeys( entity:EntityBuilder, belongsTo:string, foreignKeys:any[] ):Promise<number[]> {
+  async getPermittedIdsForForeignKeys( entity:Entity, belongsTo:string, foreignKeys:any[] ):Promise<number[]> {
     foreignKeys = _.map( foreignKeys, key => key.toString() );
     const expression = _.set({}, belongsTo, { $in: foreignKeys } );
     const result = await this.query( entity, expression );
@@ -255,7 +255,7 @@ export class MongoDbResolver extends Resolver {
    *        - open
    *      name: user.assignedContracts  # will be resolved with context
    */
-  private buildPermittedIdsFilter( entity:EntityBuilder, permission:object, context:any ):object {
+  private buildPermittedIdsFilter( entity:Entity, permission:object, context:any ):object {
     const conditions:any[] = [];
     _.forEach( permission, (values:any|any[], attribute:string) => {
       if( _.isArray( values ) ) {
@@ -273,7 +273,7 @@ export class MongoDbResolver extends Resolver {
   /**
    *
    */
-  private resolvePermissionValue( entity:EntityBuilder, attribute:string, value:any, context:any ):any {
+  private resolvePermissionValue( entity:Entity, attribute:string, value:any, context:any ):any {
     value = _.get( context, value, value );
     return attribute === '_id' || entity.isBelongsToAttribute( attribute ) ? new ObjectId( value ) : value;
   }
@@ -281,12 +281,12 @@ export class MongoDbResolver extends Resolver {
   /**
    *
    */
-  getObjectId( id:any, entity:EntityBuilder ):ObjectId {
-    if( ! id ) throw new Error(`cannot resolve type '${entity.name()}' without id`);
+  getObjectId( id:any, entity:Entity ):ObjectId {
+    if( ! id ) throw new Error(`cannot resolve type '${entity.name}' without id`);
     try {
       return new ObjectId( _.toString( id ) );
     } catch (error) {
-      console.error( `could not convert '${id}' for '${entity.name()}' to an ObjectId` );
+      console.error( `could not convert '${id}' for '${entity.name}' to an ObjectId` );
       return new ObjectId(Number.MAX_SAFE_INTEGER * -1);
     }
   }

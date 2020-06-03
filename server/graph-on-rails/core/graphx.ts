@@ -1,6 +1,6 @@
 import { GraphQLList, GraphQLObjectType, GraphQLSchema, GraphQLString, GraphQLBoolean, GraphQLNonNull, GraphQLScalarType } from 'graphql';
-import * as _ from 'lodash';
-import { EntityBuilder } from '../builder/entity-builder';
+import _ from 'lodash';
+import { Entity } from '../entities/entity';
 import { FilterTypeBuilder } from '../builder/filter-type-builder';
 import { Seeder } from './seeder';
 
@@ -9,7 +9,7 @@ import { Seeder } from './seeder';
 //
 export class GraphX {
 
-  readonly entities:{[name:string]:EntityBuilder} = {};
+  readonly entities:{[name:string]:Entity} = {};
   readonly filterAttributes:{[name:string]:FilterTypeBuilder} = {};
 	rawTypes:any = {};
 

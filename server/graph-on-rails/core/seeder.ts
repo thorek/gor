@@ -1,29 +1,28 @@
 import _ from 'lodash';
 
-import { SchemaBuilder } from '../builder/schema-builder';
-import { EntityBuilder } from '../builder/entity-builder';
+import { Entity } from '../entities/entity';
 
 export class Seeder {
 
 	//
 	//
-	private constructor( private types:SchemaBuilder[] ){}
+	private constructor( private entities:Entity[] ){}
 
   /**
    *
    */
-  static create( types:SchemaBuilder[] ):Seeder {
+  static create( types:Entity[] ):Seeder {
     return new Seeder( types );
   }
 
 	//
 	//
   async seed( truncate:boolean, context:any ):Promise<number> {
-  const entities = _.filter( this.types, type => ( type instanceof EntityBuilder ) ) as EntityBuilder[];
-    if( truncate ) await Promise.all( _.map( entities, async entity => await entity.truncate() ) );
+    const entities = _.filter( this.entities, entity => ( entity instanceof Entity ) ) as Entity[];
+    if( truncate ) await Promise.all( _.map( entities, async entity => await entity.entitySeeder.truncate() ) );
     const idsMap = {};
-    await Promise.all( _.map( entities, async entity => _.merge( idsMap, await entity.seedAttributes( context) ) ) );
-    await Promise.all( _.map( entities, async entity => _.merge( idsMap, await entity.seedReferences( idsMap, context ) ) ) );
+    await Promise.all( _.map( entities, async entity => _.merge( idsMap, await entity.entitySeeder.seedAttributes( context) ) ) );
+    await Promise.all( _.map( entities, async entity => _.merge( idsMap, await entity.entitySeeder.seedReferences( idsMap, context ) ) ) );
     return _.sum( _.map( idsMap, entityIdsMap => _.size( _.values( entityIdsMap ) ) ) );
 	}
 }

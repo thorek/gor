@@ -7,48 +7,38 @@ import path from 'path';
 import YAML from 'yaml';
 
 import { EntityBuilder } from '../builder/entity-builder';
-import { EntityConfigBuilder } from '../builder/entity-config-builder';
-import { EntityPermissions } from '../builder/entity-permissions';
-import { EnumConfigBuilder } from '../builder/enum-config-builder';
 import { SchemaBuilder } from '../builder/schema-builder';
-import { Validator } from '../validation/validator';
-import { Resolver } from './resolver';
-import { SchemaFactory } from './schema-factory';
+import { ConfigEntity } from '../entities/config-entity';
+import { Entity } from '../entities/entity';
 import { GraphX } from './graphx';
+import { SchemaFactory } from './schema-factory';
+import { GorContext } from './gor-context';
 
-
-export type GorConfig = {
-  resolver: (entity?:EntityBuilder) => Resolver
-  validator:(entity:EntityBuilder) => Validator
-  entityPermissions:(entity:EntityBuilder) => EntityPermissions
-  contextUser?:string
-  contextRoles?:string
-}
 
 /**
  *
  */
 export class Gor {
 
-  private _types?:SchemaBuilder[];
+  private _builders?:SchemaBuilder[];
   private _schema?:GraphQLSchema;
-  private configs:{[folder:string]:GorConfig} = {};
-  private customEntities:EntityBuilder[] = [];
+  private configs:{[folder:string]:GorContext} = {};
+  private customEntities:Entity[] = [];
 
   graphx:GraphX = new GraphX();
 
   /**
    *
    */
-  addConfigs( folder:string, gorConfig:GorConfig ):void {
-    this.configs[folder] = gorConfig;
+  addConfigs( folder:string, gorContext:GorContext ):void {
+    this.configs[folder] = gorContext;
   }
 
   /**
    *
    */
-  addCustomEntities( ...types:EntityBuilder[] ):void {
-    this.customEntities.push( ...types );
+  addCustomEntities( ...entities:Entity[] ):void {
+    this.customEntities.push( ...entities );
   }
 
   /**
@@ -56,7 +46,7 @@ export class Gor {
    */
   async schema():Promise<GraphQLSchema> {
     if( this._schema ) return this._schema;
-    const factory = SchemaFactory.create( this.types() );
+    const factory = SchemaFactory.create( this.builders() );
     this._schema = factory.createSchema( this.graphx );
     return this._schema;
   }
@@ -73,36 +63,42 @@ export class Gor {
   /**
    *
    */
-  private types() {
-    if( this._types ) return this._types;
-    const configEntities = this.getConfigTypes();
-    const defaultFilterTypes = this.getScalarFilterTypes();
-    this._types = [
-      ...defaultFilterTypes,
-      ...this.customEntities,
-      ...configEntities,
+  private builders() {
+    if( this._builders ) return this._builders;
+    const entities = this.initEntities();
+    const entityBuilders = _.map( entities, entity => new EntityBuilder( entity ) );
+    const defaultFilterBuilders = this.getScalarFilterBuilder();
+    this._builders = [
+      ...defaultFilterBuilders,
+      ...entityBuilders
     ];
-    return this._types;
+    return this._builders;
   }
 
   /**
    *
    */
-  private getConfigTypes():SchemaBuilder[] {
-    return _.flatten( _.map( this.configs, (config, folder) => {
+  private initEntities():Entity[] {
+    const entities = _.concat( this.getConfigEntities(), this.customEntities );
+    _.forEach( entities, entity => entity.init( this.graphx ));
+    return entities;
+  }
+
+  /**
+   *
+   */
+  private getConfigEntities():Entity[] {
+    return _.flatten( _.map( this.configs, (context, folder) => {
       const files = this.getConfigFiles( folder );
-      return _.compact( _.flatten( _.map( files, file => this.createConfigurationTypes( folder, file, config ) ) ) );
+      return _.compact( _.flatten( _.map( files, file => this.createConfigurationTypes( folder, file, context ) ) ) );
     }));
   }
 
   /**
    *
    */
-  private getScalarFilterTypes():SchemaBuilder[] {
-    return _.flatten( _.map( this.configs, (config, folder) => {
-      return config.resolver().getScalarFilterTypes();
-    }));
-
+  private getScalarFilterBuilder():SchemaBuilder[] {
+    return _.flatten( _.map( _.uniq(_.values( this.configs ) ), context => context.resolver().getScalarFilterTypes() ) );
   }
 
 
@@ -129,17 +125,17 @@ export class Gor {
   /**
    *
    */
-  private createConfigurationTypes( folder:string, file:string, gorConfig:GorConfig ):SchemaBuilder[] {
-    const builder:SchemaBuilder[] = [];
+  private createConfigurationTypes( folder:string, file:string, gorContext:GorContext ):Entity[] {
+    const builder:ConfigEntity[] = [];
     try {
       file = path.join( folder, file );
       const content = fs.readFileSync( file).toString();
       const configs = YAML.parse(content);
       if( _.get( configs, "entity.Client.permissions" ) ) console.log( configs.entity.Client )
-      builder.push( ... _.map( configs['entity'], (entityConfig, name) => EntityConfigBuilder.create(
-        name, gorConfig, entityConfig ) ) );
-      builder.push( ... _.map( configs['enum'], (enumConfig, name) => EnumConfigBuilder.create(
-        name, gorConfig, enumConfig ) ) );
+      builder.push( ... _.map( configs['entity'], (entityConfig, name) => ConfigEntity.create(
+        name, gorContext, entityConfig ) ) );
+      builder.push( ... _.map( configs['enum'], (enumConfig, name) => ConfigEntity.create(
+        name, gorContext, enumConfig ) ) );
     } catch ( e ){
       console.warn( `[${file}]: ${e}`);
     }

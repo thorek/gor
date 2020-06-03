@@ -1,12 +1,12 @@
-import { EntityBuilder } from '../graph-on-rails/builder/entity-builder';
+import { Entity } from '../graph-on-rails/entities/entity';
 
 /**
  *
  */
-export class OrganisationalUnit extends EntityBuilder {
+export class OrganisationalUnit extends Entity {
 
-	name() { return 'OrganisationalUnit' }
-	attributes() { return {
+	getName() { return 'OrganisationalUnit' }
+	getAttributes() { return {
       name: { type: "String", validation: {
         "presence": true,
         "length": { minimum: 2, maximum: 50 }
@@ -18,10 +18,10 @@ export class OrganisationalUnit extends EntityBuilder {
         "length": { minimum: 10, maximum: 100 }
       }}
 	}}
-	belongsTo() { return [
+	getBelongsTo() { return [
 		{ type: 'Organisation' }
 	]}
-  seeds() {
+  getSeeds() {
     return {
       hr: { name: "HR", additionalInfo: "HR department incl. trainee office", Organisation: "disphere" },
       it: { name: "IT", additionalInfo: "excluding our freelance Windows Admin", Organisation: "disphere" },
@@ -34,7 +34,7 @@ export class OrganisationalUnit extends EntityBuilder {
       productionBoring: { name: "Produktion", Organisation: "boring" },
     };
   }
-  permissions() {
+  getPermissions() {
     return {
       admin: true,
       user: {
