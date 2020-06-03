@@ -48,7 +48,7 @@ export abstract class EntityBuilder extends SchemaBuilder {
   private _validator:Validator|undefined;
 
   protected lockRelation:{[typeName:string]:string[]}[] = [];
-  private accessor = new EntityAccessor();
+  readonly accessor = new EntityAccessor();
 
 
 	//

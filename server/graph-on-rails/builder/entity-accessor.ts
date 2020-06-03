@@ -17,7 +17,7 @@ export class EntityAccessor {
     const foreignKey = _.get( ei.instance, entity.foreignKey() );
     if( ! foreignKey ) throw new Error(`no foreignKey for '${belongsTo}' in '${ei.entity.name()}'`);
     const args = _.set({}, 'id', foreignKey );
-    const instance = ei.entity.resolver.resolveType( entity, {}, args, context );
+    const instance = await ei.entity.resolver.resolveType( entity, {}, args, context );
     return {entity, instance};
   }
 

@@ -2,10 +2,15 @@ entity:
   Alpha:
     attributes:
       name: string
+    belongsTo:
+      - Delta
     seeds:
       a1:
         name: a1
+        Delta: d1
       a2:
         name: a2
+        Delta: d1
       a3:
         name: a3
+        Delta: d3

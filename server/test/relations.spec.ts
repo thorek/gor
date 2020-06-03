@@ -45,4 +45,13 @@ describe('Relations', () => {
     expect( aX ).toHaveLength(0);
   })
 
+  it( 'finds items along a belongsToChain', async () =>{
+    const a1 = _.first( await alpha.resolver.resolveTypes( alpha, {}, { filter: { name: { eq: "a1" } } }, {} ) );
+    const d1 = await alpha.accessor.getInstanceFromBelongsToChain( { entity:alpha, instance:a1}, "Delta", {} );
+    expect( d1.name ).toEqual("d1");
+    const a3 = _.first( await alpha.resolver.resolveTypes( alpha, {}, { filter: { name: { eq: "a3" } } }, {} ) );
+    const g2 = await alpha.accessor.getInstanceFromBelongsToChain( { entity:alpha, instance:a3 }, "Delta.Gamma", {} );
+    expect( g2.name ).toEqual("g2");
+  });
+
 })
