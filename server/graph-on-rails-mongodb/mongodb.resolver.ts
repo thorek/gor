@@ -73,9 +73,9 @@ export class MongoDbResolver extends Resolver {
    */
   async resolveType( entityType:EntityBuilder, root:any, args:any, context:any ):Promise<any> {
     const collection = this.getCollection( entityType );
-    const id = this.getObjectId( _.get( args, 'id' ) );
-		const entity = await collection.findOne( id );
-		return this.getOutEntity( entity );
+    const id = this.getObjectId( _.get( args, 'id' ), entityType );
+		const item = await collection.findOne( id );
+		return this.buildOutItem( item );
   }
 
   /**
@@ -83,9 +83,9 @@ export class MongoDbResolver extends Resolver {
    */
   async resolveRefType( refType:EntityBuilder, root:any, args:any, context:any ):Promise<any> {
     const collection = this.getCollection( refType );
-    const id = this.getObjectId( _.get( root, refType.foreignKey() ) );
-		const entity = await collection.findOne( id );
-		return this.getOutEntity( entity );
+    const id = this.getObjectId( _.get( root, refType.foreignKey() ), refType );
+		const item = await collection.findOne( id );
+		return this.buildOutItem( item );
   }
 
   /**
@@ -94,8 +94,8 @@ export class MongoDbResolver extends Resolver {
   async resolveRefTypes( entityType:EntityBuilder, refType:EntityBuilder, root:any, args:any, context:any ):Promise<any[]> {
     const collection = this.getCollection( refType );
     const filter = _.set( {}, [`${entityType.singular()}Id`], _.toString( root.id ) );
-		const entities = await collection.find( filter ).toArray();
-		return _.map( entities, entity => this.getOutEntity( entity ) );
+		const items = await collection.find( filter ).toArray();
+		return _.map( items, item => this.buildOutItem( item ) );
   }
 
   /**
@@ -106,8 +106,8 @@ export class MongoDbResolver extends Resolver {
     let filter = this.getFilterQuery( entityType, root, args, context );
     _.set( filter, 'deleted', { $ne: true } );
     filter = await this.addPermissions( entityType, "read", filter, context );
-		const entities = await collection.find( filter ).toArray();
-		return _.map( entities, entity => this.getOutEntity( entity ) );
+		const items = await collection.find( filter ).toArray();
+		return _.map( items, item => this.buildOutItem( item ) );
   }
 
   /**
@@ -139,7 +139,7 @@ export class MongoDbResolver extends Resolver {
 
 	//
 	//
-	protected getOutEntity( entity:any ):any {
+	protected buildOutItem( entity:any ):any {
     if( ! _.has( entity, '_id' ) ) return null;
     _.set( entity, 'id', entity._id );
     _.unset( entity, '_id' );
@@ -163,7 +163,7 @@ export class MongoDbResolver extends Resolver {
     const collection = this.getCollection( entityType );
 		const result = await collection.insertOne( attrs );
 		const entity:any = await collection.findOne( new ObjectId(result.insertedId ) );
-		return this.getOutEntity( entity );
+		return this.buildOutItem( entity );
 	}
 
   /**
@@ -281,13 +281,14 @@ export class MongoDbResolver extends Resolver {
   /**
    *
    */
-  getObjectId( id:any ):ObjectId {
+  getObjectId( id:any, entity:EntityBuilder ):ObjectId {
+    if( ! id ) throw new Error(`cannot resolve type '${entity.name()}' without id`);
     try {
       return new ObjectId( _.toString( id ) );
     } catch (error) {
-      console.error( `could not convert '${id}' to an ObjectId` );
+      console.error( `could not convert '${id}' for '${entity.name()}' to an ObjectId` );
+      return new ObjectId(Number.MAX_SAFE_INTEGER * -1);
     }
-    return new ObjectId(Number.MAX_SAFE_INTEGER * -1);
   }
 
 }

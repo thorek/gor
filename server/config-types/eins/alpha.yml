@@ -1,0 +1,11 @@
+entity:
+  Alpha:
+    attributes:
+      name: string
+    seeds:
+      a1:
+        name: a1
+      a2:
+        name: a2
+      a3:
+        name: a3

@@ -41,7 +41,7 @@ export class VersionedMongoDbResolver extends MongoDbResolver {
     const collection = this.getCollection( refType );
     const filter = _.set( {}, [`${entityType.singular()}Id`], _.toString( root.id ) );
 		const entities = await collection.find( filter ).toArray();
-		return _.map( entities, entity => this.getOutEntity( entity ) );
+		return _.map( entities, entity => this.buildOutItem( entity ) );
   }
 
   /**
@@ -61,7 +61,7 @@ export class VersionedMongoDbResolver extends MongoDbResolver {
 
 	//
 	//
-	protected getOutEntity( entity:any ):any {
+	protected buildOutItem( entity:any ):any {
     const outEntity = _.get( entity, 'attrs' );
     if( _.isNil( outEntity ) ) return;
     return _.set( outEntity, 'id', entity._id );
@@ -80,7 +80,7 @@ export class VersionedMongoDbResolver extends MongoDbResolver {
 		if( ! entity.versions ) entity.versions = [];
 		entity.versions.push( {attrs, createdAt: Date.now() } );
 		const result = await collection.findOneAndReplace( id, entity );
-		return this.getOutEntity( entity );
+		return this.buildOutItem( entity );
 	}
 
 	//
@@ -90,7 +90,7 @@ export class VersionedMongoDbResolver extends MongoDbResolver {
     const collection = this.getCollection( entityType );
 		const result = await collection.insertOne(doc);
 		const entity:any = await collection.findOne( new ObjectId(result.insertedId ) );
-		return this.getOutEntity( entity );
+		return this.buildOutItem( entity );
 	}
 
 }

@@ -1,0 +1,13 @@
+entity:
+  Beta:
+    attributes:
+      name: string
+    belongsTo:
+      - Delta
+    seeds:
+      b1:
+        name: b1
+      b2:
+        name: b2
+      b3:
+        name: b3

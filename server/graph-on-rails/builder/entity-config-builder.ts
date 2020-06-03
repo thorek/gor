@@ -6,7 +6,7 @@ import { EntityBuilder } from './entity-builder';
 /**
  *
  */
-export type AttributeConfig = { 
+export type AttributeConfig = {
   type:string;
   validation:any;
 }
@@ -33,7 +33,7 @@ export type EntityConfig  = {
   enum:{[name:string]:{[key:string]:string}}
   seeds:{[name:string]:any}
   permissions:null|{[role:string]:boolean|string|{[action:string]:string|object|(string|object)[]}}
-  sameRelation:null|string|{[typeName:string]:string[]}
+  equality:null|string|{[typeName:string]:string[]}
 }
 
 /**
@@ -68,7 +68,7 @@ export class EntityConfigBuilder extends EntityBuilder {
     });
   }
 
-	belongsTo() { 
+	belongsTo() {
     if( ! this.entityConfig.belongsTo ) return super.belongsTo();
     return _.map( this.entityConfig.belongsTo, bt => {
       return _.isString(bt) ? { type: bt } : bt;
@@ -103,9 +103,9 @@ export class EntityConfigBuilder extends EntityBuilder {
 
   permissions() { return this.entityConfig.permissions || super.permissions() }
 
-  sameRelation() {
-    const sr = this.entityConfig.sameRelation;
-    if( ! sr ) return super.sameRelation();
+  equality() {
+    const sr = this.entityConfig.equality;
+    if( ! sr ) return super.equality();
     return _.isString( sr ) ? _.set( {}, sr, _.map( this.belongsTo(), bt => bt.type ) ) : sr;
   }
 }

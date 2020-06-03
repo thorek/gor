@@ -1,0 +1,11 @@
+entity:
+  Delta:
+    attributes:
+      name: string
+    seeds:
+      d1:
+        name: d1
+      d2:
+        name: d2
+      d3:
+        name: d3

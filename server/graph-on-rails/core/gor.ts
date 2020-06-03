@@ -14,6 +14,7 @@ import { SchemaBuilder } from '../builder/schema-builder';
 import { Validator } from '../validation/validator';
 import { Resolver } from './resolver';
 import { SchemaFactory } from './schema-factory';
+import { GraphX } from './graphx';
 
 
 export type GorConfig = {
@@ -33,6 +34,8 @@ export class Gor {
   private _schema?:GraphQLSchema;
   private configs:{[folder:string]:GorConfig} = {};
   private customEntities:EntityBuilder[] = [];
+
+  graphx:GraphX = new GraphX();
 
   /**
    *
@@ -54,7 +57,7 @@ export class Gor {
   async schema():Promise<GraphQLSchema> {
     if( this._schema ) return this._schema;
     const factory = SchemaFactory.create( this.types() );
-    this._schema = factory.createSchema();
+    this._schema = factory.createSchema( this.graphx );
     return this._schema;
   }
 

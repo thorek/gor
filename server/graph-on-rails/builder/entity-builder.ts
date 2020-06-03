@@ -16,6 +16,7 @@ import { GraphX } from '../core/graphx';
 import { Validator } from '../validation/validator';
 import { EntityReference, SchemaBuilder } from './schema-builder';
 import { EntityPermissions, CrudAction } from './entity-permissions';
+import { EntityAccessor } from './entity-accessor';
 
 /**
  * Base class for all Entities
@@ -37,7 +38,7 @@ export abstract class EntityBuilder extends SchemaBuilder {
   enum():{[name:string]:{[key:string]:string}} { return {} }
   seeds():{[name:string]:any} { return {} }
   permissions():null|{[role:string]:boolean|string|{[action:string]:string|object|(string|object)[]}} { return null }
-  sameRelation():{[typeName:string]:string[]} {return {}}
+  equality():{[typeName:string]:string[]} {return {}}
 
   get resolver() { return this.gorConfig.resolver() }
   get validator() { if( this._validator ) return this._validator; throw "no validator" }
@@ -47,6 +48,7 @@ export abstract class EntityBuilder extends SchemaBuilder {
   private _validator:Validator|undefined;
 
   protected lockRelation:{[typeName:string]:string[]}[] = [];
+  private accessor = new EntityAccessor();
 
 
 	//
@@ -379,7 +381,7 @@ export abstract class EntityBuilder extends SchemaBuilder {
    *
    */
   protected addLockRelations():void {
-    _.forEach( this.sameRelation(), (types, typeToEnsure) => {
+    _.forEach( this.equality(), (types, typeToEnsure) => {
       _.forEach( types, entityName => {
         const entity = this.graphx.entities[entityName];
         if( ! entity ) return console.warn(`addSameRelation no such entity '${entityName}'`);
@@ -393,14 +395,16 @@ export abstract class EntityBuilder extends SchemaBuilder {
    */
   protected async validateRelations(root: any, args: any, context:any  ):Promise<string[]> {
     const input = _.get( args, this.singular() );
-    context.relatedEntities = {} as {[typeName:string]:any};
-    const errors:string[] = await this.validateExistingBelongsTo( input, context );
+    context.relatedEntities = {} as {[typeName:string]:any};  // to simple, wouldnt handle multiple relations to same type
+    let errors:string[] = await this.validateExistingBelongsTo( input, context );
     if( _.size( errors ) ) return errors;
-    return this.validateSameRelationIds( context );
+    errors.push( ...this.validateEqualities( input, context ) );
+    errors.push( ...(await this.validateLockRelations( input, context )) );
+    return errors;
   }
 
   /**
-   *
+   *  checks if all belongsTo foreignKeys in the input refer to an existing id of the belongsTo type
    */
   private async validateExistingBelongsTo( input:any, context:any ):Promise<string[]>{
     const errors:string[] = [];
@@ -417,27 +421,44 @@ export abstract class EntityBuilder extends SchemaBuilder {
   }
 
   /**
-   *
+   * checks the equality conditions
    */
-  private validateSameRelationIds( context:any ):string[] {
-    return _.compact( _.map( this.sameRelation(), (types, typeToEnsure) => {
-      const entityToEnsure = this.graphx.entities[typeToEnsure];
-      if( entityToEnsure ) return this.validateSameRelationId( entityToEnsure, types, context );
-      console.warn(`validate Relation no such type '${typeToEnsure}'`);
-      return undefined;
+  private validateEqualities( input:any, context:any ):string[] {
+
+    return _.compact( _.map( this.equality(), (types, attribute) => {
+      const entity = this.graphx.entities[attribute];
+      return this.validateEqualValues( input, entity || attribute, types, context );
     }));
   }
 
   /**
    *
    */
-  private validateSameRelationId( entityToEnsure:EntityBuilder, types:string[], context:any ):string|undefined{
-    const foreignKeys = _.uniq( _.map( types, typeName => {
-      const item = _.get( context.relatedEntities, typeName );
-      if( ! item ) return console.warn(`validate Relation could not resolve type '${typeName}'`);
-      return _.get( item, entityToEnsure.foreignKey() );
+  private validateEqualValues( input:any, entityOrAttribute:EntityBuilder|string, types:string[], context:any ):string|undefined{
+    const attribute = _.isString( entityOrAttribute ) ? entityOrAttribute : entityOrAttribute.foreignKey();
+    const values = _.uniq( _.map( types, typeChain => {
+      const item = this.accessor.getInstanceFromBelongsToChain( {entity: this, instance: input }, typeChain, context );
+      if( ! item ) return console.warn(`validate Relation could not resolve type '${typeChain}'`);
+      return _.get( item, attribute );
     }));
-    if( _.size(foreignKeys ) === 1 ) return undefined;
-    return `[${_.join( types, ', ')}] should refer to same '${entityToEnsure.typeName()}' but they refer to [${foreignKeys}]`;
+    if( _.size(values ) === 1 ) return undefined;
+    return `[${_.join( types, ', ')}] should have equal values for '${attribute}' but it is [${values}]`;
+  }
+
+
+
+  /**
+   *
+   */
+  private async validateLockRelations( input:any, context:any ):Promise<string[]> {
+    // _.forEach( this.lockRelation, (types, typeToLock) => {
+    //   const entity = this.graphx.entities[typeToLock];
+    //   if( ! entity ) return console.error(`validateLockRelations - no such entity '${typeToLock}'`);
+    //   const foreignKey = _.get( input, entity.foreignKey() );
+    //   _.forEach( types, typeToCheck => {
+
+    //   });
+    // });
+    return [];
   }
 }
