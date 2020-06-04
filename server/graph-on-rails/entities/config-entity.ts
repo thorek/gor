@@ -19,6 +19,7 @@ export type EntityConfig  = {
 
   attributes?:{[name:string]:string|AttributeConfig};
   belongsTo?:[string|{type:string}];
+  belongsToMany?:[string|{type:string}];
   hasMany?:string[];
 
 	plural?:string
@@ -69,6 +70,12 @@ export class ConfigEntity extends Entity {
 	protected getBelongsTo() {
     if( ! this.entityConfig.belongsTo ) return super.getBelongsTo();
     return _.map( this.entityConfig.belongsTo, bt => {
+      return _.isString(bt) ? { type: bt } : bt;
+    });
+  }
+	protected getBelongsToMany() {
+    if( ! this.entityConfig.belongsToMany ) return super.getBelongsToMany();
+    return _.map( this.entityConfig.belongsToMany, bt => {
       return _.isString(bt) ? { type: bt } : bt;
     });
   }

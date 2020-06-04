@@ -70,7 +70,8 @@ export class EntityBuilder extends SchemaBuilder {
 	//
 	//
 	addReferences():void {
-		this.addBelongsTo();
+    this.addBelongsTo();
+    this.addBelongsToMany();
 		this.addHasMany();
 	}
 
@@ -97,7 +98,18 @@ export class EntityBuilder extends SchemaBuilder {
       () => _.reduce( belongsTo, (fields, ref) => this.addBelongsToReferenceToType( fields, ref ), {} ));
     this.graphx.type(this.entity.inputName).extend(
       () => _.reduce( belongsTo, (fields, ref) => this.addBelongsToForeignKeyToInput( fields, ref ), {} ));
+  }
+
+	//
+	//
+	protected addBelongsToMany():void {
+    const belongsToMany = _.filter( this.entity.belongsToMany, bt => this.checkReference( 'belongsTo', bt ) );
+		this.graphx.type(this.entity.typeName).extend(
+      () => _.reduce( belongsToMany, (fields, ref) => this.addBelongsToManyReferenceToType( fields, ref ), {} ));
+    this.graphx.type(this.entity.inputName).extend(
+      () => _.reduce( belongsToMany, (fields, ref) => this.addBelongsToManyForeignKeysToInput( fields, ref ), {} ));
 	}
+
 
   //
   //
@@ -108,10 +120,28 @@ export class EntityBuilder extends SchemaBuilder {
 
   //
   //
+  private addBelongsToManyForeignKeysToInput( fields:any, ref:EntityReference ):any {
+    const refEntity = this.graphx.entities[ref.type];
+    return _.set( fields, refEntity.foreignKeys, { type: GraphQLList( GraphQLID ) });
+  }
+
+  //
+  //
   private addBelongsToReferenceToType( fields:any, ref:EntityReference ):any {
     const refEntity = this.graphx.entities[ref.type];
     const refObjectType = this.graphx.type(refEntity.typeName);
     return _.set( fields, refEntity.singular, {
+      type: refObjectType,
+      resolve: (root:any, args:any, context:any ) => this.resolver.resolveRefType( refEntity, root, args, context )
+    });
+  }
+
+  //
+  //
+  private addBelongsToManyReferenceToType( fields:any, ref:EntityReference ):any {
+    const refEntity = this.graphx.entities[ref.type];
+    const refObjectType = this.graphx.type(refEntity.typeName);
+    return _.set( fields, refEntity.plural, {
       type: refObjectType,
       resolve: (root:any, args:any, context:any ) => this.resolver.resolveRefType( refEntity, root, args, context )
     });
@@ -132,7 +162,7 @@ export class EntityBuilder extends SchemaBuilder {
     const refObjectType = this.graphx.type(refEntity.typeName)
     return _.set( fields, refEntity.plural, {
       type: new GraphQLList( refObjectType ),
-      resolve: (root:any, args:any, context:any ) => this.resolver.resolveRefTypes( this.entity, refEntity, root, args, context )
+      resolve: (root:any, args:any, context:any ) => this.resolver.resolveBelongsToManyTypes( this.entity, refEntity, root, args, context )
     });
   }
 

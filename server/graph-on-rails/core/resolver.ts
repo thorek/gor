@@ -30,6 +30,11 @@ export abstract class Resolver {
   /**
    *
    */
+  abstract resolveBelongsToManyTypes( entity:Entity, refType:Entity, root:any, args:any, context:any ):Promise<any[]>;
+
+  /**
+   *
+   */
   abstract saveEntity( entity:Entity, root:any, args:any, context:any ):Promise<any>;
 
   /**

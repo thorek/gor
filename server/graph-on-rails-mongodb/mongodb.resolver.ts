@@ -101,6 +101,17 @@ export class MongoDbResolver extends Resolver {
   /**
    *
    */
+  async resolveBelongsToManyTypes( entity:Entity, refType:Entity, root:any, args:any, context:any ):Promise<any[]> {
+    const collection = this.getCollection( refType );
+    const foreignKeys = _.map( _.get( root, refType.foreignKeys ), foreignKey => new ObjectId( foreignKey ) );
+    const filter = { _id: { $in: foreignKeys } };
+		const items = await collection.find( filter ).toArray();
+		return _.map( items, item => this.buildOutItem( item ) );
+  }
+
+  /**
+   *
+   */
   async resolveTypes( entity:Entity, root:any, args:any, context:any ):Promise<any[]> {
     const collection = this.getCollection( entity );
     let filter = this.getFilterQuery( entity, root, args, context );

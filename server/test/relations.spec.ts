@@ -49,16 +49,26 @@ describe('Relations', () => {
     expect( g2.name ).toEqual("g2");
   });
 
+  it('should recognice belongsToMany', async () => {
+    const phi = gor.graphx.entities['Phi'];
+    const expected = { type: 'Chi' }
+    expect( _.first(phi.belongsToMany) ).toEqual( expected );
+    const chiFilter = gor.graphx.type("ChiFilter");
+  });
+
   it('should find adjective belongsToMany', async ()=> {
     const phi = gor.graphx.entities['Phi'];
     const phi1 = _.first( await phi.resolver.resolveTypes( phi, {}, { filter: { name: { eq: "phi1" } } }, {} ) );
     expect( phi1.chiIds ).toHaveLength( 2 );
 
+    const phi2 = _.first( await phi.resolver.resolveTypes( phi, {}, { filter: { name: { eq: "phi2" } } }, {} ) );
+    expect( phi2.chiIds ).toHaveLength( 1 );
+
     const chi = gor.graphx.entities['Chi'];
-    const chi1 = _.first( await phi.resolver.resolveTypes( chi, {}, { filter: { name: { eq: "chi1" } } }, {} ) );
+    const chi1 = _.first( await chi.resolver.resolveTypes( chi, {}, { filter: { name: { eq: "chi1" } } }, {} ) );
     expect( chi1.phiIds ).toHaveLength( 3 );
-    const chi2 = _.first( await phi.resolver.resolveTypes( chi, {}, { filter: { name: { eq: "chi2" } } }, {} ) );
-    expect( chi2.phiIds ).toHaveLength( 0 );
+    const chi2 = _.first( await chi.resolver.resolveTypes( chi, {}, { filter: { name: { eq: "chi2" } } }, {} ) );
+    expect( chi2.phiIds ).toBeUndefined();
   })
 
 })

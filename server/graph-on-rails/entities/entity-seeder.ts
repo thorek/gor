@@ -49,7 +49,10 @@ export class EntitySeeder {
   public async seedReferences( idsMap:any, context:any ):Promise<void> {
     await Promise.all( _.map( this.entity.seeds, async (seed, name) => {
       await Promise.all( _.map( this.entity.belongsTo, async belongsTo => {
-        await this.seedReference( belongsTo, seed, idsMap, name, context );
+        await this.seedBelongsTo( belongsTo, seed, idsMap, name, context );
+      }));
+      await Promise.all( _.map( this.entity.belongsToMany, async belongsToMany => {
+        await this.seedBelongsToMany( belongsToMany, seed, idsMap, name, context );
       }));
     }));
   }
@@ -57,13 +60,13 @@ export class EntitySeeder {
   /**
    *
    */
-  private async seedReference( belongsTo: EntityReference, seed: any, idsMap: any, name: string, context:any ):Promise<void> {
+  private async seedBelongsTo( belongsTo: EntityReference, seed: any, idsMap: any, name: string, context:any ):Promise<void> {
     try {
       const refEntity = this.graphx.entities[belongsTo.type];
       if ( refEntity && _.has( seed, refEntity.typeName ) ) {
         const refName = _.get( seed, refEntity.typeName );
         const refId = _.get( idsMap, [refEntity.typeName, refName] );
-        if ( refId ) await this.updateReference( idsMap, name, refEntity, refId, context );
+        if ( refId ) await this.updateBelongsTo( idsMap, name, refEntity, refId, context );
       }
     }
     catch ( error ) {
@@ -74,10 +77,41 @@ export class EntitySeeder {
   /**
    *
    */
-  private async updateReference( idsMap: any, name: string, refEntity: Entity, refId: string, context:any ) {
+  private async seedBelongsToMany( belongsToMany: EntityReference, seed: any, idsMap: any, name: string, context:any ):Promise<void> {
+    try {
+      const refEntity = this.graphx.entities[belongsToMany.type];
+      if ( refEntity && _.has( seed, refEntity.typeName ) ) {
+        const refNames:string[] = _.get( seed, refEntity.typeName );
+        // const refId =
+        const refIds = _.compact( _.map( refNames, refName => _.get( idsMap, [refEntity.typeName, refName] ) ) );
+        await this.updateBelongsToMany( idsMap, name, refEntity, refIds, context );
+      }
+    }
+    catch ( error ) {
+      console.error( `Entity '${this.entity.typeName}' could not seed a reference`, belongsToMany, name, error );
+    }
+  }
+
+
+  /**
+   *
+   */
+  private async updateBelongsTo( idsMap: any, name: string, refEntity: Entity, refId: string, context:any ) {
     const id = _.get( idsMap, [this.entity.typeName, name] );
     const entity = await this.resolver.resolveType( this.entity, {}, { id }, context );
     _.set( entity, refEntity.foreignKey, _.toString(refId) );
+    const args = _.set( {}, this.entity.singular, entity );
+    await this.resolver.saveEntity( this.entity, {}, args, context );
+  }
+
+  /**
+   *
+   */
+  private async updateBelongsToMany( idsMap:any, name:string, refEntity:Entity, refIds:any[], context:any ) {
+    refIds = _.map( refIds, refId => _.toString( refId ) );
+    const id = _.get( idsMap, [this.entity.typeName, name] );
+    const entity = await this.resolver.resolveType( this.entity, {}, { id }, context );
+    _.set( entity, refEntity.foreignKeys, refIds );
     const args = _.set( {}, this.entity.singular, entity );
     await this.resolver.saveEntity( this.entity, {}, args, context );
   }

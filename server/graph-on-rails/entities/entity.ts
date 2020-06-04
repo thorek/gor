@@ -57,10 +57,12 @@ export abstract class Entity {
   get typeName(){ return this.getTypeName() }
   get attributes() { return this.getAttributes() }
   get belongsTo() { return this.getBelongsTo() }
+  get belongsToMany() { return this.getBelongsToMany() }
   get hasMany() { return this.getHasMany() }
   get singular() { return this.getSingular() }
   get plural() { return this.getPlural() }
   get foreignKey() { return this.getForeignKey() }
+  get foreignKeys() { return this.getForeignKeys() }
   get inputName() { return this.getInputName() }
   get filterName() { return this.getFilterName() }
   get collection() { return this.getCollection() }
@@ -77,13 +79,15 @@ export abstract class Entity {
 	protected getSingular() { return `${_.toLower(this.typeName.substring(0,1))}${this.typeName.substring(1)}` }
   protected getPlural() { return inflection.pluralize( this.singular ) }
   protected getForeignKey() { return `${this.singular}Id` }
+  protected getForeignKeys() { return `${this.singular}Ids` }
   protected getInputName() { return `${this.typeName}Input` }
   protected getFilterName() { return `${this.typeName}Filter` }
   protected getCollection() { return this.plural }
   protected getLabel() { return inflection.titleize(  this.plural )  }
   protected getPath() { return this.plural }
 	protected getAttributes():{[name:string]:TypeAttribute} { return {} };
-	protected getBelongsTo(): EntityReference[] { return [] }
+  protected getBelongsTo(): EntityReference[] { return [] }
+  protected getBelongsToMany(): EntityReference[] { return [] }
 	protected getHasMany(): EntityReference[] { return [] }
   protected getParent():string | null { return null }
   protected getEnum():{[name:string]:{[key:string]:string}} { return {} }
