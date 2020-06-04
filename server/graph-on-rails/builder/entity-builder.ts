@@ -142,8 +142,8 @@ export class EntityBuilder extends SchemaBuilder {
     const refEntity = this.graphx.entities[ref.type];
     const refObjectType = this.graphx.type(refEntity.typeName);
     return _.set( fields, refEntity.plural, {
-      type: refObjectType,
-      resolve: (root:any, args:any, context:any ) => this.resolver.resolveRefType( refEntity, root, args, context )
+      type: new GraphQLList( refObjectType),
+      resolve: (root:any, args:any, context:any ) => this.resolver.resolveBelongsToManyTypes( this.entity, refEntity, root, args, context )
     });
   }
 
@@ -162,7 +162,7 @@ export class EntityBuilder extends SchemaBuilder {
     const refObjectType = this.graphx.type(refEntity.typeName)
     return _.set( fields, refEntity.plural, {
       type: new GraphQLList( refObjectType ),
-      resolve: (root:any, args:any, context:any ) => this.resolver.resolveBelongsToManyTypes( this.entity, refEntity, root, args, context )
+      resolve: (root:any, args:any, context:any ) => this.resolver.resolveRefTypes( this.entity, refEntity, root, args, context )
     });
   }
 

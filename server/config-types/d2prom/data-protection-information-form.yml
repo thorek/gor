@@ -1,0 +1,9 @@
+entity:
+  DataProtectionInformationForm:
+    attributes:
+      name: string
+    seeds:
+      aushang:
+        name: Aushang
+      website:
+        name: Website

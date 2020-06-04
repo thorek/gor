@@ -47,14 +47,13 @@ describe('Relations', () => {
     const a3 = _.first( await alpha.resolver.resolveTypes( alpha, {}, { filter: { name: { eq: "a3" } } }, {} ) );
     const g2 = await accessor.getItemFromBelongsToChain( { entity:alpha, item:a3 }, "Delta.Gamma", {} );
     expect( g2.name ).toEqual("g2");
-  });
+  })
 
   it('should recognice belongsToMany', async () => {
     const phi = gor.graphx.entities['Phi'];
     const expected = { type: 'Chi' }
     expect( _.first(phi.belongsToMany) ).toEqual( expected );
-    const chiFilter = gor.graphx.type("ChiFilter");
-  });
+  })
 
   it('should find adjective belongsToMany', async ()=> {
     const phi = gor.graphx.entities['Phi'];

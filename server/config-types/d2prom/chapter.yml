@@ -1,0 +1,18 @@
+entity:
+  Chapter:
+    attributes:
+      name: string
+    hasMany:
+      - ProcessingActivity
+    belongsToMany:
+      - DataProtectionInformationForm
+    seeds:
+      c1:
+        name: Chapter 1
+        DataProtectionInformationForm:
+          - aushang
+          - website
+      c2:
+        name: Chapter 2
+        DataProtectionInformationForm:
+          - website
