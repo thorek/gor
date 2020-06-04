@@ -6,9 +6,9 @@ import { Seeder } from '../graph-on-rails/core/seeder';
 import { Entity } from '../graph-on-rails/entities/entity';
 import { EntityAccessor } from '../graph-on-rails/entities/entity-accessor';
 
-describe('Relations', () => {
+xdescribe('Relations', () => {
 
-  let gor:Gor|null = null;
+  let gor!:Gor;
   let alpha:Entity, beta:Entity, delta:Entity, gamma:Entity;
   const accessor = new EntityAccessor();
 
@@ -27,7 +27,7 @@ describe('Relations', () => {
 
   it('should find entities', () => {
     expect( alpha ).toBeDefined();
-    const foo = gor?.graphx.entities['Foo'];
+    const foo = gor.graphx.entities['Foo'];
     expect( foo ).toBeUndefined();
   })
 

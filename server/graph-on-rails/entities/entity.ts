@@ -53,25 +53,24 @@ export abstract class Entity {
     this.entitySeeder = this.gorContext.entitySeeder( this );
   }
 
-
-  readonly name = this.getName();
-  readonly typeName = this.getTypeName();
-  readonly attributes = this.getAttributes();
-  readonly belongsTo = this.getBelongsTo();
-  readonly hasMany = this.getHasMany();
-  readonly singular = this.getSingular();
-  readonly plural = this.getPlural();
-  readonly foreignKey = this.getForeignKey();
-  readonly inputName = this.getInputName();
-  readonly filterName = this.getFilterName();
-  readonly collection = this.getCollection();
-  readonly label = this.getLabel();
-  readonly path = this.getPath();
-  readonly parent = this.getParent();
-  readonly enum = this.getEnum();
-  readonly seeds = this.getSeeds();
-  readonly permissions = this.getPermissions();
-  readonly equality = this.getEquality();
+  get name() { return this.getName() }
+  get typeName(){ return this.getTypeName() }
+  get attributes() { return this.getAttributes() }
+  get belongsTo() { return this.getBelongsTo() }
+  get hasMany() { return this.getHasMany() }
+  get singular() { return this.getSingular() }
+  get plural() { return this.getPlural() }
+  get foreignKey() { return this.getForeignKey() }
+  get inputName() { return this.getInputName() }
+  get filterName() { return this.getFilterName() }
+  get collection() { return this.getCollection() }
+  get label() { return this.getLabel() }
+  get path() { return this.getPath() }
+  get parent() { return this.getParent() }
+  get enum() { return this.getEnum() }
+  get seeds() { return this.getSeeds() }
+  get permissions() { return this.getPermissions() }
+  get equality() { return this.getEquality() }
 
   protected abstract getName():string;
 	protected getTypeName() { return inflection.camelize( this.name ) }

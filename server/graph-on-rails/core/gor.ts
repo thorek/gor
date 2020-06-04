@@ -7,12 +7,13 @@ import path from 'path';
 import YAML from 'yaml';
 
 import { EntityBuilder } from '../builder/entity-builder';
+import { EnumConfigBuilder } from '../builder/enum-config-builder';
 import { SchemaBuilder } from '../builder/schema-builder';
 import { ConfigEntity } from '../entities/config-entity';
 import { Entity } from '../entities/entity';
+import { GorContext } from './gor-context';
 import { GraphX } from './graphx';
 import { SchemaFactory } from './schema-factory';
-import { GorContext } from './gor-context';
 
 
 /**
@@ -65,12 +66,11 @@ export class Gor {
    */
   private builders() {
     if( this._builders ) return this._builders;
-    const entities = this.initEntities();
-    const entityBuilders = _.map( entities, entity => new EntityBuilder( entity ) );
+    const domainBuilders = this.getDomainBuilders();
     const defaultFilterBuilders = this.getScalarFilterBuilder();
     this._builders = [
       ...defaultFilterBuilders,
-      ...entityBuilders
+      ...domainBuilders
     ];
     return this._builders;
   }
@@ -78,16 +78,21 @@ export class Gor {
   /**
    *
    */
-  private initEntities():Entity[] {
+  private getDomainBuilders():SchemaBuilder[] {
     const entities = _.concat( this.getConfigEntities(), this.customEntities );
-    _.forEach( entities, entity => entity.init( this.graphx ));
-    return entities;
+    return _.map( entities, entity => {
+      if( entity instanceof Entity ) {
+        entity.init( this.graphx );
+        return new EntityBuilder( entity );
+      }
+      return entity;
+    });
   }
 
   /**
    *
    */
-  private getConfigEntities():Entity[] {
+  private getConfigEntities():(Entity|SchemaBuilder)[] {
     return _.flatten( _.map( this.configs, (context, folder) => {
       const files = this.getConfigFiles( folder );
       return _.compact( _.flatten( _.map( files, file => this.createConfigurationTypes( folder, file, context ) ) ) );
@@ -125,16 +130,15 @@ export class Gor {
   /**
    *
    */
-  private createConfigurationTypes( folder:string, file:string, gorContext:GorContext ):Entity[] {
-    const builder:ConfigEntity[] = [];
+  private createConfigurationTypes( folder:string, file:string, gorContext:GorContext ):(Entity|SchemaBuilder)[] {
+    const builder:(ConfigEntity|EnumConfigBuilder)[] = [];
     try {
       file = path.join( folder, file );
       const content = fs.readFileSync( file).toString();
       const configs = YAML.parse(content);
-      if( _.get( configs, "entity.Client.permissions" ) ) console.log( configs.entity.Client )
       builder.push( ... _.map( configs['entity'], (entityConfig, name) => ConfigEntity.create(
         name, gorContext, entityConfig ) ) );
-      builder.push( ... _.map( configs['enum'], (enumConfig, name) => ConfigEntity.create(
+      builder.push( ... _.map( configs['enum'], (enumConfig, name) => EnumConfigBuilder.create(
         name, gorContext, enumConfig ) ) );
     } catch ( e ){
       console.warn( `[${file}]: ${e}`);

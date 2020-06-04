@@ -11,7 +11,7 @@ import {
 import _ from 'lodash';
 
 import { GraphX } from '../core/graphx';
-import { Entity, EntityReference } from '../entities/entity';
+import { Entity, EntityReference, TypeAttribute } from '../entities/entity';
 import { SchemaBuilder } from './schema-builder';
 
 //
@@ -20,6 +20,7 @@ export class EntityBuilder extends SchemaBuilder {
 
   name() { return this.entity.name }
   get resolver() { return this.entity.gorContext.resolver() }
+  attributes():{[name:string]:TypeAttribute} { return this.entity.attributes };
 
 	//
 	//
@@ -139,7 +140,7 @@ export class EntityBuilder extends SchemaBuilder {
   //
   private checkReference( direction:'belongsTo'|'hasMany', ref:EntityReference ):boolean {
     const refEntity = this.graphx.entities[ref.type];
-    if( ! (refEntity instanceof EntityBuilder) ) {
+    if( ! (refEntity instanceof Entity ) ) {
       console.warn( `'${this.entity.typeName}:${direction}': no such entity type '${ref.type}'` );
       return false;
     }

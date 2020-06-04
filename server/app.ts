@@ -5,12 +5,8 @@ import express from 'express';
 import { createServer } from 'http';
 
 import { OrganisationalUnit } from './custom-types/organisational-unit';
-import { MongoDbResolver } from './graph-on-rails-mongodb/mongodb.resolver';
-import { EntityBuilder } from './graph-on-rails/builder/entity-builder';
 import { Gor } from './graph-on-rails/core/gor';
-import { EntityPermissions } from './graph-on-rails/entities/entity-permissions';
-import { ValidateJs } from './graph-on-rails/validation/validate-js';
-import { GorContext } from 'graph-on-rails/core/gor-context';
+import { GorContext } from './graph-on-rails/core/gor-context';
 
 (async () => {
 

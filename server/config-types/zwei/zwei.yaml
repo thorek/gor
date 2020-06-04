@@ -1,0 +1,11 @@
+enum:
+  ZweiStatus:
+    DRAFT: draft
+    ACTIVE: active
+    INACTIVE: inactive
+
+entity:
+  Zwei:
+    attributes:
+      name: string
+      status: ZweiStatus
