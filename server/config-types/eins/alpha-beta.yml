@@ -4,8 +4,8 @@ entity:
       - Alpha
       - Beta
     same:
-      Delta:  # weil groß - foreignKey of Type, same as deltaId except check Delta exists
-        - Alpha.Beta
+      Delta:
+        - Alpha
         - Beta
     seeds:
       ab11:

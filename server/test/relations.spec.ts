@@ -1,37 +1,37 @@
+import { printSchema } from 'graphql';
 import _ from 'lodash';
 
 import { Gor } from '../graph-on-rails/core/gor';
 import { GorContext } from '../graph-on-rails/core/gor-context';
 import { Seeder } from '../graph-on-rails/core/seeder';
-import { Entity } from '../graph-on-rails/entities/entity';
 import { EntityAccessor } from '../graph-on-rails/entities/entity-accessor';
 
 describe('Relations', () => {
 
   let gor!:Gor;
-  let alpha:Entity, beta:Entity, delta:Entity, gamma:Entity;
   const accessor = new EntityAccessor();
 
   beforeAll( async () => {
     gor = new Gor();
-
     const context = await GorContext.create("test-relations");
     gor.addConfigs( './config-types/eins', context );
     await gor.server({});
     await Seeder.create(_.values( gor.graphx.entities ) ).seed( true, {} );
-    alpha = gor.graphx.entities['Alpha'];
-    beta = gor.graphx.entities['Beta'];
-    delta = gor.graphx.entities['Delta'];
-    gamma = gor.graphx.entities['Gamma'];
+  })
+
+  xit( 'should print the schema', async ()=> {
+    console.log( printSchema( await gor.schema() ) );
   })
 
   it('should find entities', () => {
+    const alpha = gor.graphx.entities['Alpha'];
     expect( alpha ).toBeDefined();
     const foo = gor.graphx.entities['Foo'];
     expect( foo ).toBeUndefined();
   })
 
   it('should find items', async () => {
+    const alpha = gor.graphx.entities['Alpha'];
     const a1 = await alpha.resolver.resolveTypes( alpha, {}, { filter: { name: { eq: "a1" } } }, {} );
     expect( a1 ).toHaveLength(1);
     const arr = await alpha.resolver.resolveTypes( alpha, {}, { filter: { name: { contains: "a" } } }, {} );
@@ -41,6 +41,7 @@ describe('Relations', () => {
   })
 
   it( 'finds items along a assocToChain', async () =>{
+    const alpha = gor.graphx.entities['Alpha'];
     const a1 = _.first( await alpha.resolver.resolveTypes( alpha, {}, { filter: { name: { eq: "a1" } } }, {} ) );
     const d1 = await accessor.getItemFromAssocToChain( { entity:alpha, item:a1}, "Delta", {} );
     expect( d1.name ).toEqual("d1");
@@ -82,7 +83,7 @@ describe('Relations', () => {
 
   it('shoud resolve assocFrom - advers of assocToMany', async ()=> {
     const chi = gor.graphx.entities['Chi'];
-    const chi1 = _.first( await delta.resolver.resolveTypes( chi, {}, { filter: { name: { eq: "chi1" } } }, {} ) );
+    const chi1 = _.first( await chi.resolver.resolveTypes( chi, {}, { filter: { name: { eq: "chi1" } } }, {} ) );
 
     const phi = gor.graphx.entities['Phi'];
     const phis = await chi.resolver.resolveAssocFromTypes( chi, phi, { id: chi1.id }, {}, {} );
