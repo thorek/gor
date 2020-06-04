@@ -103,11 +103,19 @@ export abstract class Entity {
    *
    */
   isAssocToAttribute( attribute:string ):boolean {
-    return _.find( this.assocTo, bt => {
-      const ref = this.graphx.entities[bt.type];
+    return _.find( this.assocTo, assocTo => {
+      const ref = this.graphx.entities[assocTo.type];
       return ref && ref.foreignKey === attribute;
     }) != null;
   }
+
+  /**
+   *
+   */
+  isAssocToMany( ref:Entity ):boolean {
+    return _.find( this.assocToMany, assocToMany => assocToMany.type === ref.typeName ) != undefined;
+  }
+
 
   /**
    *

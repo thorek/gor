@@ -132,7 +132,7 @@ export class EntityBuilder extends SchemaBuilder {
     const refObjectType = this.graphx.type(refEntity.typeName);
     return _.set( fields, refEntity.singular, {
       type: refObjectType,
-      resolve: (root:any, args:any, context:any ) => this.resolver.resolveRefType( refEntity, root, args, context )
+      resolve: (root:any, args:any, context:any ) => this.resolver.resolveAssocToType( refEntity, root, args, context )
     });
   }
 
@@ -150,7 +150,7 @@ export class EntityBuilder extends SchemaBuilder {
 	//
 	//
 	protected addAssocFrom():void {
-    const assocFrom = _.filter( this.entity.assocFrom, hm => this.checkReference( 'assocFrom', hm ) );
+    const assocFrom = _.filter( this.entity.assocFrom, assocFrom => this.checkReference( 'assocFrom', assocFrom ) );
 		this.graphx.type(this.entity.typeName).extend(
       () => _.reduce( assocFrom, (fields, ref) => this.addAssocFromReferenceToType( fields, ref ), {} ));
   }
@@ -162,7 +162,7 @@ export class EntityBuilder extends SchemaBuilder {
     const refObjectType = this.graphx.type(refEntity.typeName)
     return _.set( fields, refEntity.plural, {
       type: new GraphQLList( refObjectType ),
-      resolve: (root:any, args:any, context:any ) => this.resolver.resolveRefTypes( this.entity, refEntity, root, args, context )
+      resolve: (root:any, args:any, context:any ) => this.resolver.resolveAssocFromTypes( this.entity, refEntity, root, args, context )
     });
   }
 

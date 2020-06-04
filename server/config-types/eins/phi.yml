@@ -13,7 +13,7 @@ entity:
       phi2:
         name: phi2
         Chi:
-          - chi2
+          - chi1
       phi3:
         name: phi3
         Chi:

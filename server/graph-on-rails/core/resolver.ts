@@ -20,12 +20,12 @@ export abstract class Resolver {
   /**
    *
    */
-  abstract resolveRefType( refType:Entity, root:any, args:any, context:any ):Promise<any>;
+  abstract resolveAssocToType( refType:Entity, root:any, args:any, context:any ):Promise<any>;
 
   /**
    *
    */
-  abstract resolveRefTypes( entity:Entity, refType:Entity, root:any, args:any, context:any ):Promise<any[]>;
+  abstract resolveAssocFromTypes( entity:Entity, refType:Entity, root:any, args:any, context:any ):Promise<any[]>;
 
   /**
    *

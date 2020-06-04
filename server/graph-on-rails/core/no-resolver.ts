@@ -29,7 +29,7 @@ export class NoResolver extends Resolver {
   /**
    *
    */
-  async resolveRefType( entity:Entity, root:any, args:any ):Promise<any> {
+  async resolveAssocToType( entity:Entity, root:any, args:any ):Promise<any> {
     console.warn(`no resolver specified to resolve reference type '${entity.name}'`);
     return {};
   }
@@ -37,7 +37,7 @@ export class NoResolver extends Resolver {
   /**
    *
    */
-  async resolveRefTypes( entity:Entity, refType:Entity, root:any, args:any ):Promise<any[]> {
+  async resolveAssocFromTypes( entity:Entity, refType:Entity, root:any, args:any ):Promise<any[]> {
     console.warn(`no resolver specified to resolve reference types for '${entity.name}'`);
     return [{}];
   }

@@ -81,7 +81,7 @@ export class MongoDbResolver extends Resolver {
   /**
    *
    */
-  async resolveRefType( refType:Entity, root:any, args:any, context:any ):Promise<any> {
+  async resolveAssocToType( refType:Entity, root:any, args:any, context:any ):Promise<any> {
     const collection = this.getCollection( refType );
     const id = this.getObjectId( _.get( root, refType.foreignKey ), refType );
 		const item = await collection.findOne( id );
@@ -91,9 +91,10 @@ export class MongoDbResolver extends Resolver {
   /**
    *
    */
-  async resolveRefTypes( entity:Entity, refType:Entity, root:any, args:any, context:any ):Promise<any[]> {
+  async resolveAssocFromTypes( entity:Entity, refType:Entity, root:any, args:any, context:any ):Promise<any[]> {
     const collection = this.getCollection( refType );
-    const filter = _.set( {}, [entity.foreignKey], _.toString( root.id ) );
+    const attr = refType.isAssocToMany( entity ) ? entity.foreignKeys : entity.foreignKey;
+    const filter = _.set({}, attr, _.toString(root.id) );
 		const items = await collection.find( filter ).toArray();
 		return _.map( items, item => this.buildOutItem( item ) );
   }

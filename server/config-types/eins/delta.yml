@@ -4,6 +4,8 @@ entity:
       name: string
     assocTo:
       - Gamma
+    assocFrom:
+      - Alpha
     seeds:
       d1:
         name: d1

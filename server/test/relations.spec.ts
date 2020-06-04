@@ -55,19 +55,38 @@ describe('Relations', () => {
     expect( _.first(phi.assocToMany) ).toEqual( expected );
   })
 
-  it('should find adjective assocToMany', async ()=> {
+  it('should find assocToMany', async ()=> {
     const phi = gor.graphx.entities['Phi'];
     const phi1 = _.first( await phi.resolver.resolveTypes( phi, {}, { filter: { name: { eq: "phi1" } } }, {} ) );
     expect( phi1.chiIds ).toHaveLength( 2 );
+  })
 
-    const phi2 = _.first( await phi.resolver.resolveTypes( phi, {}, { filter: { name: { eq: "phi2" } } }, {} ) );
-    expect( phi2.chiIds ).toHaveLength( 1 );
+  it( 'should resolve assocTo', async () => {
+    const delta = gor.graphx.entities['Delta'];
+    const d1 = _.first( await delta.resolver.resolveTypes( delta, {}, { filter: { name: { eq: "d1" } } }, {} ) );
+    const deltaId = d1.id;
+    expect( deltaId ).toBeDefined();
+    const alpha = gor.graphx.entities['Alpha'];
+    const d2 = await alpha.resolver.resolveAssocToType( delta, {deltaId}, {}, {} );
+    expect( d2 ).toEqual( d1 );
+  })
 
+  it('shoud resolve assocFrom - advers of assocTo', async ()=> {
+    const delta = gor.graphx.entities['Delta'];
+    const d1 = _.first( await delta.resolver.resolveTypes( delta, {}, { filter: { name: { eq: "d1" } } }, {} ) );
+
+    const alpha = gor.graphx.entities['Alpha'];
+    const alphas = await delta.resolver.resolveAssocFromTypes( delta, alpha, { id: d1.id }, {}, {} );
+    expect( alphas ).toHaveLength( 2 );
+  })
+
+  it('shoud resolve assocFrom - advers of assocToMany', async ()=> {
     const chi = gor.graphx.entities['Chi'];
-    const chi1 = _.first( await chi.resolver.resolveTypes( chi, {}, { filter: { name: { eq: "chi1" } } }, {} ) );
-    expect( chi1.phiIds ).toHaveLength( 3 );
-    const chi2 = _.first( await chi.resolver.resolveTypes( chi, {}, { filter: { name: { eq: "chi2" } } }, {} ) );
-    expect( chi2.phiIds ).toBeUndefined();
+    const chi1 = _.first( await delta.resolver.resolveTypes( chi, {}, { filter: { name: { eq: "chi1" } } }, {} ) );
+
+    const phi = gor.graphx.entities['Phi'];
+    const phis = await chi.resolver.resolveAssocFromTypes( chi, phi, { id: chi1.id }, {}, {} );
+    expect( phis ).toHaveLength( 2 );
   })
 
 })
