@@ -7,5 +7,5 @@ entity:
         type: string
       color: string
       fuel: Fuel
-    belongsTo:
+    assocTo:
       - Person

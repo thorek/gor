@@ -2,9 +2,9 @@ entity:
   Chapter:
     attributes:
       name: string
-    hasMany:
+    assocFrom:
       - ProcessingActivity
-    belongsToMany:
+    assocToMany:
       - DataProtectionInformationForm
     seeds:
       c1:

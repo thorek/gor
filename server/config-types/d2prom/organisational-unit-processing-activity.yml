@@ -1,6 +1,6 @@
 entity:
   OrganisationalUnitProcessingActivity:
-    belongsTo:
+    assocTo:
       - type: ProcessingActivity
         required: true
       - type: OrganisationalUnit

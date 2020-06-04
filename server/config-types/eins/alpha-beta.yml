@@ -1,6 +1,6 @@
 entity:
   AlphaBeta:
-    belongsTo:
+    assocTo:
       - Alpha
       - Beta
     same:

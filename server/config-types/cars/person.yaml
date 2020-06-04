@@ -6,7 +6,7 @@ entity:
       birthdate: String
       gender: Gender
       age: Int
-    hasMany:
+    assocFrom:
       - type: Address
       - type: Car
     enum:

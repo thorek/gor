@@ -18,7 +18,7 @@ export class OrganisationalUnit extends Entity {
         "length": { minimum: 10, maximum: 100 }
       }}
 	}}
-	getBelongsTo() { return [
+	getAssocTo() { return [
 		{ type: 'Organisation' }
 	]}
   getSeeds() {

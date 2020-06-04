@@ -2,6 +2,6 @@ entity:
   DataSubject:
     attributes:
       description: string
-    belongsTo:
+    assocTo:
       - DataAtom
       - PersonCategory

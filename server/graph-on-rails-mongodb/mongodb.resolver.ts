@@ -101,7 +101,7 @@ export class MongoDbResolver extends Resolver {
   /**
    *
    */
-  async resolveBelongsToManyTypes( entity:Entity, refType:Entity, root:any, args:any, context:any ):Promise<any[]> {
+  async resolveAssocToManyTypes( entity:Entity, refType:Entity, root:any, args:any, context:any ):Promise<any[]> {
     const collection = this.getCollection( refType );
     const foreignKeys = _.map( _.get( root, refType.foreignKeys ), foreignKey => new ObjectId( foreignKey ) );
     const filter = { _id: { $in: foreignKeys } };
@@ -251,9 +251,9 @@ export class MongoDbResolver extends Resolver {
   /**
    *
    */
-  async getPermittedIdsForForeignKeys( entity:Entity, belongsTo:string, foreignKeys:any[] ):Promise<number[]> {
+  async getPermittedIdsForForeignKeys( entity:Entity, assocTo:string, foreignKeys:any[] ):Promise<number[]> {
     foreignKeys = _.map( foreignKeys, key => key.toString() );
-    const expression = _.set({}, belongsTo, { $in: foreignKeys } );
+    const expression = _.set({}, assocTo, { $in: foreignKeys } );
     const result = await this.query( entity, expression );
     return _.map( result, item => _.get(item, '_id' ) );
   }
@@ -286,7 +286,7 @@ export class MongoDbResolver extends Resolver {
    */
   private resolvePermissionValue( entity:Entity, attribute:string, value:any, context:any ):any {
     value = _.get( context, value, value );
-    return attribute === '_id' || entity.isBelongsToAttribute( attribute ) ? new ObjectId( value ) : value;
+    return attribute === '_id' || entity.isAssocToAttribute( attribute ) ? new ObjectId( value ) : value;
   }
 
   /**

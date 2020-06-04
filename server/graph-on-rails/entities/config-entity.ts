@@ -18,9 +18,9 @@ export type EntityConfig  = {
   typeName?:string;
 
   attributes?:{[name:string]:string|AttributeConfig};
-  belongsTo?:[string|{type:string}];
-  belongsToMany?:[string|{type:string}];
-  hasMany?:string[];
+  assocTo?:[string|{type:string}];
+  assocToMany?:[string|{type:string}];
+  assocFrom?:string[];
 
 	plural?:string
 	singular?:string;
@@ -67,25 +67,25 @@ export class ConfigEntity extends Entity {
       return _.isString(attr) ? { type: attr } : attr;
     });
   }
-	protected getBelongsTo() {
-    if( ! this.entityConfig.belongsTo ) return super.getBelongsTo();
-    return _.map( this.entityConfig.belongsTo, bt => {
+	protected getAssocTo() {
+    if( ! this.entityConfig.assocTo ) return super.getAssocTo();
+    return _.map( this.entityConfig.assocTo, bt => {
       return _.isString(bt) ? { type: bt } : bt;
     });
   }
-	protected getBelongsToMany() {
-    if( ! this.entityConfig.belongsToMany ) return super.getBelongsToMany();
-    return _.map( this.entityConfig.belongsToMany, bt => {
+	protected getAssocToMany() {
+    if( ! this.entityConfig.assocToMany ) return super.getAssocToMany();
+    return _.map( this.entityConfig.assocToMany, bt => {
       return _.isString(bt) ? { type: bt } : bt;
     });
   }
-  protected getHasMany(){
-    if( ! this.entityConfig.hasMany ) return super.getHasMany();
-    if( ! _.isArray( this.entityConfig.hasMany ) ){
-      console.warn(`'${this.name}' hasMany must be an array but is: `, this.entityConfig.hasMany );
-      return super.getHasMany();
+  protected getAssocFrom(){
+    if( ! this.entityConfig.assocFrom ) return super.getAssocFrom();
+    if( ! _.isArray( this.entityConfig.assocFrom ) ){
+      console.warn(`'${this.name}' assocFrom must be an array but is: `, this.entityConfig.assocFrom );
+      return super.getAssocFrom();
     }
-    return _.map( this.entityConfig.hasMany, hm => {
+    return _.map( this.entityConfig.assocFrom, hm => {
       return _.isString(hm) ? { type: hm } : hm;
     });
    }
@@ -104,6 +104,6 @@ export class ConfigEntity extends Entity {
   protected getEquality() {
     const sr = this.entityConfig.equality;
     if( ! sr ) return super.getEquality();
-    return _.isString( sr ) ? _.set( {}, sr, _.map( this.belongsTo, bt => bt.type ) ) : sr;
+    return _.isString( sr ) ? _.set( {}, sr, _.map( this.assocTo, bt => bt.type ) ) : sr;
   }
 }

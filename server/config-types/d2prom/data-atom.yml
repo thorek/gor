@@ -2,8 +2,8 @@ entity:
   DataAtom:
     attributes:
       description: string
-    hasMany:
+    assocFrom:
       - ProcessedData
       - DataSubject
-    belongsTo:
+    assocTo:
       - ProcessingActivity

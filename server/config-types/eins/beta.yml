@@ -2,7 +2,7 @@ entity:
   Beta:
     attributes:
       name: string
-    belongsTo:
+    assocTo:
       - Delta
     seeds:
       b1:

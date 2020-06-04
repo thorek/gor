@@ -10,9 +10,9 @@ entity:
       name: string
       description: string
       status: ProcessingActivityStatus
-    hasMany:
+    assocFrom:
       - OrganisationalUnitProcessingActivity
-    belongsTo:
+    assocTo:
       - Organisation
       - AutomatedDescisionMaking
     seeds:

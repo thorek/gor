@@ -2,10 +2,10 @@ entity:
   Organisation:
     attributes:
       name: string
-    hasMany:
+    assocFrom:
       - OrganisationalUnit
       - ProcessingActivity
-    belongsTo:
+    assocTo:
       - Client
 
 

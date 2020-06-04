@@ -2,7 +2,7 @@ entity:
   Delta:
     attributes:
       name: string
-    belongsTo:
+    assocTo:
       - Gamma
     seeds:
       d1:

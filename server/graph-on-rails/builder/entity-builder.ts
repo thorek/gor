@@ -70,9 +70,9 @@ export class EntityBuilder extends SchemaBuilder {
 	//
 	//
 	addReferences():void {
-    this.addBelongsTo();
-    this.addBelongsToMany();
-		this.addHasMany();
+    this.addAssocTo();
+    this.addAssocToMany();
+		this.addAssocFrom();
 	}
 
 	//
@@ -92,42 +92,42 @@ export class EntityBuilder extends SchemaBuilder {
 
 	//
 	//
-	protected addBelongsTo():void {
-    const belongsTo = _.filter( this.entity.belongsTo, bt => this.checkReference( 'belongsTo', bt ) );
+	protected addAssocTo():void {
+    const assocTo = _.filter( this.entity.assocTo, bt => this.checkReference( 'assocTo', bt ) );
 		this.graphx.type(this.entity.typeName).extend(
-      () => _.reduce( belongsTo, (fields, ref) => this.addBelongsToReferenceToType( fields, ref ), {} ));
+      () => _.reduce( assocTo, (fields, ref) => this.addAssocToReferenceToType( fields, ref ), {} ));
     this.graphx.type(this.entity.inputName).extend(
-      () => _.reduce( belongsTo, (fields, ref) => this.addBelongsToForeignKeyToInput( fields, ref ), {} ));
+      () => _.reduce( assocTo, (fields, ref) => this.addAssocToForeignKeyToInput( fields, ref ), {} ));
   }
 
 	//
 	//
-	protected addBelongsToMany():void {
-    const belongsToMany = _.filter( this.entity.belongsToMany, bt => this.checkReference( 'belongsTo', bt ) );
+	protected addAssocToMany():void {
+    const assocToMany = _.filter( this.entity.assocToMany, bt => this.checkReference( 'assocTo', bt ) );
 		this.graphx.type(this.entity.typeName).extend(
-      () => _.reduce( belongsToMany, (fields, ref) => this.addBelongsToManyReferenceToType( fields, ref ), {} ));
+      () => _.reduce( assocToMany, (fields, ref) => this.addAssocToManyReferenceToType( fields, ref ), {} ));
     this.graphx.type(this.entity.inputName).extend(
-      () => _.reduce( belongsToMany, (fields, ref) => this.addBelongsToManyForeignKeysToInput( fields, ref ), {} ));
+      () => _.reduce( assocToMany, (fields, ref) => this.addAssocToManyForeignKeysToInput( fields, ref ), {} ));
 	}
 
 
   //
   //
-  private addBelongsToForeignKeyToInput( fields:any, ref:EntityReference ):any {
+  private addAssocToForeignKeyToInput( fields:any, ref:EntityReference ):any {
     const refEntity = this.graphx.entities[ref.type];
     return _.set( fields, refEntity.foreignKey, { type: GraphQLID });
   }
 
   //
   //
-  private addBelongsToManyForeignKeysToInput( fields:any, ref:EntityReference ):any {
+  private addAssocToManyForeignKeysToInput( fields:any, ref:EntityReference ):any {
     const refEntity = this.graphx.entities[ref.type];
     return _.set( fields, refEntity.foreignKeys, { type: GraphQLList( GraphQLID ) });
   }
 
   //
   //
-  private addBelongsToReferenceToType( fields:any, ref:EntityReference ):any {
+  private addAssocToReferenceToType( fields:any, ref:EntityReference ):any {
     const refEntity = this.graphx.entities[ref.type];
     const refObjectType = this.graphx.type(refEntity.typeName);
     return _.set( fields, refEntity.singular, {
@@ -138,26 +138,26 @@ export class EntityBuilder extends SchemaBuilder {
 
   //
   //
-  private addBelongsToManyReferenceToType( fields:any, ref:EntityReference ):any {
+  private addAssocToManyReferenceToType( fields:any, ref:EntityReference ):any {
     const refEntity = this.graphx.entities[ref.type];
     const refObjectType = this.graphx.type(refEntity.typeName);
     return _.set( fields, refEntity.plural, {
       type: new GraphQLList( refObjectType),
-      resolve: (root:any, args:any, context:any ) => this.resolver.resolveBelongsToManyTypes( this.entity, refEntity, root, args, context )
+      resolve: (root:any, args:any, context:any ) => this.resolver.resolveAssocToManyTypes( this.entity, refEntity, root, args, context )
     });
   }
 
 	//
 	//
-	protected addHasMany():void {
-    const hasMany = _.filter( this.entity.hasMany, hm => this.checkReference( 'hasMany', hm ) );
+	protected addAssocFrom():void {
+    const assocFrom = _.filter( this.entity.assocFrom, hm => this.checkReference( 'assocFrom', hm ) );
 		this.graphx.type(this.entity.typeName).extend(
-      () => _.reduce( hasMany, (fields, ref) => this.addHasManyReferenceToType( fields, ref ), {} ));
+      () => _.reduce( assocFrom, (fields, ref) => this.addAssocFromReferenceToType( fields, ref ), {} ));
   }
 
   //
   //
-  private addHasManyReferenceToType(fields:any, ref:EntityReference):any {
+  private addAssocFromReferenceToType(fields:any, ref:EntityReference):any {
     const refEntity = this.graphx.entities[ref.type];
     const refObjectType = this.graphx.type(refEntity.typeName)
     return _.set( fields, refEntity.plural, {
@@ -168,7 +168,7 @@ export class EntityBuilder extends SchemaBuilder {
 
   //
   //
-  private checkReference( direction:'belongsTo'|'hasMany', ref:EntityReference ):boolean {
+  private checkReference( direction:'assocTo'|'assocFrom', ref:EntityReference ):boolean {
     const refEntity = this.graphx.entities[ref.type];
     if( ! (refEntity instanceof Entity ) ) {
       console.warn( `'${this.entity.typeName}:${direction}': no such entity type '${ref.type}'` );

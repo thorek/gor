@@ -2,6 +2,6 @@ entity:
   ProcessedData:
     attributes:
       description: string
-    belongsTo:
+    assocTo:
       - DataAtom
       - DataCategory

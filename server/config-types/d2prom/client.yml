@@ -23,7 +23,7 @@ entity:
         type: string
         validation:
           email: true
-    hasMany:
+    assocFrom:
       - Organisation
 
 

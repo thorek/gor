@@ -14,9 +14,9 @@ entity:
         validation:
           unique: true
           email: true
-      belongsTo:
+      assocTo:
         - Client: required
-      hasMany:
+      assocFrom:
         - Organisation
 
 

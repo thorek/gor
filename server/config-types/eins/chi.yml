@@ -2,7 +2,7 @@ entity:
   Chi:
     attributes:
       name: string
-    belongsToMany:
+    assocToMany:
       - Phi
     seeds:
       chi1:

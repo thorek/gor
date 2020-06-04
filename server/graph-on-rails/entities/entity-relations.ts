@@ -18,7 +18,7 @@ export class EntityRelations {
   // protected async validateRelations(root: any, args: any, context:any  ):Promise<string[]> {
   //   const input = _.get( args, this.entity.singular );
   //   context.relatedEntities = {} as {[typeName:string]:any};  // to simple, wouldnt handle multiple relations to same type
-  //   let errors:string[] = await this.validateExistingBelongsTo( input, context );
+  //   let errors:string[] = await this.validateExistingAssocTo( input, context );
   //   if( _.size( errors ) ) return errors;
   //   errors.push( ...this.validateEqualities( input, context ) );
   //   errors.push( ...(await this.validateLockRelations( input, context )) );
@@ -26,9 +26,9 @@ export class EntityRelations {
   // }
 
   // /**
-  //  *  checks if all belongsTo foreignKeys in the input refer to an existing id of the belongsTo type
+  //  *  checks if all assocTo foreignKeys in the input refer to an existing id of the assocTo type
   //  */
-  // private async validateExistingBelongsTo( input:any, context:any ):Promise<string[]>{
+  // private async validateExistingAssocTo( input:any, context:any ):Promise<string[]>{
   //   const errors:string[] = [];
   //   for( const key of _.keys( input ) ){
   //     const entity = _.find( this.graphx.entities, entity => entity.entity.foreignKey === key );
@@ -59,7 +59,7 @@ export class EntityRelations {
   // private validateEqualValues( input:any, entityOrAttribute:EntityBuilder|string, types:string[], context:any ):string|undefined{
   //   const attribute = _.isString( entityOrAttribute ) ? entityOrAttribute : entityOrAttribute.entity.foreignKey;
   //   const values = _.uniq( _.map( types, typeChain => {
-  //     const item = this.accessor.getInstanceFromBelongsToChain( {entity: this, instance: input }, typeChain, context );
+  //     const item = this.accessor.getInstanceFromAssocToChain( {entity: this, instance: input }, typeChain, context );
   //     if( ! item ) return console.warn(`validate Relation could not resolve type '${typeChain}'`);
   //     return _.get( item, attribute );
   //   }));

@@ -30,7 +30,7 @@ export abstract class Resolver {
   /**
    *
    */
-  abstract resolveBelongsToManyTypes( entity:Entity, refType:Entity, root:any, args:any, context:any ):Promise<any[]>;
+  abstract resolveAssocToManyTypes( entity:Entity, refType:Entity, root:any, args:any, context:any ):Promise<any[]>;
 
   /**
    *
@@ -70,6 +70,6 @@ export abstract class Resolver {
   /**
    *
    */
-  abstract getPermittedIdsForForeignKeys( entity:Entity, belongsTo:string, foreignKeys:number[] ):Promise<number[]>;
+  abstract getPermittedIdsForForeignKeys( entity:Entity, assocTo:string, foreignKeys:number[] ):Promise<number[]>;
 
 }

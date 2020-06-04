@@ -2,5 +2,5 @@ entity:
   ProcessingActivityCategory:
     attributes:
       name: string
-    hasMany:
+    assocFrom:
       - ProcessingActivityChapter

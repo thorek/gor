@@ -12,7 +12,7 @@ export class AddressType extends Entity {
 			city: { type: "String" },
 			country: { type: "String" }
 	}}
-	getBelongsTo() { return [
+	getAssocTo() { return [
 		{ type: 'Person' }
 	]}
   getParent() { return "foo" }

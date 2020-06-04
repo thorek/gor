@@ -6,6 +6,10 @@ import { Resolver } from "./resolver";
  */
 export class NoResolver extends Resolver {
 
+  resolveAssocToManyTypes( entity: Entity, refType: Entity, root: any, args: any, context: any ): Promise<any[]> {
+    throw new Error( "Method not implemented." );
+  }
+
   /**
    *
    */
@@ -81,7 +85,7 @@ export class NoResolver extends Resolver {
   /**
    *
    */
-  async getPermittedIdsForForeignKeys( entity: Entity, belongsTo: string, foreignKeys: number[] ): Promise<number[]> {
+  async getPermittedIdsForForeignKeys( entity: Entity, assocTo: string, foreignKeys: number[] ): Promise<number[]> {
     console.warn(`no resolver specified to get permissions '${entity.name}'`);
     return [];
   }

@@ -49,7 +49,7 @@ export class EntityPermissions {
 
   /**
    *  @param permission if this is a string it will be handled as a reference to an action for the role
-   *  in this or a belongsTo entity. If it is an object it is delegated to the resolver to use to return the
+   *  in this or a assocTo entity. If it is an object it is delegated to the resolver to use to return the
    *  permitted ids
    */
   protected async getIdsForActionPermission( role:string, permission:string|object, context:any ):Promise<boolean|number[]> {
@@ -75,14 +75,14 @@ export class EntityPermissions {
   protected async getIdsForReference( role:string, permissionReference:string, context:any ):Promise<boolean|number[]> {
     const entityAction = _.split( permissionReference, '.' );
     const action = _.last( entityAction ) as string;
-    const entity = _.size( entityAction ) === 1 ? this.entity : this.getBelongsToEntity( _.first( entityAction ) );
-    return entity ? this.resolvePermittedIdsForBelongsTo( entity, role, action, context ) : false;
+    const entity = _.size( entityAction ) === 1 ? this.entity : this.getAssocToEntity( _.first( entityAction ) );
+    return entity ? this.resolvePermittedIdsForAssocTo( entity, role, action, context ) : false;
   }
 
   /**
    *
    */
-  private async resolvePermittedIdsForBelongsTo( entity:Entity, role:string, action:string, context:any ):Promise<boolean|number[]>{
+  private async resolvePermittedIdsForAssocTo( entity:Entity, role:string, action:string, context:any ):Promise<boolean|number[]>{
     const ids = await entity.entityPermissions.getPermittedIdsForRole( role, action as CrudAction, context );
     if( _.isBoolean( ids ) ) return ids;
     try {
@@ -97,10 +97,10 @@ export class EntityPermissions {
   /**
    *
    */
-  protected getBelongsToEntity( entity:undefined|string ):null|Entity {
-    const entityIsBelongsTo = _.find( this.entity.belongsTo, refEntity => refEntity.type === entity );
-    if( entityIsBelongsTo ) return this.entity.graphx.entities[ entity as string ];
-    console.warn(`'${entity}' is not a belongsTo of '${this.entity.name}'`);
+  protected getAssocToEntity( entity:undefined|string ):null|Entity {
+    const entityIsAssocTo = _.find( this.entity.assocTo, refEntity => refEntity.type === entity );
+    if( entityIsAssocTo ) return this.entity.graphx.entities[ entity as string ];
+    console.warn(`'${entity}' is not a assocTo of '${this.entity.name}'`);
     return null;
   }
 
@@ -114,7 +114,7 @@ export class EntityPermissions {
    *
    *    string - another role in this permissions to get the permitted ids
    *
-   *    (string|object)[] - string - get permissions from action in this or a belongsTo entity for the same role
+   *    (string|object)[] - string - get permissions from action in this or a assocTo entity for the same role
    *                      - object - create filter for query as described below
    *
    *  ### Filter for query:
@@ -141,7 +141,7 @@ export class EntityPermissions {
    *      attributes:
    *        name: string
    *        status: string
-   *      belongsTo:
+   *      assocTo:
    *        - Car
    *      permissions:
    *        admin: true                 # all actions, everything permitted
@@ -183,8 +183,8 @@ export class EntityPermissions {
    *              - open
    *              - draft
    *        roleH:
-   *          all: Car.read             # same as in Car.permissions.roleD.read (Car must be a belongsTo)
-   *                                    # permisions in Car could also delegate to another belongsTo entity
+   *          all: Car.read             # same as in Car.permissions.roleD.read (Car must be a assocTo)
+   *                                    # permisions in Car could also delegate to another assocTo entity
    *        roleI:
    *          create: false
    *          all:

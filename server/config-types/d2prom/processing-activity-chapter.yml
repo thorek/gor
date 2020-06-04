@@ -2,7 +2,7 @@ entity:
   ProcessingActivityChapter:
     attributes:
       name: string
-    hasMany:
+    assocFrom:
       - ProcessingActivity
-    belongsTo:
+    assocTo:
       - ProcessingActivityCategory

@@ -9,13 +9,13 @@ export type EntityItem = {
 export class EntityAccessor {
 
   /**
-   *  @returns the belongsTo EntityInstance
+   *  @returns the assocTo EntityInstance
    */
-  async getBelongsTo( ei:EntityItem, belongsTo:string, context:any ):Promise<EntityItem> {
-    const entity = ei.entity.graphx.entities[belongsTo];
-    if( ! entity ) throw new Error(`no such type '${belongsTo}'`);
+  async getAssocTo( ei:EntityItem, assocTo:string, context:any ):Promise<EntityItem> {
+    const entity = ei.entity.graphx.entities[assocTo];
+    if( ! entity ) throw new Error(`no such type '${assocTo}'`);
     const foreignKey = _.get( ei.item, entity.foreignKey );
-    if( ! foreignKey ) throw new Error(`no foreignKey for '${belongsTo}' in '${ei.entity.typeName}'`);
+    if( ! foreignKey ) throw new Error(`no foreignKey for '${assocTo}' in '${ei.entity.typeName}'`);
     const args = _.set({}, 'id', foreignKey );
     const item = await ei.entity.resolver.resolveType( entity, {}, args, context );
     return {entity, item};
@@ -24,11 +24,11 @@ export class EntityAccessor {
   /**
    *  returns the actual instance from a chain of types with sequential belongTo relations
    */
-  async getItemFromBelongsToChain( ei:EntityItem, typeNames: string, context: any ):Promise<any> {
+  async getItemFromAssocToChain( ei:EntityItem, typeNames: string, context: any ):Promise<any> {
     const typeChain = _.split( typeNames, '.' );
     try {
       for( const type of typeChain ){
-        ei = await this.getBelongsTo( ei, type, context );
+        ei = await this.getAssocTo( ei, type, context );
       }
       return ei.item;
     } catch (error) {

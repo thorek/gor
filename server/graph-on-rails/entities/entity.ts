@@ -56,9 +56,9 @@ export abstract class Entity {
   get name() { return this.getName() }
   get typeName(){ return this.getTypeName() }
   get attributes() { return this.getAttributes() }
-  get belongsTo() { return this.getBelongsTo() }
-  get belongsToMany() { return this.getBelongsToMany() }
-  get hasMany() { return this.getHasMany() }
+  get assocTo() { return this.getAssocTo() }
+  get assocToMany() { return this.getAssocToMany() }
+  get assocFrom() { return this.getAssocFrom() }
   get singular() { return this.getSingular() }
   get plural() { return this.getPlural() }
   get foreignKey() { return this.getForeignKey() }
@@ -86,9 +86,9 @@ export abstract class Entity {
   protected getLabel() { return inflection.titleize(  this.plural )  }
   protected getPath() { return this.plural }
 	protected getAttributes():{[name:string]:TypeAttribute} { return {} };
-  protected getBelongsTo(): EntityReference[] { return [] }
-  protected getBelongsToMany(): EntityReference[] { return [] }
-	protected getHasMany(): EntityReference[] { return [] }
+  protected getAssocTo(): EntityReference[] { return [] }
+  protected getAssocToMany(): EntityReference[] { return [] }
+	protected getAssocFrom(): EntityReference[] { return [] }
   protected getParent():string | null { return null }
   protected getEnum():{[name:string]:{[key:string]:string}} { return {} }
   protected getSeeds():{[name:string]:any} { return {} }
@@ -102,8 +102,8 @@ export abstract class Entity {
   /**
    *
    */
-  isBelongsToAttribute( attribute:string ):boolean {
-    return _.find( this.belongsTo, bt => {
+  isAssocToAttribute( attribute:string ):boolean {
+    return _.find( this.assocTo, bt => {
       const ref = this.graphx.entities[bt.type];
       return ref && ref.foreignKey === attribute;
     }) != null;

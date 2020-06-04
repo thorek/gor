@@ -48,11 +48,11 @@ export class EntitySeeder {
    */
   public async seedReferences( idsMap:any, context:any ):Promise<void> {
     await Promise.all( _.map( this.entity.seeds, async (seed, name) => {
-      await Promise.all( _.map( this.entity.belongsTo, async belongsTo => {
-        await this.seedBelongsTo( belongsTo, seed, idsMap, name, context );
+      await Promise.all( _.map( this.entity.assocTo, async assocTo => {
+        await this.seedAssocTo( assocTo, seed, idsMap, name, context );
       }));
-      await Promise.all( _.map( this.entity.belongsToMany, async belongsToMany => {
-        await this.seedBelongsToMany( belongsToMany, seed, idsMap, name, context );
+      await Promise.all( _.map( this.entity.assocToMany, async assocToMany => {
+        await this.seedAssocToMany( assocToMany, seed, idsMap, name, context );
       }));
     }));
   }
@@ -60,35 +60,35 @@ export class EntitySeeder {
   /**
    *
    */
-  private async seedBelongsTo( belongsTo: EntityReference, seed: any, idsMap: any, name: string, context:any ):Promise<void> {
+  private async seedAssocTo( assocTo: EntityReference, seed: any, idsMap: any, name: string, context:any ):Promise<void> {
     try {
-      const refEntity = this.graphx.entities[belongsTo.type];
+      const refEntity = this.graphx.entities[assocTo.type];
       if ( refEntity && _.has( seed, refEntity.typeName ) ) {
         const refName = _.get( seed, refEntity.typeName );
         const refId = _.get( idsMap, [refEntity.typeName, refName] );
-        if ( refId ) await this.updateBelongsTo( idsMap, name, refEntity, refId, context );
+        if ( refId ) await this.updateAssocTo( idsMap, name, refEntity, refId, context );
       }
     }
     catch ( error ) {
-      console.error( `Entity '${this.entity.typeName}' could not seed a reference`, belongsTo, name, error );
+      console.error( `Entity '${this.entity.typeName}' could not seed a reference`, assocTo, name, error );
     }
   }
 
   /**
    *
    */
-  private async seedBelongsToMany( belongsToMany: EntityReference, seed: any, idsMap: any, name: string, context:any ):Promise<void> {
+  private async seedAssocToMany( assocToMany: EntityReference, seed: any, idsMap: any, name: string, context:any ):Promise<void> {
     try {
-      const refEntity = this.graphx.entities[belongsToMany.type];
+      const refEntity = this.graphx.entities[assocToMany.type];
       if ( refEntity && _.has( seed, refEntity.typeName ) ) {
         const refNames:string[] = _.get( seed, refEntity.typeName );
         // const refId =
         const refIds = _.compact( _.map( refNames, refName => _.get( idsMap, [refEntity.typeName, refName] ) ) );
-        await this.updateBelongsToMany( idsMap, name, refEntity, refIds, context );
+        await this.updateAssocToMany( idsMap, name, refEntity, refIds, context );
       }
     }
     catch ( error ) {
-      console.error( `Entity '${this.entity.typeName}' could not seed a reference`, belongsToMany, name, error );
+      console.error( `Entity '${this.entity.typeName}' could not seed a reference`, assocToMany, name, error );
     }
   }
 
@@ -96,7 +96,7 @@ export class EntitySeeder {
   /**
    *
    */
-  private async updateBelongsTo( idsMap: any, name: string, refEntity: Entity, refId: string, context:any ) {
+  private async updateAssocTo( idsMap: any, name: string, refEntity: Entity, refId: string, context:any ) {
     const id = _.get( idsMap, [this.entity.typeName, name] );
     const entity = await this.resolver.resolveType( this.entity, {}, { id }, context );
     _.set( entity, refEntity.foreignKey, _.toString(refId) );
@@ -107,7 +107,7 @@ export class EntitySeeder {
   /**
    *
    */
-  private async updateBelongsToMany( idsMap:any, name:string, refEntity:Entity, refIds:any[], context:any ) {
+  private async updateAssocToMany( idsMap:any, name:string, refEntity:Entity, refIds:any[], context:any ) {
     refIds = _.map( refIds, refId => _.toString( refId ) );
     const id = _.get( idsMap, [this.entity.typeName, name] );
     const entity = await this.resolver.resolveType( this.entity, {}, { id }, context );
