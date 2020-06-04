@@ -1,0 +1,23 @@
+entity:
+  Chi:
+    attributes:
+      name: string
+    belongsToMany:
+      - Phi
+    seeds:
+      chi1:
+        name: chi1
+        Phi:
+          - phi1
+          - phi2
+          - phi3
+      chi2:
+        name: chi2
+      chi3:
+        name: chi3
+        Phi:
+          - phi1
+          - phi3
+
+
+
