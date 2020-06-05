@@ -1,6 +1,6 @@
 import { SchemaBuilder } from '../builder/schema-builder';
 import { Entity } from '../entities/entity';
-import { GraphX } from './graphx';
+import { GorContext } from './gor-context';
 
 /**
  *
@@ -55,7 +55,7 @@ export abstract class Resolver {
   /**
    *
    */
-  addEnumFilterAttributeType( name: string, graphx:GraphX ) {}
+  addEnumFilterAttributeType( name: string, context:GorContext ) {}
 
   /**
    *
@@ -72,4 +72,8 @@ export abstract class Resolver {
    */
   abstract getPermittedIdsForForeignKeys( entity:Entity, assocTo:string, foreignKeys:number[] ):Promise<number[]>;
 
+  /**
+   *
+   */
+  abstract findByAttribute( entity:Entity, attribute:string, value:any ):Promise<any[]>;
 }

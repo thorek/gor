@@ -1,6 +1,6 @@
 import _ from 'lodash';
+
 import { Entity } from './entity';
-import { GorContext } from '../core/gor-context';
 
 export type EntityItem = {
   entity:Entity
@@ -10,15 +10,10 @@ export type EntityItem = {
 export class EntityAccessor {
 
   /**
-   *
-   */
-  constructor( public readonly context:GorContext ){}
-
-  /**
    *  @returns the assocTo EntityInstance
    */
   async getAssocTo( ei:EntityItem, assocTo:string, context:any ):Promise<EntityItem> {
-    const entity = this.context.entities[assocTo];
+    const entity = ei.entity.context.entities[assocTo];
     if( ! entity ) throw new Error(`no such type '${assocTo}'`);
     const foreignKey = _.get( ei.item, entity.foreignKey );
     if( ! foreignKey ) throw new Error(`no foreignKey for '${assocTo}' in '${ei.entity.typeName}'`);

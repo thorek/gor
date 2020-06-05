@@ -6,11 +6,13 @@ import { GorContext } from '../core/gor-context';
 import { Validator } from '../validation/validator';
 import { CrudAction, EntityPermissions } from './entity-permissions';
 import { EntitySeeder } from './entity-seeder';
+import { EntityResolverValidator } from './entity-resolver-validator';
 
 //
 //
 export type EntityReference = {
 	type:string;
+  required?:boolean;
 }
 
 //
@@ -19,6 +21,7 @@ export type TypeAttribute = {
   type:string;
 	filterType?:string;
   validation?:any; // todo validation type
+  unique?:string|boolean
 }
 
 //
@@ -33,6 +36,7 @@ export abstract class Entity {
   public entitySeeder!:EntitySeeder;
   public entityPermissions!:EntityPermissions;
   protected validator!:Validator;
+  protected resolverValidator!:EntityResolverValidator;
 
   /**
    *
@@ -47,6 +51,7 @@ export abstract class Entity {
     this.validator = this.context.validator( this );
     this.entityPermissions = this.context.entityPermissions( this );
     this.entitySeeder = this.context.entitySeeder( this );
+    this.resolverValidator = EntityResolverValidator.getInstance();
   }
 
   get name() { return this.getName() }
@@ -92,7 +97,9 @@ export abstract class Entity {
   protected getEquality():{[typeName:string]:string[]} {return {}}
 
   public getAttribute( name:string): Attribute {
-    return new Attribute( name, this.attributes[name], this.graphx );
+    const attr = this.attributes[name];
+    const type = attr ? attr.type : undefined;
+    return new Attribute( name, type, this.graphx );
   }
 
   /**
@@ -121,14 +128,13 @@ export abstract class Entity {
     return this.entityPermissions.getPermittedIds( action, context );
   }
 
-    /**
+  /**
    *
    */
   async validate( root: any, args: any, context:any ):Promise<string[]> {
-    const errors:string[] = []; //await this.validateRelations( root, args, context );
-    if( ! this.validator ) return errors;
-    return _.concat( errors, await this.validator.validate( root, args ) );
+    const violations:string[] = this.validator ? await this.validator.validate( root, args, context ) : [];
+    if( _.size( violations ) ) return violations;
+    return await this.resolverValidator.validate( this, root, args, context );
   }
-
 
 }

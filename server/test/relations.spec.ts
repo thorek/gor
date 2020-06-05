@@ -9,7 +9,7 @@ import { EntityAccessor } from '../graph-on-rails/entities/entity-accessor';
 describe('Relations', () => {
 
   let context!:GorContext;
-  let accessor!:EntityAccessor;
+  const accessor = new EntityAccessor();
 
   beforeAll( async () => {
     const gor = await Gor.create( "tests" );
@@ -17,7 +17,7 @@ describe('Relations', () => {
     await gor.server({});
     await Seeder.create( gor.context ).seed( true, {} );
     context = gor.context;
-    accessor = new EntityAccessor( context );
+
     // logSchema( gor );
   })
 

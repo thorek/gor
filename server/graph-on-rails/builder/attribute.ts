@@ -1,4 +1,3 @@
-import { GraphX } from '../core/graphx';
 import {
   GraphQLBoolean,
   GraphQLFloat,
@@ -12,7 +11,7 @@ import {
 } from 'graphql';
 import _ from 'lodash';
 
-import { TypeAttribute } from '../entities/entity';
+import { GraphX } from '../core/graphx';
 import { FilterTypeBuilder } from './filter-type-builder';
 
 
@@ -24,14 +23,15 @@ export class Attribute {
 	//
 	constructor(
     public readonly name:string,
-		public readonly attr:TypeAttribute,
+		public readonly type:string|undefined,
 		public readonly graphx:GraphX )
-	{}
+	{ }
 
 	//
 	//
 	getType():GraphQLType {
-		switch( _.toLower(this.attr.type) ){
+    if( ! this.type ) return GraphQLString;
+		switch( _.toLower(this.type) ){
 			case 'id': return GraphQLID;
 			case 'string': return GraphQLString;
 			case '[string]': return new GraphQLList( GraphQLString );
@@ -42,8 +42,8 @@ export class Attribute {
 			case 'boolean': return GraphQLBoolean;
 			case '[boolean]': return new GraphQLList( GraphQLBoolean );
 			default: {
-				const type = this.graphx.type( this.attr.type );
-				if( ! type ) console.warn( `${this.name } no such type '${this.attr.type}'` );
+				const type = this.graphx.type( this.type );
+				if( ! type ) console.warn( `${this.name } no such type '${this.type}'` );
 				return type;
 			}
 		};
@@ -52,14 +52,15 @@ export class Attribute {
 	//
 	//
 	getFilterInputType():GraphQLInputType|any {
-		switch( _.toLower(this.attr.type) ){
+    if( ! this.type ) this.graphx.type('StringFilter');
+		switch( _.toLower(this.type) ){
 			case 'id':
 			case 'int': return this.graphx.type('IntFilter');
 			case 'float': return this.graphx.type('FloatFilter');
 			case 'boolean': return this.graphx.type('BooleanFilter');
 			case 'string': return this.graphx.type('StringFilter');
 			default: {
-        const filterTypeName = `${this.attr.type}Filter`;
+        const filterTypeName = `${this.type}Filter`;
 				const type = this.graphx.type( filterTypeName );
 				if( type instanceof GraphQLInputObjectType ) return type;
         console.warn( `${this.name} no such filter type '${filterTypeName}'` );
@@ -71,14 +72,15 @@ export class Attribute {
 	//
 	//
 	getFilterAttributeType():FilterTypeBuilder | null {
-		switch( _.toLower(this.attr.type) ){
+    if( ! this.type ) return this.graphx.filterAttributes['StringFilter'];
+		switch( _.toLower(this.type) ){
 			case 'id':
 			case 'int': return this.graphx.filterAttributes['IntFilter']
 			case 'float': return this.graphx.filterAttributes['FloatFilter']
 			case 'boolean': return this.graphx.filterAttributes['BooleanFilter']
       case 'string': return this.graphx.filterAttributes['StringFilter']
 			default: {
-        const filterTypeName = `${this.attr.type}Filter`;
+        const filterTypeName = `${this.type}Filter`;
 				return <FilterTypeBuilder>this.graphx.filterAttributes[filterTypeName];
 			}
 		};

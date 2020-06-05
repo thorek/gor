@@ -42,7 +42,7 @@ export class EntityBuilder extends SchemaBuilder {
 			const values = {};
 			_.forEach( keyValues, (value,key) => _.set( values, key, { value }));
 			this.graphx.type( name, { name, values, from: GraphQLEnumType	} );
-			this.resolver.addEnumFilterAttributeType( name, this.graphx );
+			this.resolver.addEnumFilterAttributeType( name, this.context );
 		});
 	}
 
@@ -264,7 +264,7 @@ export class EntityBuilder extends SchemaBuilder {
   /**
    *
    */
-  private async  saveEntity( root: any, args: any, context:any ) {
+  private async saveEntity( root: any, args: any, context:any ) {
     let errors = await this.entity.validate( root, args, context );
     if( _.size( errors ) ) return { errors };
     return _.set( {errors: []}, this.entity.singular, this.resolver.saveEntity( this.entity, root, args, context ) );

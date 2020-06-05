@@ -3,7 +3,8 @@ entity:
     attributes:
       name: string
     assocTo:
-      - Delta
+      - type: Delta
+        required: true
     seeds:
       b1:
         name: b1

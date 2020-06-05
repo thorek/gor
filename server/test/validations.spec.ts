@@ -5,11 +5,10 @@ import { GorContext } from '../graph-on-rails/core/gor-context';
 import { Seeder } from '../graph-on-rails/core/seeder';
 import { EntityAccessor } from '../graph-on-rails/entities/entity-accessor';
 
-describe('Validations', () => {
-
+fdescribe('Validations', () => {
 
   let context!:GorContext;
-  let accessor!:EntityAccessor;
+  const accessor = new EntityAccessor();
 
   beforeAll( async () => {
     const gor = await Gor.create( "tests" );
@@ -17,73 +16,61 @@ describe('Validations', () => {
     await gor.server({});
     await Seeder.create( gor.context ).seed( true, {} );
     context = gor.context;
-    accessor = new EntityAccessor( context );
   })
 
-
-  it('should not save when validation violation unique attribute', () => {
+  it('should validate attributes', async () => {
     const alpha = context.entities['Alpha'];
 
+    let result = await alpha.validate( {},{ alpha: { some: "some" } }, {} );
+    expect( result ).toHaveLength( 1 );
+
+    result = await alpha.validate( {},{ alpha: { name: "x" } }, {} );
+    expect( result ).toHaveLength( 1 );
+
+    result = await alpha.validate( {},{ alpha: { name: "Cool this" } }, {} );
+    expect( result ).toHaveLength( 0 );
   })
 
-  it('should find items', async () => {
+
+  it( 'should validate required assocTo', async () => {
+    const beta = context.entities['Beta']
+    const result = await beta.validate( {},{ beta: { name: "someName" } }, {} );
+    expect( result ).toHaveLength( 1 );
+    expect( result ).toEqual( expect.arrayContaining([
+      expect.stringContaining("must be provided")
+    ]));
+  })
+
+
+  it( 'should validate existing foreignKey', async () => {
+    const beta = context.entities['Beta']
+    let result = await beta.validate( {},{ beta: { name: "someName", deltaId: "1234" } }, {} );
+    expect( result ).toHaveLength( 1 );
+    expect( result ).toEqual( expect.arrayContaining([
+      expect.stringContaining("could not convert")
+    ]));
+
     const alpha = context.entities['Alpha'];
-    const a1 = await alpha.resolver.resolveTypes( alpha, {}, { filter: { name: { eq: "a1" } } }, {} );
-    expect( a1 ).toHaveLength(1);
-    const arr = await alpha.resolver.resolveTypes( alpha, {}, { filter: { name: { contains: "a" } } }, {} );
-    expect( arr ).toHaveLength(3);
-    const aX = await alpha.resolver.resolveTypes( alpha, {}, { filter:  {name: { eq: "aX" } } }, {} );
-    expect( aX ).toHaveLength(0);
-  })
+    const a1 = _.first( await context.resolver.resolveTypes( alpha, {}, { filter: { name: { eq: "a1" } } }, {} ) );
+    result = await beta.validate( {},{ beta: { name: "someName", deltaId: a1.id } }, {} );
+    expect( result ).toHaveLength( 1 );
+    expect( result ).toEqual( expect.arrayContaining([
+      expect.stringContaining("must refer to existing item")
+    ]));
 
-  it( 'finds items along a assocToChain', async () =>{
-    const alpha = context.entities['Alpha'];
-    const a1 = _.first( await alpha.resolver.resolveTypes( alpha, {}, { filter: { name: { eq: "a1" } } }, {} ) );
-    const d1 = await accessor.getItemFromAssocToChain( { entity:alpha, item:a1}, "Delta", {} );
-    expect( d1.name ).toEqual("d1");
-    const a3 = _.first( await alpha.resolver.resolveTypes( alpha, {}, { filter: { name: { eq: "a3" } } }, {} ) );
-    const g2 = await accessor.getItemFromAssocToChain( { entity:alpha, item:a3 }, "Delta.Gamma", {} );
-    expect( g2.name ).toEqual("g2");
-  })
-
-  it('should recognice assocToMany', async () => {
-    const phi = context.entities['Phi'];
-    const expected = { type: 'Chi' }
-    expect( _.first(phi.assocToMany) ).toEqual( expected );
-  })
-
-  it('should find assocToMany', async ()=> {
-    const phi = context.entities['Phi'];
-    const phi1 = _.first( await phi.resolver.resolveTypes( phi, {}, { filter: { name: { eq: "phi1" } } }, {} ) );
-    expect( phi1.chiIds ).toHaveLength( 2 );
-  })
-
-  it( 'should resolve assocTo', async () => {
     const delta = context.entities['Delta'];
-    const d1 = _.first( await delta.resolver.resolveTypes( delta, {}, { filter: { name: { eq: "d1" } } }, {} ) );
-    const deltaId = d1.id;
-    expect( deltaId ).toBeDefined();
+    const d1 = _.first( await context.resolver.resolveTypes( delta, {}, { filter: { name: { eq: "d1" } } }, {} ) );
+    result = await beta.validate( {},{ beta: { name: "someName", deltaId: d1.id } }, {} );
+    expect( result ).toHaveLength( 0 );
+  })
+
+
+  it('should have validation violation for unique attribute', async () => {
     const alpha = context.entities['Alpha'];
-    const d2 = await alpha.resolver.resolveAssocToType( delta, {deltaId}, {}, {} );
-    expect( d2 ).toEqual( d1 );
+
+    let result = await alpha.validate( {},{ alpha: { name: "a1" } }, {} );
+    expect( result ).toHaveLength( 1 );
   })
 
-  it('shoud resolve assocFrom - advers of assocTo', async ()=> {
-    const delta = context.entities['Delta'];
-    const d1 = _.first( await delta.resolver.resolveTypes( delta, {}, { filter: { name: { eq: "d1" } } }, {} ) );
-
-    const alpha = context.entities['Alpha'];
-    const alphas = await delta.resolver.resolveAssocFromTypes( delta, alpha, { id: d1.id }, {}, {} );
-    expect( alphas ).toHaveLength( 2 );
-  })
-
-  it('shoud resolve assocFrom - advers of assocToMany', async ()=> {
-    const chi = context.entities['Chi'];
-    const chi1 = _.first( await chi.resolver.resolveTypes( chi, {}, { filter: { name: { eq: "chi1" } } }, {} ) );
-
-    const phi = context.entities['Phi'];
-    const phis = await chi.resolver.resolveAssocFromTypes( chi, phi, { id: chi1.id }, {}, {} );
-    expect( phis ).toHaveLength( 2 );
-  })
 
 })

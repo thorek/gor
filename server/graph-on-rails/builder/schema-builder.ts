@@ -42,7 +42,7 @@ export abstract class SchemaBuilder {
 	//
 	protected getAttributes():{[name:string]:Attribute} {
 		if( ! this._attributes ) {
-			this._attributes = _.mapValues( this.attributes(), (attribute, name) => new Attribute( name, attribute, this.graphx ) );
+			this._attributes = _.mapValues( this.attributes(), (attribute, name) => new Attribute( name, attribute.type, this.graphx ) );
 		}
 		return this._attributes;
 	}

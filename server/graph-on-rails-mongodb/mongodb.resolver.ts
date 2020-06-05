@@ -1,14 +1,14 @@
-import _ from 'lodash';
 import ts from 'es6-template-strings';
+import _ from 'lodash';
+import { Collection, Db, FilterQuery, MongoClient, ObjectId } from 'mongodb';
 
-import { Collection, Db, FilterQuery, ObjectId, MongoClient } from 'mongodb';
-import { CrudAction } from '../graph-on-rails/entities/entity-permissions';
+import { GorContext } from '../graph-on-rails/core/gor-context';
 import { Resolver } from '../graph-on-rails/core/resolver';
-import { EnumFilterTypeBuilder } from './filter/enum-filter-type-builder';
-import { GraphX } from '../graph-on-rails/core/graphx';
-import { StringFilterTypeBuilder } from './filter/string-filter-type-builder';
-import { IntFilterTypeBuilder } from './filter/int-filter-type-builder';
 import { Entity } from '../graph-on-rails/entities/entity';
+import { CrudAction } from '../graph-on-rails/entities/entity-permissions';
+import { EnumFilterTypeBuilder } from './filter/enum-filter-type-builder';
+import { IntFilterTypeBuilder } from './filter/int-filter-type-builder';
+import { StringFilterTypeBuilder } from './filter/string-filter-type-builder';
 
 /**
  *
@@ -60,9 +60,9 @@ export class MongoDbResolver extends Resolver {
   /**
    *
    */
-  addEnumFilterAttributeType( name: string, graphx:GraphX ) {
+  addEnumFilterAttributeType( name: string, context:GorContext ) {
     const efat =  new EnumFilterTypeBuilder( name );
-    efat.init( graphx );
+    efat.init( context );
     efat.createTypes();
   }
 
@@ -298,9 +298,16 @@ export class MongoDbResolver extends Resolver {
     try {
       return new ObjectId( _.toString( id ) );
     } catch (error) {
-      console.error( `could not convert '${id}' for '${entity.name}' to an ObjectId` );
-      return new ObjectId(Number.MAX_SAFE_INTEGER * -1);
+      throw new Error( `could not convert '${id}' for '${entity.name}' to an ObjectId` );
     }
+  }
+
+  /**
+   *
+   */
+  async findByAttribute( entity:Entity, attribute:string, value:any ):Promise<any[]> {
+    const expression = _.set( {}, attribute, { $eq: value } );
+    return this.query( entity, expression );
   }
 
 }

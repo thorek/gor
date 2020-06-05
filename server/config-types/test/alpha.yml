@@ -4,6 +4,11 @@ entity:
       name:
         type: string
         unique: true
+        validation:
+          presence: true
+          length:
+            minimum: 2
+            maximum: 20
       some:
         type: string
         unique: Delta
@@ -12,10 +17,13 @@ entity:
     seeds:
       a1:
         name: a1
+        some: some1
         Delta: d1
       a2:
         name: a2
+        some: some2
         Delta: d1
       a3:
         name: a3
+        some: some3
         Delta: d3
