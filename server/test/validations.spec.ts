@@ -70,6 +70,26 @@ fdescribe('Validations', () => {
 
     let result = await alpha.validate( {},{ alpha: { name: "a1" } }, {} );
     expect( result ).toHaveLength( 1 );
+    expect( result ).toEqual( expect.arrayContaining([
+      expect.stringContaining("name - value 'a1' must be unique")
+    ]));
+  })
+
+
+  it('should have validation violation for unique attribute with scope', async () => {
+    const alpha = context.entities['Alpha'];
+    const delta = context.entities['Delta'];
+    const d1 = _.first( await context.resolver.resolveTypes( delta, {}, { filter: { name: { eq: "d1" } } }, {} ) );
+    const d2 = _.first( await context.resolver.resolveTypes( delta, {}, { filter: { name: { eq: "d2" } } }, {} ) );
+
+    let result = await alpha.validate( {},{ alpha: { name: "aX", some: "some1", deltaId: d1.id } }, {} );
+    expect( result ).toHaveLength( 1 );
+    expect( result ).toEqual( expect.arrayContaining([
+      expect.stringContaining("some - value 'some1' must be unique within scope 'Delta'")
+    ]));
+
+    result = await alpha.validate( {},{ alpha: { name: "aX", some: "some1", deltaId: d2.id } }, {} );
+    expect( result ).toHaveLength( 0 );
   })
 
 

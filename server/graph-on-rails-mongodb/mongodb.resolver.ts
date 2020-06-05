@@ -305,8 +305,8 @@ export class MongoDbResolver extends Resolver {
   /**
    *
    */
-  async findByAttribute( entity:Entity, attribute:string, value:any ):Promise<any[]> {
-    const expression = _.set( {}, attribute, { $eq: value } );
+  async findByAttribute( entity:Entity, ...attrValue:{name:string,value:any}[] ):Promise<any[]> {
+    const expression = { $and: _.map( attrValue, av => _.set({}, av.name, { $eq: _.toString(av.value) }) ) };
     return this.query( entity, expression );
   }
 

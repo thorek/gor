@@ -57,7 +57,7 @@ export class EntityResolverValidator  {
     for( const name of _.keys(entity.attributes) ){
       const attribute = entity.attributes[name];
       if( ! attribute.unique ) continue;
-      const violation = await this.validateUniqeAttribute( entity, name, attribute, root, args, context );
+      const violation = await this.validateUniqeAttribute( entity, name, attribute, args );
       if( violation ) violations.push( violation );
     }
     return violations;
@@ -66,11 +66,21 @@ export class EntityResolverValidator  {
   /**
    *
    */
-  private async validateUniqeAttribute( entity:Entity, name:string, attribute:TypeAttribute, root:any, args:any, context:any ):Promise<string|undefined> {
-    const value = _.get( args, [entity.singular,name] );
+  private async validateUniqeAttribute( entity:Entity, name:string, attribute:TypeAttribute, args:any ):Promise<string|undefined> {
+    const value = _.get( args, [entity.singular, name] );
     if( _.isUndefined( value ) ) return;
-    const result = await entity.resolver.findByAttribute( entity, name, value );
-    if( _.size( result ) ) return `${name} - value '${value}' must be unique`;
+    const attrValues = [{name, value}];
+    let scopeMsg = "";
+    if( _.isString( attribute.unique ) ){
+      const scopeEntity = entity.context.entities[attribute.unique];
+      const scope = scopeEntity ? scopeEntity.foreignKey : attribute.unique;
+      const scopeValue = _.get( args, [entity.singular, scope]);
+      attrValues.push({name:scope, value:scopeValue});
+      scopeMsg = ` within scope '${attribute.unique}'`;
+    }
+    const result = await entity.resolver.findByAttribute( entity, ...attrValues );
+    if( _.size( result ) === 0 ) return;
+    return `${name} - value '${value}' must be unique` + scopeMsg;
   }
 
 
