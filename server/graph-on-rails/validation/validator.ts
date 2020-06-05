@@ -1,15 +1,11 @@
-import { Entity } from "../entities/entity";
+import { EntityModule } from "../entities/entity-module";
 
 
 /**
  *
  */
-export abstract class Validator {
+export abstract class Validator extends EntityModule{
 
-  /**
-   *
-   */
-  constructor( public readonly entity:Entity ){}
 
   abstract validate( root:any, args:any ):Promise<string[]>
 }

@@ -1,7 +1,8 @@
-import { GraphQLList, GraphQLObjectType, GraphQLSchema, GraphQLString, GraphQLBoolean, GraphQLNonNull, GraphQLScalarType } from 'graphql';
+import { GraphQLBoolean, GraphQLList, GraphQLObjectType, GraphQLSchema, GraphQLString } from 'graphql';
 import _ from 'lodash';
-import { Entity } from '../entities/entity';
+
 import { FilterTypeBuilder } from '../builder/filter-type-builder';
+import { GorContext } from './gor-context';
 import { Seeder } from './seeder';
 
 
@@ -9,7 +10,6 @@ import { Seeder } from './seeder';
 //
 export class GraphX {
 
-  readonly entities:{[name:string]:Entity} = {};
   readonly filterAttributes:{[name:string]:FilterTypeBuilder} = {};
 	rawTypes:any = {};
 
@@ -38,7 +38,7 @@ export class GraphX {
           type: GraphQLString,
           args: { truncate: { type: GraphQLBoolean } },
           resolve: ( root: any, args: any, context:any ) => Seeder.create(
-            _.values( this.entities ) ).seed( args.truncate, context )
+            context.gorContext as GorContext ).seed( args.truncate, context )
         }
       } )
     } );
@@ -114,7 +114,7 @@ export class GraphX {
     this.type('query').extend( () => {
       return _.set( {}, 'metaData', {
         type: new GraphQLList( metaDataType ),
-        resolve: (root:any) => _.values( this.entities )
+        resolve: (root:any, args:any, context:any) => _.values( _.get( context, 'gorContext.entities') )
 			});
     });
   }

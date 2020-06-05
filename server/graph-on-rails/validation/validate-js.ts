@@ -14,7 +14,7 @@ export class ValidateJs extends Validator {
   /**
    *
    */
-  constructor( public readonly entity:Entity ){
+  constructor( protected readonly entity:Entity ){
     super( entity );
     this.buildConstraints();
   }

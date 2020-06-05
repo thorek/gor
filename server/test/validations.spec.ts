@@ -5,8 +5,8 @@ import { GorContext } from '../graph-on-rails/core/gor-context';
 import { Seeder } from '../graph-on-rails/core/seeder';
 import { EntityAccessor } from '../graph-on-rails/entities/entity-accessor';
 
+describe('Validations', () => {
 
-describe('Relations', () => {
 
   let context!:GorContext;
   let accessor!:EntityAccessor;
@@ -18,14 +18,12 @@ describe('Relations', () => {
     await Seeder.create( gor.context ).seed( true, {} );
     context = gor.context;
     accessor = new EntityAccessor( context );
-    // logSchema( gor );
   })
 
-  it('should find entities', () => {
+
+  it('should not save when validation violation unique attribute', () => {
     const alpha = context.entities['Alpha'];
-    expect( alpha ).toBeDefined();
-    const foo = context.entities['Foo'];
-    expect( foo ).toBeUndefined();
+
   })
 
   it('should find items', async () => {

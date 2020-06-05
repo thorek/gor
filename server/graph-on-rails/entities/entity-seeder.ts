@@ -1,20 +1,16 @@
 import _ from 'lodash';
-import { Entity, EntityReference } from "./entity";
+
+import { Entity, EntityReference } from './entity';
+import { EntityModule } from './entity-module';
 
 /**
  *
  */
-export class EntitySeeder {
+export class EntitySeeder extends EntityModule {
 
-  get resolver() { return this.entity.resolver }
-  get graphx() { return this.entity.graphx }
+  get resolver() { return this.context.resolver }
 
   /**
-   *
-   */
-  constructor( public readonly entity:Entity ){}
-
-    /**
    *
    */
   public async truncate():Promise<boolean> {
@@ -62,7 +58,7 @@ export class EntitySeeder {
    */
   private async seedAssocTo( assocTo: EntityReference, seed: any, idsMap: any, name: string, context:any ):Promise<void> {
     try {
-      const refEntity = this.graphx.entities[assocTo.type];
+      const refEntity = this.context.entities[assocTo.type];
       if ( refEntity && _.has( seed, refEntity.typeName ) ) {
         const refName = _.get( seed, refEntity.typeName );
         const refId = _.get( idsMap, [refEntity.typeName, refName] );
@@ -79,7 +75,7 @@ export class EntitySeeder {
    */
   private async seedAssocToMany( assocToMany: EntityReference, seed: any, idsMap: any, name: string, context:any ):Promise<void> {
     try {
-      const refEntity = this.graphx.entities[assocToMany.type];
+      const refEntity = this.context.entities[assocToMany.type];
       if ( refEntity && _.has( seed, refEntity.typeName ) ) {
         const refNames:string[] = _.get( seed, refEntity.typeName );
         // const refId =

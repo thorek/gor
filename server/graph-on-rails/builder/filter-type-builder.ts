@@ -1,7 +1,7 @@
 import { GraphQLInputObjectType } from 'graphql';
 import _ from 'lodash';
 
-import { GraphX } from '../core/graphx';
+import { GorContext } from '../core/gor-context';
 import { SchemaBuilder } from './schema-builder';
 
 /**
@@ -11,8 +11,8 @@ export abstract class FilterTypeBuilder extends SchemaBuilder {
 
 	//
 	//
-	init(graphx:GraphX ):void {
-		super.init( graphx );
+	init( context:GorContext ):void {
+		super.init( context );
     this.graphx.filterAttributes[`${this.name()}Filter`] = this;
 	}
 

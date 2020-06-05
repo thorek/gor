@@ -1,18 +1,14 @@
 import _ from 'lodash';
 import { AuthenticationError } from 'apollo-server-express';
 import { Entity } from './entity';
+import { EntityModule } from './entity-module';
 
 export type CrudAction = "read" | "create" | "update" | "delete";
 
 /**
  *
  */
-export class EntityPermissions {
-
-  /**
-   *
-   */
-  constructor( protected readonly entity:Entity  ){}
+export class EntityPermissions extends EntityModule {
 
   /**
    *
@@ -99,7 +95,7 @@ export class EntityPermissions {
    */
   protected getAssocToEntity( entity:undefined|string ):null|Entity {
     const entityIsAssocTo = _.find( this.entity.assocTo, refEntity => refEntity.type === entity );
-    if( entityIsAssocTo ) return this.entity.graphx.entities[ entity as string ];
+    if( entityIsAssocTo ) return this.context.entities[ entity as string ];
     console.warn(`'${entity}' is not a assocTo of '${this.entity.name}'`);
     return null;
   }
@@ -216,16 +212,16 @@ export class EntityPermissions {
    *
    */
   protected isUserAndRolesDefined():boolean {
-    return this.entity.gorContext.contextUser != null && this.entity.gorContext.contextRoles != null;
+    return this.context.contextUser != null && this.context.contextRoles != null;
   }
 
   /**
    *
    */
   protected getUserRoles( context:any ):string[] {
-    const user = _.get( context, this.entity.gorContext.contextUser as string );
+    const user = _.get( context, this.context.contextUser as string );
     if( ! user ) throw "should not happen, no user in context";
-    let roles:any = _.get( user, this.entity.gorContext.contextRoles as string );
+    let roles:any = _.get( user, this.context.contextRoles as string );
     if( ! roles ) throw new AuthenticationError( `User has no role - ${JSON.stringify( user ) }` );
     return _.isArray( roles ) ? roles : [roles];
   }

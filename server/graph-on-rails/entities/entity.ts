@@ -1,11 +1,10 @@
-import _ from 'lodash';
 import inflection from 'inflection';
-import { GorContext } from '../core/gor-context';
+import _ from 'lodash';
+
 import { Attribute } from '../builder/attribute';
-import { GraphX } from '../core/graphx';
-import { CrudAction, EntityPermissions } from './entity-permissions';
+import { GorContext } from '../core/gor-context';
 import { Validator } from '../validation/validator';
-import { Resolver } from '../core/resolver';
+import { CrudAction, EntityPermissions } from './entity-permissions';
 import { EntitySeeder } from './entity-seeder';
 
 //
@@ -26,13 +25,11 @@ export type TypeAttribute = {
 //
 export abstract class Entity {
 
-  /**
-   *
-   */
-  constructor( public readonly gorContext:GorContext ){}
+  private _context!:GorContext;
+  get context() { return this._context }
+  get graphx() {return this.context.graphx };
+  get resolver() {return this.context.resolver };
 
-  public graphx!:GraphX;
-  public resolver!:Resolver;
   public entitySeeder!:EntitySeeder;
   public entityPermissions!:EntityPermissions;
   protected validator!:Validator;
@@ -40,17 +37,16 @@ export abstract class Entity {
   /**
    *
    */
-  init( graphx:GraphX ){
-    this.graphx = graphx;
+  init( context:GorContext ){
+    this._context = context;
 
     // this.addLockRelations();
 
-    this.graphx.entities[this.typeName] = this;
-    this.entitySeeder = this.gorContext.entitySeeder( this );
-    this.resolver = this.gorContext.resolver( this );
-    this.validator = this.gorContext.validator( this );
-    this.entityPermissions = this.gorContext.entityPermissions( this );
-    this.entitySeeder = this.gorContext.entitySeeder( this );
+    this.context.entities[this.typeName] = this;
+    this.entitySeeder = this.context.entitySeeder( this );
+    this.validator = this.context.validator( this );
+    this.entityPermissions = this.context.entityPermissions( this );
+    this.entitySeeder = this.context.entitySeeder( this );
   }
 
   get name() { return this.getName() }
@@ -104,7 +100,7 @@ export abstract class Entity {
    */
   isAssocToAttribute( attribute:string ):boolean {
     return _.find( this.assocTo, assocTo => {
-      const ref = this.graphx.entities[assocTo.type];
+      const ref = this.context.entities[assocTo.type];
       return ref && ref.foreignKey === attribute;
     }) != null;
   }

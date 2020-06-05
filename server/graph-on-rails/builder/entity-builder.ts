@@ -1,3 +1,4 @@
+import { GorContext } from 'graph-on-rails/core/gor-context';
 import {
   GraphQLBoolean,
   GraphQLEnumType,
@@ -10,7 +11,6 @@ import {
 } from 'graphql';
 import _ from 'lodash';
 
-import { GraphX } from '../core/graphx';
 import { Entity, EntityReference, TypeAttribute } from '../entities/entity';
 import { SchemaBuilder } from './schema-builder';
 
@@ -19,7 +19,6 @@ import { SchemaBuilder } from './schema-builder';
 export class EntityBuilder extends SchemaBuilder {
 
   name() { return this.entity.name }
-  get resolver() { return this.entity.gorContext.resolver() }
   attributes():{[name:string]:TypeAttribute} { return this.entity.attributes };
 
 	//
@@ -28,11 +27,13 @@ export class EntityBuilder extends SchemaBuilder {
     super();
   }
 
-	//
-	//
-	init( graphx:GraphX ):void {
-    super.init( graphx );
-	}
+  /**
+   *
+   */
+  init( context:GorContext ){
+    super.init( context );
+    this.entity.init( context );
+  }
 
 	//
 	//
@@ -114,21 +115,21 @@ export class EntityBuilder extends SchemaBuilder {
   //
   //
   private addAssocToForeignKeyToInput( fields:any, ref:EntityReference ):any {
-    const refEntity = this.graphx.entities[ref.type];
+    const refEntity = this.context.entities[ref.type];
     return _.set( fields, refEntity.foreignKey, { type: GraphQLID });
   }
 
   //
   //
   private addAssocToManyForeignKeysToInput( fields:any, ref:EntityReference ):any {
-    const refEntity = this.graphx.entities[ref.type];
+    const refEntity = this.context.entities[ref.type];
     return _.set( fields, refEntity.foreignKeys, { type: GraphQLList( GraphQLID ) });
   }
 
   //
   //
   private addAssocToReferenceToType( fields:any, ref:EntityReference ):any {
-    const refEntity = this.graphx.entities[ref.type];
+    const refEntity = this.context.entities[ref.type];
     const refObjectType = this.graphx.type(refEntity.typeName);
     return _.set( fields, refEntity.singular, {
       type: refObjectType,
@@ -139,7 +140,7 @@ export class EntityBuilder extends SchemaBuilder {
   //
   //
   private addAssocToManyReferenceToType( fields:any, ref:EntityReference ):any {
-    const refEntity = this.graphx.entities[ref.type];
+    const refEntity = this.context.entities[ref.type];
     const refObjectType = this.graphx.type(refEntity.typeName);
     return _.set( fields, refEntity.plural, {
       type: new GraphQLList( refObjectType),
@@ -158,7 +159,7 @@ export class EntityBuilder extends SchemaBuilder {
   //
   //
   private addAssocFromReferenceToType(fields:any, ref:EntityReference):any {
-    const refEntity = this.graphx.entities[ref.type];
+    const refEntity = this.context.entities[ref.type];
     const refObjectType = this.graphx.type(refEntity.typeName)
     return _.set( fields, refEntity.plural, {
       type: new GraphQLList( refObjectType ),
@@ -169,7 +170,7 @@ export class EntityBuilder extends SchemaBuilder {
   //
   //
   private checkReference( direction:'assocTo'|'assocFrom', ref:EntityReference ):boolean {
-    const refEntity = this.graphx.entities[ref.type];
+    const refEntity = this.context.entities[ref.type];
     if( ! (refEntity instanceof Entity ) ) {
       console.warn( `'${this.entity.typeName}:${direction}': no such entity type '${ref.type}'` );
       return false;

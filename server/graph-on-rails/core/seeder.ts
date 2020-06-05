@@ -1,6 +1,7 @@
 import _ from 'lodash';
 
 import { Entity } from '../entities/entity';
+import { GorContext } from './gor-context';
 
 export class Seeder {
 
@@ -11,8 +12,8 @@ export class Seeder {
   /**
    *
    */
-  static create( types:Entity[] ):Seeder {
-    return new Seeder( types );
+  static create( context:GorContext ):Seeder {
+    return new Seeder( _.values(context.entities) );
   }
 
 	//

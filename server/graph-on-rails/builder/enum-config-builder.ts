@@ -21,17 +21,14 @@ export class EnumConfigBuilder extends EnumBuilder {
   /**
    *
    */
-  static create( name:string, gorContext:GorContext, enumConfig:EnumConfig ):EnumConfigBuilder {
-    return new EnumConfigBuilder( name, gorContext, enumConfig );
+  static create( name:string, enumConfig:EnumConfig ):EnumConfigBuilder {
+    return new EnumConfigBuilder( name, enumConfig );
   }
 
 	//
 	//
 	constructor(
       protected readonly _name:string,
-      protected readonly gorContext:GorContext,
       protected readonly config:EnumConfig )
-  {
-    super( gorContext );
-  }
+  { super() }
 }

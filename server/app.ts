@@ -14,10 +14,10 @@ import { GorContext } from './graph-on-rails/core/gor-context';
   app.use('*', cors());
   app.use(compression());
 
-  const gor = new Gor();
-  const gorContext = await GorContext.create( "d2prom" );
-  gor.addConfigs( './server/config-types/d2prom', gorContext );
-  gor.addCustomEntities( new OrganisationalUnit( gorContext ) );
+  const gor = await Gor.create("d2Prom");
+
+  gor.addConfigFolder( './server/config-types/d2prom' );
+  gor.addCustomEntities( new OrganisationalUnit() );
 
   const users:{[token:string]:any} = {
     admin: { id: 100, username: "Admin", roles: ["admin"], clientId: "5ec3b745d3a47f8284414125" },

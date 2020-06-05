@@ -3,6 +3,7 @@ import _ from 'lodash';
 import { GraphX } from '../core/graphx';
 import { TypeAttribute } from '../entities/entity';
 import { Attribute } from './attribute';
+import { GorContext } from '../core/gor-context';
 
 
 /**
@@ -10,17 +11,19 @@ import { Attribute } from './attribute';
  */
 export abstract class SchemaBuilder {
 
+  private _context!:GorContext;
+  get context() { return this._context }
+  get graphx() {return this.context.graphx };
+  get resolver() {return this.context.resolver };
 
-  graphx!:GraphX;
   abstract name():string;
   attributes():{[name:string]:TypeAttribute} { return {} };
 	protected _attributes?:{[name:string]:Attribute};
 
-
 	//
 	//
-	init(graphx:GraphX ):void {
-    this.graphx = graphx;
+	init( context:GorContext ):void {
+    this._context = context;
 	}
 
 	//

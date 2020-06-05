@@ -2,7 +2,7 @@ import { GraphQLSchema } from 'graphql';
 import _ from 'lodash';
 
 import { SchemaBuilder } from '../builder/schema-builder';
-import { GraphX } from './graphx';
+import { GorContext } from './gor-context';
 
 export class SchemaFactory {
 
@@ -19,15 +19,15 @@ export class SchemaFactory {
 
 	//
 	//
-	createSchema(graphx:GraphX):GraphQLSchema {
+	createSchema(context:GorContext):GraphQLSchema {
 
-    graphx.init();
+    context.graphx.init();
 
-		_.forEach( this.builders, type => type.init( graphx ) );
+		_.forEach( this.builders, type => type.init( context ) );
 		_.forEach( this.builders, type => type.createTypes() );
 		_.forEach( this.builders, type => type.extendTypes() );
 
-		const schema = graphx.generate();
+		const schema = context.graphx.generate();
 		return schema;
 	}
 }

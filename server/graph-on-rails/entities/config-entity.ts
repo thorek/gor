@@ -45,8 +45,8 @@ export class ConfigEntity extends Entity {
   /**
    *
    */
-  static create( name:string, gorContext:GorContext, entityConfig:EntityConfig ):ConfigEntity {
-    return new ConfigEntity( name, gorContext, entityConfig );
+  static create( name:string, entityConfig:EntityConfig ):ConfigEntity {
+    return new ConfigEntity( name, entityConfig );
   }
 
   /**
@@ -54,9 +54,8 @@ export class ConfigEntity extends Entity {
    */
 	protected  constructor(
       protected readonly _name:string,
-      public readonly gorContext:GorContext,
       public readonly entityConfig:EntityConfig ){
-   super( gorContext );
+   super();
   }
 
   protected getName() { return this._name }

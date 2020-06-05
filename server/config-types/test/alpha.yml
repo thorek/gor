@@ -1,7 +1,12 @@
 entity:
   Alpha:
     attributes:
-      name: string
+      name:
+        type: string
+        unique: true
+      some:
+        type: string
+        unique: Delta
     assocTo:
       - Delta
     seeds:

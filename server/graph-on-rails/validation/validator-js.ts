@@ -7,19 +7,19 @@ const is = require( 'validator.js' ).Assert;
 const validator = require( 'validator.js' ).validator();
 
 
-
 /**
  *
  */
 export class ValidatorJs extends Validator {
 
   private constraint:any = {};
+
   /**
    *
    */
-  constructor( public readonly entity:Entity ){
+  protected constructor( protected readonly entity:Entity ){
     super( entity );
-    this.buildConstraint();
+    this.buildConstraints();
   }
 
   /**
@@ -50,7 +50,7 @@ export class ValidatorJs extends Validator {
   /**
    *
    */
-  private buildConstraint() {
+  private buildConstraints() {
     this.constraint = {};
     _.forEach( this.entity.attributes, (attribute, name:string) => {
       this.constraint[name] = [];

@@ -7,10 +7,11 @@ import { EntitySeeder } from '../entities/entity-seeder';
 import { ValidateJs } from '../validation/validate-js';
 import { Validator } from '../validation/validator';
 import { Resolver } from './resolver';
+import { GraphX } from './graphx';
 
 export type GorConfig = {
   name?:string
-  resolver?: (entity?:Entity) => Resolver
+  resolver?:Resolver
   validator?:(entity:Entity) => Validator
   entityPermissions?:(entity:Entity) => EntityPermissions
   entitySeeder?:(entity:Entity) => EntitySeeder
@@ -19,6 +20,9 @@ export type GorConfig = {
 }
 
 export class GorContext {
+
+  readonly graphx = new GraphX();
+  readonly entities:{[name:string]:Entity} = {};
 
   private constructor( private config:GorConfig ){}
 
@@ -29,10 +33,7 @@ export class GorContext {
     if( ! config ) config = {};
     if( _.isString( config ) ) config = { name: config };
     if( ! config.name ) config.name = "default";
-    if( ! config.resolver ) {
-      const resolver = await MongoDbResolver.create( { url: 'mongodb://localhost:27017', dbName: config.name } );
-      config.resolver = (entity?:Entity) => resolver;
-    }
+    if( ! config.resolver ) config.resolver = await this.getDefaultResolver( config.name );
     _.defaults( config, {
       validator: (entity:Entity) => new ValidateJs( entity ),
       entityPermissions: (entity:Entity) => new EntityPermissions( entity ),
@@ -43,9 +44,13 @@ export class GorContext {
     return new GorContext(config);
   }
 
-  resolver( entity?:Entity ) {
-    if( ! this.config.resolver ) throw new Error("GorContext - you must provide a resolver factory method" );
-    return this.config.resolver(entity);
+  private static getDefaultResolver( dbName:string ):Promise<Resolver> {
+    return MongoDbResolver.create( { url: 'mongodb://localhost:27017', dbName } );
+  }
+
+  get resolver() {
+    if( ! this.config.resolver ) throw new Error("GorContext - you must provide a resolver" );
+    return this.config.resolver;
   }
 
   validator( entity:Entity ) {
