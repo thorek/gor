@@ -18,6 +18,8 @@ fdescribe('Validations', () => {
     context = gor.context;
   })
 
+  //
+  //
   it('should validate attributes', async () => {
     const alpha = context.entities['Alpha'];
 
@@ -31,7 +33,8 @@ fdescribe('Validations', () => {
     expect( result ).toHaveLength( 0 );
   })
 
-
+  //
+  //
   it( 'should validate required assocTo', async () => {
     const beta = context.entities['Beta']
     const result = await beta.validate( {},{ beta: { name: "someName" } }, {} );
@@ -41,7 +44,8 @@ fdescribe('Validations', () => {
     ]));
   })
 
-
+  //
+  //
   it( 'should validate existing foreignKey', async () => {
     const beta = context.entities['Beta']
     let result = await beta.validate( {},{ beta: { name: "someName", deltaId: "1234" } }, {} );
@@ -64,7 +68,8 @@ fdescribe('Validations', () => {
     expect( result ).toHaveLength( 0 );
   })
 
-
+  //
+  //
   it('should have validation violation for unique attribute', async () => {
     const alpha = context.entities['Alpha'];
 
@@ -75,7 +80,8 @@ fdescribe('Validations', () => {
     ]));
   })
 
-
+  //
+  //
   it('should have validation violation for unique attribute with scope', async () => {
     const alpha = context.entities['Alpha'];
     const delta = context.entities['Delta'];
@@ -92,5 +98,13 @@ fdescribe('Validations', () => {
     expect( result ).toHaveLength( 0 );
   })
 
+  //
+  //
+  it('should validate the updated item (not just the input)', async () => {
+    const alpha = context.entities['Alpha'];
+    const a1 = _.first( await context.resolver.findByAttribute( alpha, {name: "name", value: 'a1' } ) );
+    const result = await alpha.validate( {},{ alpha: { id: a1.id } }, {} );
+    expect( result ).toHaveLength( 0 );
+  })
 
 })

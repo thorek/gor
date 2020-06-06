@@ -7,7 +7,7 @@ import { EntityModule } from "../entities/entity-module";
 export abstract class Validator extends EntityModule{
 
 
-  abstract validate( root:any, args:any, context:any ):Promise<string[]>
+  abstract validate( attributes:any, root:any, args:any, context:any ):Promise<string[]>
 }
 
 
@@ -16,7 +16,7 @@ export abstract class Validator extends EntityModule{
  */
 export class NonValidator extends Validator {
 
-  async validate( root:any, args:any ): Promise<string[]> {
+  async validate(): Promise<string[]> {
     return [];
   }
 

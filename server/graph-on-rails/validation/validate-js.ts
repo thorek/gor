@@ -22,9 +22,8 @@ export class ValidateJs extends Validator {
   /**
    *
    */
-  async validate( root:any, args:any ): Promise<string[]> {
-    const input = _.get( args, this.entity.singular );
-    const result = validate( input, this.constraints );
+  async validate( attributes:any ): Promise<string[]> {
+    const result = validate( attributes, this.constraints );
     return result === true ? [] : this.formatErrors( result );
   }
 

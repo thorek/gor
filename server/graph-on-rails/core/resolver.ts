@@ -60,11 +60,6 @@ export abstract class Resolver {
   /**
    *
    */
-  abstract query( entity:Entity, expression:any ):Promise<any>;
-
-  /**
-   *
-   */
   abstract getPermittedIds( entity:Entity, expression:object, context:any ):Promise<number[]>;
 
   /**
@@ -76,4 +71,14 @@ export abstract class Resolver {
    *
    */
   abstract findByAttribute( entity:Entity, ...attrValue:{name:string,value:any}[] ):Promise<any[]>;
+
+  /**
+   *
+   */
+  abstract findById( entity:Entity, id:any ):Promise<any>
+
+  /**
+   *
+   */
+  abstract findByExpression( entity:Entity, filter:any ):Promise<any[]>
 }

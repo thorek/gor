@@ -12,6 +12,10 @@ entity:
       some:
         type: string
         unique: Delta
+        required: true
+      foo:
+          type: string
+          required: true
     assocTo:
       - Delta
     seeds:

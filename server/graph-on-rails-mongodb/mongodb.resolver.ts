@@ -43,6 +43,34 @@ export class MongoDbResolver extends Resolver {
   /**
    *
    */
+  async findById( entity:Entity, id:ObjectId|string ):Promise<any> {
+    if( ! (id instanceof ObjectId) ) id = this.getObjectId( id, entity );
+    const collection = this.getCollection( entity );
+		const item = await collection.findOne( id );
+		return this.buildOutItem( item );
+  }
+
+  /**
+   *
+   */
+  async findByExpression( entity:Entity, filter:any ):Promise<any[]> {
+    const collection = this.getCollection( entity );
+    const items = await collection.find( filter ).toArray();
+		return _.map( items, item => this.buildOutItem( item ) );
+  }
+
+  /**
+   *
+   */
+  async findByAttribute( entity:Entity, ...attrValue:{name:string,value:any}[] ):Promise<any[]> {
+    const expression = { $and: _.map( attrValue, av => _.set({}, av.name, { $eq: _.toString(av.value) }) ) };
+    return this.findByExpression( entity, expression );
+  }
+
+
+  /**
+   *
+   */
   protected getCollection( entity:Entity ):Collection {
     return this.db.collection( entity.plural  );
   }
@@ -72,54 +100,44 @@ export class MongoDbResolver extends Resolver {
    *
    */
   async resolveType( entity:Entity, root:any, args:any, context:any ):Promise<any> {
-    const collection = this.getCollection( entity );
-    const id = this.getObjectId( _.get( args, 'id' ), entity );
-		const item = await collection.findOne( id );
-		return this.buildOutItem( item );
+    const id = _.get( args, 'id' );
+    return this.findById( entity, id );
   }
 
   /**
    *
    */
   async resolveAssocToType( refType:Entity, root:any, args:any, context:any ):Promise<any> {
-    const collection = this.getCollection( refType );
-    const id = this.getObjectId( _.get( root, refType.foreignKey ), refType );
-		const item = await collection.findOne( id );
-		return this.buildOutItem( item );
+    const id = _.get( root, refType.foreignKey );
+    return this.findById( refType, id );
   }
 
   /**
    *
    */
   async resolveAssocFromTypes( entity:Entity, refType:Entity, root:any, args:any, context:any ):Promise<any[]> {
-    const collection = this.getCollection( refType );
     const attr = refType.isAssocToMany( entity ) ? entity.foreignKeys : entity.foreignKey;
     const filter = _.set({}, attr, _.toString(root.id) );
-		const items = await collection.find( filter ).toArray();
-		return _.map( items, item => this.buildOutItem( item ) );
+    return this.findByExpression( refType, filter );
   }
 
   /**
    *
    */
   async resolveAssocToManyTypes( entity:Entity, refType:Entity, root:any, args:any, context:any ):Promise<any[]> {
-    const collection = this.getCollection( refType );
     const foreignKeys = _.map( _.get( root, refType.foreignKeys ), foreignKey => new ObjectId( foreignKey ) );
     const filter = { _id: { $in: foreignKeys } };
-		const items = await collection.find( filter ).toArray();
-		return _.map( items, item => this.buildOutItem( item ) );
+    return this.findByExpression( refType, filter );
   }
 
   /**
    *
    */
   async resolveTypes( entity:Entity, root:any, args:any, context:any ):Promise<any[]> {
-    const collection = this.getCollection( entity );
     let filter = this.getFilterQuery( entity, root, args, context );
     _.set( filter, 'deleted', { $ne: true } );
     filter = await this.addPermissions( entity, "read", filter, context );
-		const items = await collection.find( filter ).toArray();
-		return _.map( items, item => this.buildOutItem( item ) );
+    return this.findByExpression( entity, filter );
   }
 
   /**
@@ -215,18 +233,6 @@ export class MongoDbResolver extends Resolver {
   /**
    *
    */
-  async query( entity:Entity, expression:any ):Promise<any[]> {
-    try {
-      return await this.getCollection( entity ).find( expression ).toArray();
-    } catch (error) {
-      console.error( `could not query on collection '${entity.name}'`, expression, error );
-    }
-    return [];
-  }
-
-  /**
-   *
-   */
   protected async addPermissions( entity:Entity, action:CrudAction, filter:any, context:any ):Promise<any> {
     let ids = await entity.getPermittedIds( action, context );
     if( ids === true ) return filter;
@@ -245,7 +251,7 @@ export class MongoDbResolver extends Resolver {
     } else {
       expression = this.buildPermittedIdsFilter( entity, permission, context );
     }
-    const result = await this.query( entity, expression );
+    const result = await this.findByExpression( entity, expression );
     return _.map( result, item => _.get(item, '_id' ) );
   }
 
@@ -255,7 +261,7 @@ export class MongoDbResolver extends Resolver {
   async getPermittedIdsForForeignKeys( entity:Entity, assocTo:string, foreignKeys:any[] ):Promise<number[]> {
     foreignKeys = _.map( foreignKeys, key => key.toString() );
     const expression = _.set({}, assocTo, { $in: foreignKeys } );
-    const result = await this.query( entity, expression );
+    const result = await this.findByExpression( entity, expression );
     return _.map( result, item => _.get(item, '_id' ) );
   }
 
@@ -300,14 +306,6 @@ export class MongoDbResolver extends Resolver {
     } catch (error) {
       throw new Error( `could not convert '${id}' for '${entity.name}' to an ObjectId` );
     }
-  }
-
-  /**
-   *
-   */
-  async findByAttribute( entity:Entity, ...attrValue:{name:string,value:any}[] ):Promise<any[]> {
-    const expression = { $and: _.map( attrValue, av => _.set({}, av.name, { $eq: _.toString(av.value) }) ) };
-    return this.query( entity, expression );
   }
 
 }

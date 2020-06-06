@@ -6,7 +6,7 @@ import { GorContext } from '../core/gor-context';
 import { Validator } from '../validation/validator';
 import { CrudAction, EntityPermissions } from './entity-permissions';
 import { EntitySeeder } from './entity-seeder';
-import { EntityResolverValidator } from './entity-resolver-validator';
+import { EntityValidator } from './entity-validator';
 
 //
 //
@@ -35,8 +35,7 @@ export abstract class Entity {
 
   public entitySeeder!:EntitySeeder;
   public entityPermissions!:EntityPermissions;
-  protected validator!:Validator;
-  protected resolverValidator!:EntityResolverValidator;
+  protected entityValidator!:EntityValidator;
 
   /**
    *
@@ -48,10 +47,9 @@ export abstract class Entity {
 
     this.context.entities[this.typeName] = this;
     this.entitySeeder = this.context.entitySeeder( this );
-    this.validator = this.context.validator( this );
     this.entityPermissions = this.context.entityPermissions( this );
     this.entitySeeder = this.context.entitySeeder( this );
-    this.resolverValidator = EntityResolverValidator.getInstance();
+    this.entityValidator = new EntityValidator( this )
   }
 
   get name() { return this.getName() }
@@ -132,9 +130,7 @@ export abstract class Entity {
    *
    */
   async validate( root: any, args: any, context:any ):Promise<string[]> {
-    const violations:string[] = this.validator ? await this.validator.validate( root, args, context ) : [];
-    if( _.size( violations ) ) return violations;
-    return await this.resolverValidator.validate( this, root, args, context );
+    return await this.entityValidator.validate( root, args, context );
   }
 
 }
