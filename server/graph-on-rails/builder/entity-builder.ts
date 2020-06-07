@@ -252,7 +252,7 @@ export class EntityBuilder extends SchemaBuilder {
       const typeName = this.entity.typeName;
       const singular = this.entity.singular;
       const args = _.set( {}, this.entity.singular, { type: this.graphx.type(this.entity.inputName)} );
-      let fields = { errors: {type: new GraphQLNonNull(new GraphQLList(GraphQLString)) } };
+      let fields = { validationViolations: { type: new GraphQLNonNull( new GraphQLList(this.graphx.type('ValidationViolation'))) } };
       fields = _.set( fields, singular, {type: this.graphx.type(typeName) } );
       const type = new GraphQLObjectType( { name: `Save${typeName}MutationResult`, fields } );
       return _.set( {}, `save${typeName}`, {
@@ -265,8 +265,8 @@ export class EntityBuilder extends SchemaBuilder {
    *
    */
   private async saveEntity( root: any, args: any, context:any ) {
-    let errors = await this.entity.validate( root, args, context );
-    if( _.size( errors ) ) return { errors };
+    let validationViolations = await this.entity.validate( root, args, context );
+    if( _.size( validationViolations ) ) return { validationViolations };
     return _.set( {errors: []}, this.entity.singular, this.resolver.saveEntity( this.entity, root, args, context ) );
   }
 

@@ -3,6 +3,7 @@ import validate from 'validate.js';
 
 import { Entity } from '../entities/entity';
 import { Validator } from './validator';
+import { ValidationViolation } from '../entities/entity-validator';
 
 /**
  *
@@ -22,7 +23,7 @@ export class ValidateJs extends Validator {
   /**
    *
    */
-  async validate( attributes:any ): Promise<string[]> {
+  async validate( attributes:any ): Promise<ValidationViolation[]> {
     const result = validate( attributes, this.constraints );
     return result === true ? [] : this.formatErrors( result );
   }
@@ -30,10 +31,10 @@ export class ValidateJs extends Validator {
   /**
    *
    */
-  private formatErrors( result:any ):string[] {
-    const errors:string[] = [];
+  private formatErrors( result:any ):ValidationViolation[] {
+    const errors:ValidationViolation[] = [];
     _.forEach( result, (messages:string[], attribute) => {
-      _.forEach( messages, message => errors.push( `${attribute} : ${message}` ));
+      _.forEach( messages, violation => errors.push( { attribute, violation } ) );
     });
     return errors;
   }

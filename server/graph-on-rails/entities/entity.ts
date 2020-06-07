@@ -3,10 +3,9 @@ import _ from 'lodash';
 
 import { Attribute } from '../builder/attribute';
 import { GorContext } from '../core/gor-context';
-import { Validator } from '../validation/validator';
 import { CrudAction, EntityPermissions } from './entity-permissions';
 import { EntitySeeder } from './entity-seeder';
-import { EntityValidator } from './entity-validator';
+import { EntityValidator, ValidationViolation } from './entity-validator';
 
 //
 //
@@ -129,7 +128,7 @@ export abstract class Entity {
   /**
    *
    */
-  async validate( root: any, args: any, context:any ):Promise<string[]> {
+  async validate( root: any, args: any, context:any ):Promise<ValidationViolation[]> {
     return await this.entityValidator.validate( root, args, context );
   }
 

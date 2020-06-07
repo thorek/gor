@@ -40,7 +40,10 @@ fdescribe('Validations', () => {
     const result = await beta.validate( {},{ beta: { name: "someName" } }, {} );
     expect( result ).toHaveLength( 1 );
     expect( result ).toEqual( expect.arrayContaining([
-      expect.stringContaining("must be provided")
+      expect.objectContaining( {
+        attribute: 'deltaId',
+        violation: 'must be provided'
+      })
     ]));
   })
 
@@ -51,7 +54,10 @@ fdescribe('Validations', () => {
     let result = await beta.validate( {},{ beta: { name: "someName", deltaId: "1234" } }, {} );
     expect( result ).toHaveLength( 1 );
     expect( result ).toEqual( expect.arrayContaining([
-      expect.stringContaining("could not convert")
+      expect.objectContaining({
+        attribute: 'deltaId',
+        violation: expect.stringContaining("could not convert")
+      })
     ]));
 
     const alpha = context.entities['Alpha'];
@@ -59,7 +65,10 @@ fdescribe('Validations', () => {
     result = await beta.validate( {},{ beta: { name: "someName", deltaId: a1.id } }, {} );
     expect( result ).toHaveLength( 1 );
     expect( result ).toEqual( expect.arrayContaining([
-      expect.stringContaining("must refer to existing item")
+      expect.objectContaining( {
+        attribute: 'deltaId',
+        violation: 'must refer to existing item'
+      })
     ]));
 
     const delta = context.entities['Delta'];
@@ -76,7 +85,10 @@ fdescribe('Validations', () => {
     let result = await alpha.validate( {},{ alpha: { name: "a1" } }, {} );
     expect( result ).toHaveLength( 1 );
     expect( result ).toEqual( expect.arrayContaining([
-      expect.stringContaining("name - value 'a1' must be unique")
+      expect.objectContaining( {
+        attribute: 'name',
+        violation: "value 'a1' must be unique"
+      })
     ]));
   })
 
@@ -91,7 +103,10 @@ fdescribe('Validations', () => {
     let result = await alpha.validate( {},{ alpha: { name: "aX", some: "some1", deltaId: d1.id } }, {} );
     expect( result ).toHaveLength( 1 );
     expect( result ).toEqual( expect.arrayContaining([
-      expect.stringContaining("some - value 'some1' must be unique within scope 'Delta'")
+      expect.objectContaining( {
+        attribute: 'some',
+        violation: "value 'some1' must be unique within scope 'Delta'"
+      })
     ]));
 
     result = await alpha.validate( {},{ alpha: { name: "aX", some: "some1", deltaId: d2.id } }, {} );

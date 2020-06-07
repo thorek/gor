@@ -4,6 +4,13 @@ import { Validator } from '../validation/validator';
 
 //
 //
+export type ValidationViolation = {
+  attribute?: string,
+  violation: string
+}
+
+//
+//
 export class EntityValidator  {
 
   private validator!:Validator;
@@ -18,9 +25,9 @@ export class EntityValidator  {
   /**
    *
    */
-  async validate( root:any, args:any, context:any ):Promise<string[]> {
+  async validate( root:any, args:any, context:any ):Promise<ValidationViolation[]> {
     const attributes = await this.getAttributes( args );
-    const violations:string[] = [];
+    const violations:ValidationViolation[] = [];
     violations.push( ... await this.validateRequiredAssocTos( attributes ) );
     violations.push( ... await this.validateUniqe( attributes ) );
     violations.push( ... await this.validator.validate( attributes, root, args, context ) );
@@ -40,8 +47,8 @@ export class EntityValidator  {
   /**
    *
    */
-  private async validateRequiredAssocTos( attributes:any ):Promise<string[]> {
-    const violations:string[] = [];
+  private async validateRequiredAssocTos( attributes:any ):Promise<ValidationViolation[]> {
+    const violations:ValidationViolation[] = [];
     for( const assocTo of this.entity.assocTo ){
       if( ! assocTo.required ) continue;
       const violation = await this.validateRequiredAssocTo( assocTo, attributes );
@@ -53,25 +60,25 @@ export class EntityValidator  {
   /**
    *
    */
-  private async validateRequiredAssocTo( assocTo:EntityReference, attributes:any ):Promise<string|undefined> {
+  private async validateRequiredAssocTo( assocTo:EntityReference, attributes:any ):Promise<ValidationViolation|undefined> {
     const refEntity = this.context.entities[assocTo.type];
     const foreignKey = _.get( attributes, refEntity.foreignKey );
-    if( ! foreignKey ) return `${refEntity.foreignKey} must be provided`;
+    if( ! foreignKey ) return {attribute: refEntity.foreignKey, violation: "must be provided"};
     try {
       const result = await this.resolver.resolveType( refEntity, {}, { id: foreignKey }, {} );
       if( _.size( result ) ) return;
     } catch (error) {
-      return `${refEntity.foreignKey} ${error}`;
+      return { attribute: refEntity.foreignKey, violation: _.toString(error) };
     }
-    return `${refEntity.foreignKey} must refer to existing item`;
+    return { attribute: refEntity.foreignKey, violation: "must refer to existing item" };
   }
 
 
   /**
    *
    */
-  private async validateUniqe( attributes:any ):Promise<string[]> {
-    const violations:string[] = [];
+  private async validateUniqe( attributes:any ):Promise<ValidationViolation[]> {
+    const violations:ValidationViolation[] = [];
     for( const name of _.keys(this.entity.attributes) ){
       const attribute = this.entity.attributes[name];
       if( ! attribute.unique ) continue;
@@ -84,7 +91,7 @@ export class EntityValidator  {
   /**
    *
    */
-  private async validateUniqeAttribute( name:string, attribute:TypeAttribute, attributes:any ):Promise<string|undefined> {
+  private async validateUniqeAttribute( name:string, attribute:TypeAttribute, attributes:any ):Promise<ValidationViolation|undefined> {
     const value = _.get( attributes, name );
     if( _.isUndefined( value ) ) return;
     const attrValues = [{name, value}];
@@ -97,7 +104,8 @@ export class EntityValidator  {
       scopeMsg = ` within scope '${attribute.unique}'`;
     }
     const result = await this.resolver.findByAttribute( this.entity, ...attrValues );
-    return this.isUniqueResult( attributes, result ) ? undefined : `${name} - value '${value}' must be unique` + scopeMsg;
+    const violation = {attribute: name, violation: `value '${value}' must be unique` + scopeMsg }
+    return this.isUniqueResult( attributes, result ) ? undefined : violation;
   }
 
   /**

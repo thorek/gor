@@ -1,4 +1,4 @@
-import { GraphQLBoolean, GraphQLList, GraphQLObjectType, GraphQLSchema, GraphQLString } from 'graphql';
+import { GraphQLBoolean, GraphQLList, GraphQLObjectType, GraphQLSchema, GraphQLString, GraphQLNonNull } from 'graphql';
 import _ from 'lodash';
 
 import { FilterTypeBuilder } from '../builder/filter-type-builder';
@@ -19,7 +19,8 @@ export class GraphX {
 	//
 	init(){
 		this.createQueryType();
-		this.createMutationType();
+    this.createMutationType();
+    this.createValidationViolationType();
 	}
 
   /**
@@ -54,6 +55,19 @@ export class GraphX {
         ping: { type: GraphQLString, resolve: () => 'pong' }
       } )
     } );
+  }
+
+  /**
+   *
+   */
+  private createValidationViolationType(){
+    this.createType('ValidationViolation', {
+      name: 'ValidationViolation',
+      fields: () => ({
+        attribute: { type: GraphQLString },
+        violation: { type: new GraphQLNonNull( GraphQLString ) }
+      })
+    });
   }
 
 

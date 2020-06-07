@@ -2,6 +2,7 @@ import _ from 'lodash';
 
 import { Entity } from '../entities/entity';
 import { Validator } from './validator';
+import { ValidationViolation } from '../entities/entity-validator';
 
 const is = require( 'validator.js' ).Assert;
 const validator = require( 'validator.js' ).validator();
@@ -25,7 +26,7 @@ export class ValidatorJs extends Validator {
   /**
    *
    */
-  async validate( attributes:any ): Promise<string[]> {
+  async validate( attributes:any ): Promise<ValidationViolation[]> {
     const result = validator.validate( attributes, this.constraint );
     return result === true ? [] : this.formatErrors( result );
   }
@@ -33,14 +34,14 @@ export class ValidatorJs extends Validator {
   /**
    *
    */
-  private formatErrors( result:any ):string[] {
-    const errors:string[] = [];
+  private formatErrors( result:any ):ValidationViolation[] {
+    const errors:ValidationViolation[] = [];
     _.forEach( result, (violations, key) => {
       violations = _.isArray( violations ) ? violations : [violations];
       _.forEach( violations, violation => {
         const msg = _.get( violation, '__class__' ) === 'Violation' && (! _.isObject( _.get( violation, 'value')) ) ?
           violation.__toString() : `${_.get(violation, ['assert', '__class__'])} assert failed`;
-        errors.push( `${key} : ${ msg }` );
+          errors.push( { attribute: key, violation: msg } );
       });
     });
     return errors;
