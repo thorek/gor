@@ -1,15 +1,12 @@
-
-import _ from 'lodash';
-import { GraphQLType, GraphQLID, GraphQLString, GraphQLInt, GraphQLFloat, GraphQLBoolean, GraphQLNonNull } from "graphql";
-import { GorContext } from "graph-on-rails/core/gor-context";
-
+import { GraphQLType } from 'graphql';
 
 //
 export type TypeAttribute = {
   graphqlType:GraphQLType|string;
-  filterType?:GraphQLType|string;
+  filterType?:GraphQLType|string|false;
   validation?:any;
   unique?:string|boolean;
   required?:boolean;
+  description?:string
 }
 

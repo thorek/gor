@@ -1,13 +1,20 @@
 entity:
   Organisation:
     attributes:
-      name: string
+      name:
+        type: string
+        description: wird in den erstellten Dokumenten verwendet, daher ohne vollständige Rechtliche Form
     assocFrom:
       - OrganisationalUnit
       - ProcessingActivity
     assocTo:
       - Client
 
+
+    description: >
+      Organisation ist der Oberbegriff für jede Stelle (eines Kunden) bei dem Datenschutzrelevante
+      Sachverhalte erfasst, beschrieben und verwaltet werden. Eine Organisation in diesem Sinne muss demnach
+      nicht zwingend mit der rechtlichen Organisationsstruktur des Kunden übereinstimmen.
 
     seeds:
       disphere:

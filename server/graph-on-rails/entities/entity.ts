@@ -63,6 +63,7 @@ export abstract class Entity {
   get seeds() { return this.getSeeds() }
   get permissions() { return this.getPermissions() }
   get equality() { return this.getEquality() }
+  get description() { return this.getDescription() }
 
   protected abstract getName():string;
 	protected getTypeName() { return inflection.camelize( this.name ) }
@@ -84,6 +85,7 @@ export abstract class Entity {
   protected getSeeds():{[name:string]:any} { return {} }
   protected getPermissions():null|{[role:string]:boolean|string|{[action:string]:string|object|(string|object)[]}} { return null }
   protected getEquality():{[typeName:string]:string[]} {return {}}
+  protected getDescription():string|undefined { return }
 
   /**
    *

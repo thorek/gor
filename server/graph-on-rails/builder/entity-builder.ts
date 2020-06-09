@@ -1,18 +1,10 @@
 import { GorContext } from 'graph-on-rails/core/gor-context';
-import {
-  GraphQLBoolean,
-  GraphQLEnumType,
-  GraphQLID,
-  GraphQLInputObjectType,
-  GraphQLList,
-  GraphQLNonNull,
-  GraphQLObjectType,
-} from 'graphql';
+import { GraphQLBoolean, GraphQLID, GraphQLInputObjectType, GraphQLList, GraphQLNonNull, GraphQLObjectType } from 'graphql';
 import _ from 'lodash';
 
 import { Entity, EntityReference } from '../entities/entity';
-import { SchemaBuilder } from './schema-builder';
 import { TypeAttribute } from '../entities/type-attribute';
+import { SchemaBuilder } from './schema-builder';
 
 //
 //
@@ -39,10 +31,14 @@ export class EntityBuilder extends SchemaBuilder {
 	//
 	protected createObjectType():void {
    	const name = this.entity.typeName;
-		this.graphx.type( name, { name, fields: () => {
-			const fields = {  id: { type: new GraphQLNonNull(GraphQLID) } };
-			return this.setAttributes( fields );
-		} });
+		this.graphx.type( name, {
+      name,
+      fields: () => {
+			  const fields = {  id: { type: new GraphQLNonNull(GraphQLID) } };
+			  return this.setAttributes( fields );
+      },
+      description: this.entity.description
+    });
 	}
 
 	//
@@ -186,7 +182,7 @@ export class EntityBuilder extends SchemaBuilder {
    */
   protected setAttributes( fields:any ):any {
 		_.forEach( this.attributes(), (attribute, name) => {
-      _.set( fields, name, { type: this.getGraphQLType(attribute) } );
+      _.set( fields, name, { type: this.getGraphQLType(attribute), description: attribute.description } );
     });
     return fields;
 	}
