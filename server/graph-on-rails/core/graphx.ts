@@ -25,7 +25,7 @@ export class GraphX {
   /**
    *
    */
-  private createMutationType() {
+  private createMutationType():void {
     this.createType( 'mutation', {
       name: 'Mutation',
       fields: () => ( {
@@ -47,7 +47,7 @@ export class GraphX {
   /**
    *
    */
-  private createQueryType() {
+  private createQueryType():void {
     this.createType( 'query', {
       name: 'Query',
       fields: () => ( {
@@ -59,7 +59,7 @@ export class GraphX {
   /**
    *
    */
-  private createValidationViolationType(){
+  private createValidationViolationType():void {
     this.createType('ValidationViolation', {
       name: 'ValidationViolation',
       fields: () => ({

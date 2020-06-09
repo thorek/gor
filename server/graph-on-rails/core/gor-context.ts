@@ -9,7 +9,7 @@ import { ValidateJs } from '../validation/validate-js';
 import { Validator } from '../validation/validator';
 import { GraphX } from './graphx';
 import { Resolver } from './resolver';
-import { GraphQLType } from 'graphql';
+import { SchemaBuilder } from '../builder/schema-builder';
 
 export type GorConfig = {
   name?:string
@@ -72,7 +72,7 @@ export class GorContext {
   }
 
   filterType( type:string ):FilterType|undefined {
-    return this.filterTypes[ FilterType.getFilterName(type) ];
+    return this.filterTypes[ SchemaBuilder.getFilterName(type) ];
   }
 
   readonly contextUser = this.config.contextUser;

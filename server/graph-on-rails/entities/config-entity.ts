@@ -13,6 +13,7 @@ export type AttributeConfig = {
   validation?:any;
   required?:boolean
   unique?:boolean
+  description?:string
 }
 
 /**
@@ -38,6 +39,7 @@ export type EntityConfig  = {
   seeds:{[name:string]:any}
   permissions:null|{[role:string]:boolean|string|{[action:string]:string|object|(string|object)[]}}
   equality:null|string|{[typeName:string]:string[]}
+  description?:string
 }
 
 /**
@@ -103,6 +105,7 @@ export class ConfigEntity extends Entity {
     if( ! sr ) return super.getEquality();
     return _.isString( sr ) ? _.set( {}, sr, _.map( this.assocTo, bt => bt.type ) ) : sr;
   }
+  protected getDescription():string|undefined { return this.entityConfig.description || super.getDescription() }
 
   /**
    *
@@ -114,18 +117,15 @@ export class ConfigEntity extends Entity {
       attrConfig.type = attrConfig.type.slice(0, -1);
       attrConfig.required = true;
     }
-    if( attrConfig.filterType === false ) {
-      attrConfig.filterType = undefined;
-    } else {
-      if( ! attrConfig.filterType ) attrConfig.filterType = FilterType.getFilterName( attrConfig.type );
-    }
+    if( attrConfig.filterType === true ) attrConfig.filterType === undefined;
 
     return {
       graphqlType: attrConfig.type,
-      filterType: attrConfig.filterType as string,
+      filterType: attrConfig.filterType as string|false|undefined,
       validation: attrConfig.validation,
       unique: attrConfig.unique,
-      required: attrConfig.required
+      required: attrConfig.required,
+      description: attrConfig.description
     }
   }
 

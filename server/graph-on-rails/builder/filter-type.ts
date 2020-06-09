@@ -4,22 +4,16 @@ import _ from 'lodash';
 import { GorContext } from '../core/gor-context';
 import { SchemaBuilder } from './schema-builder';
 
-export interface FilterExpressionBuilder {
-  getFilterExpression( args:any, field:string ):any;
-}
 
 /**
  * Base class for all Filter Attributes
  */
-export abstract class FilterType extends SchemaBuilder implements FilterExpressionBuilder {
+export abstract class FilterType extends SchemaBuilder {
+
 
   //
   //
-  static getFilterName( type:string ):string { return `${type}Filter` }
-
-  //
-  //
-  name() { return FilterType.getFilterName( _.get(this.graphqlType(), "name") ) }
+  name() { return SchemaBuilder.getFilterName( _.get(this.graphqlType(), "name") ) }
 
 	//
 	//

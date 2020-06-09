@@ -3,6 +3,7 @@ import _ from 'lodash';
 import { GorContext } from '../core/gor-context';
 import { TypeAttribute } from '../entities/type-attribute';
 import { GraphQLType, GraphQLNonNull, GraphQLID, GraphQLString, GraphQLInt, GraphQLFloat, GraphQLBoolean } from 'graphql';
+import { FilterType } from './filter-type';
 
 const typesMap:{[scalar:string]:GraphQLType} = {
   Id: GraphQLID,
@@ -24,6 +25,10 @@ export abstract class SchemaBuilder {
 
   abstract name():string;
   attributes():{[name:string]:TypeAttribute} { return {} };
+
+  //
+  //
+  static getFilterName( type:string ):string { return `${type}Filter` }
 
 	//
 	//
@@ -76,7 +81,11 @@ export abstract class SchemaBuilder {
    *
    */
   getFilterType( attr:TypeAttribute):GraphQLType|undefined {
-    if( ! attr.filterType ) return;
+    if( attr.filterType === false ) return;
+    if( ! attr.filterType ){
+      const typeName = _.isString( attr.graphqlType ) ? attr.graphqlType : _.get(attr.graphqlType, 'name' ) as string;
+      attr.filterType = SchemaBuilder.getFilterName( typeName );
+    }
     if( ! _.isString( attr.filterType ) ) return attr.filterType;
     try {
       return this.context.graphx.type(attr.filterType);
