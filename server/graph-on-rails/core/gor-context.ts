@@ -1,13 +1,15 @@
 import _ from 'lodash';
 
 import { MongoDbResolver } from '../../graph-on-rails-mongodb/mongodb.resolver';
+import { FilterType } from '../builder/filter-type';
 import { Entity } from '../entities/entity';
 import { EntityPermissions } from '../entities/entity-permissions';
 import { EntitySeeder } from '../entities/entity-seeder';
 import { ValidateJs } from '../validation/validate-js';
 import { Validator } from '../validation/validator';
-import { Resolver } from './resolver';
 import { GraphX } from './graphx';
+import { Resolver } from './resolver';
+import { GraphQLType } from 'graphql';
 
 export type GorConfig = {
   name?:string
@@ -23,6 +25,7 @@ export class GorContext {
 
   readonly graphx = new GraphX();
   readonly entities:{[name:string]:Entity} = {};
+  readonly filterTypes:{[name:string]:FilterType} = {};
 
   private constructor( private config:GorConfig ){}
 
@@ -66,6 +69,10 @@ export class GorContext {
   entitySeeder( entity:Entity ) {
     if( ! this.config.entitySeeder ) throw new Error("GorContext - you must provide a entitySeeder factory method" );
     return this.config.entitySeeder(entity);
+  }
+
+  filterType( type:string ):FilterType|undefined {
+    return this.filterTypes[ FilterType.getFilterName(type) ];
   }
 
   readonly contextUser = this.config.contextUser;

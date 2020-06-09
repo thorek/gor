@@ -19,7 +19,7 @@ describe('Schema Generation', () => {
     context = gor.context;
   })
 
-  it( 'should generate schema', async () => {
+  fit( 'should generate schema', async () => {
     const schema = printSchema( await gor.schema() );
     expect( schema ).toContain("type Alpha");
     expect( schema ).toContain("type Beta");

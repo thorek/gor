@@ -1,4 +1,5 @@
 import { Entity } from '../graph-on-rails/entities/entity';
+import { GraphQLString } from 'graphql';
 
 /**
  *
@@ -7,14 +8,14 @@ export class OrganisationalUnit extends Entity {
 
 	getName() { return 'OrganisationalUnit' }
 	getAttributes() { return {
-      name: { type: "String", validation: {
+      name: { graphqlType: GraphQLString, validation: {
         "presence": true,
         "length": { minimum: 2, maximum: 50 }
       }},
-      email: { type: "String", validation: {
+      email: { graphqlType: GraphQLString, validation: {
         "email": true
       }},
-      additionalInfo: { type: "String", validation: {
+      additionalInfo: { graphqlType: GraphQLString, validation: {
         "length": { minimum: 10, maximum: 100 }
       }}
 	}}

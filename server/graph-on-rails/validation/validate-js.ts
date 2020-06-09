@@ -45,7 +45,12 @@ export class ValidateJs extends Validator {
   private buildConstraints() {
     this.constraints = {};
     _.forEach( this.entity.attributes, (attribute, name:string) => {
-      if( _.isObject( attribute.validation ) ) this.constraints[name] = attribute.validation
+      let validation = attribute.validation;
+      if( attribute.required ){
+        if( ! validation ) validation = {};
+        _.set( validation, 'presence', true );
+      }
+      if( validation ) this.constraints[name] = validation
     });
   }
 

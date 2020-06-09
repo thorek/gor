@@ -6,7 +6,6 @@ import { createServer } from 'http';
 
 import { OrganisationalUnit } from './custom-types/organisational-unit';
 import { Gor } from './graph-on-rails/core/gor';
-import { GorContext } from './graph-on-rails/core/gor-context';
 
 (async () => {
 
@@ -29,7 +28,7 @@ import { GorContext } from './graph-on-rails/core/gor-context';
     const token:string = contextExpress.req.headers.authorization || '';
     const user:any = users[token];
     if( ! user ) throw new AuthenticationError( `Token '${token}' cannot be resolved to a valid user.`);
-    return { user };
+    return { user, context: gor.context };
   }
 
   const server = await gor.server({context});

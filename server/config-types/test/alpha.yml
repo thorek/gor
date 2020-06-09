@@ -1,11 +1,19 @@
+enum:
+  Color:
+    RED: red
+    BLUE: blue
+    GREEN: green
 entity:
+  Other:
+    attributes:
+      foo: string!
   Alpha:
     attributes:
       name:
         type: string
         unique: true
+        required: true
         validation:
-          presence: true
           length:
             minimum: 2
             maximum: 20
@@ -14,8 +22,9 @@ entity:
         unique: Delta
         required: true
       foo:
-          type: string
-          required: true
+          type: int
+          required: false
+      color: Color
     assocTo:
       - Delta
     seeds:

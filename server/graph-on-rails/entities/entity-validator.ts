@@ -1,6 +1,8 @@
 import _ from 'lodash';
-import { Entity, TypeAttribute, EntityReference } from './entity';
+
 import { Validator } from '../validation/validator';
+import { Entity, EntityReference } from './entity';
+import { TypeAttribute } from './type-attribute';
 
 //
 //

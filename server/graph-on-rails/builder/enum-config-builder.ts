@@ -1,4 +1,3 @@
-import { GorContext } from '../core/gor-context';
 import { EnumBuilder } from './enum-builder';
 
 /**

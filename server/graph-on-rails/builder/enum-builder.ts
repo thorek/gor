@@ -14,13 +14,21 @@ export abstract class EnumBuilder extends SchemaBuilder {
     const values = {};
     _.forEach( this.enum(), (value,key) => _.set( values, key, { value }));
     this.graphx.type( name, { name, values, from: GraphQLEnumType	} );
-    this.createEnumFilter( name );
+  }
+
+  //
+  //
+  extendTypes():void {
+    this.createEnumFilter();
   }
 
 	//
 	//
-	protected createEnumFilter( name:string ):void {
-		this.resolver.addEnumFilterAttributeType( name, this.context );
+	protected createEnumFilter():void {
+    const filterType = this.resolver.getEnumFilterType( this.name() );
+    filterType.init( this.context );
+    filterType.createTypes();
+    filterType.extendTypes();
 	}
 
 

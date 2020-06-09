@@ -1,7 +1,6 @@
-import { GraphQLBoolean, GraphQLList, GraphQLObjectType, GraphQLSchema, GraphQLString, GraphQLNonNull } from 'graphql';
+import { GraphQLBoolean, GraphQLList, GraphQLObjectType, GraphQLSchema, GraphQLString, GraphQLNonNull, GraphQLType, GraphQLID, GraphQLInt } from 'graphql';
 import _ from 'lodash';
 
-import { FilterTypeBuilder } from '../builder/filter-type-builder';
 import { GorContext } from './gor-context';
 import { Seeder } from './seeder';
 
@@ -10,7 +9,7 @@ import { Seeder } from './seeder';
 //
 export class GraphX {
 
-  readonly filterAttributes:{[name:string]:FilterTypeBuilder} = {};
+
 	rawTypes:any = {};
 
 	private fnFromArray = (fns:any) => () => fns.reduce((obj:any, fn:any) => Object.assign({}, obj, fn.call()), {});
@@ -39,7 +38,7 @@ export class GraphX {
           type: GraphQLString,
           args: { truncate: { type: GraphQLBoolean } },
           resolve: ( root: any, args: any, context:any ) => Seeder.create(
-            context.gorContext as GorContext ).seed( args.truncate, context )
+            context.context as GorContext ).seed( args.truncate, context )
         }
       } )
     } );
@@ -76,6 +75,7 @@ export class GraphX {
 	private createType( name:string, obj:any ){
 		if (this.rawTypes[name]) throw new Error(`Type '${name}' already exists.`);
 		return this.rawTypes[name] = {
+      filterExpression: obj.filterExpression,
 			from: obj.from || GraphQLObjectType,
 			name: obj.name,
 			description: obj.description,

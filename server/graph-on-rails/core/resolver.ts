@@ -1,6 +1,5 @@
-import { SchemaBuilder } from '../builder/schema-builder';
+import { FilterType } from '../builder/filter-type';
 import { Entity } from '../entities/entity';
-import { GorContext } from './gor-context';
 
 /**
  *
@@ -50,12 +49,12 @@ export abstract class Resolver {
   /**
    *
    */
-  getScalarFilterTypes():SchemaBuilder[] { return [] }
+  abstract getScalarFilterTypes():FilterType[];
 
   /**
    *
    */
-  addEnumFilterAttributeType( name: string, context:GorContext ) {}
+  abstract getEnumFilterType( name: string ):FilterType;
 
   /**
    *

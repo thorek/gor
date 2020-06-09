@@ -2,18 +2,19 @@ import ts from 'es6-template-strings';
 import _ from 'lodash';
 import { Collection, Db, FilterQuery, MongoClient, ObjectId } from 'mongodb';
 
-import { GorContext } from '../graph-on-rails/core/gor-context';
+import { FilterType } from '../graph-on-rails/builder/filter-type';
 import { Resolver } from '../graph-on-rails/core/resolver';
 import { Entity } from '../graph-on-rails/entities/entity';
 import { CrudAction } from '../graph-on-rails/entities/entity-permissions';
-import { EnumFilterTypeBuilder } from './filter/enum-filter-type-builder';
-import { IntFilterTypeBuilder } from './filter/int-filter-type-builder';
-import { StringFilterTypeBuilder } from './filter/string-filter-type-builder';
+import { EnumFilterType } from './filter/enum-filter-type';
+import { IntFilterType } from './filter/int-filter-type';
+import { StringFilterType } from './filter/string-filter-type';
 
 /**
  *
  */
 export class MongoDbResolver extends Resolver {
+
 
   /**
    *
@@ -78,23 +79,19 @@ export class MongoDbResolver extends Resolver {
   /**
    *
    */
-  getScalarFilterTypes() {
+  getScalarFilterTypes():FilterType[] {
     return [
-      new StringFilterTypeBuilder(),
-      new IntFilterTypeBuilder()
-    ];
+      new StringFilterType(),
+      new IntFilterType()
+    ]
   }
 
   /**
    *
    */
-  addEnumFilterAttributeType( name: string, context:GorContext ) {
-    const efat =  new EnumFilterTypeBuilder( name );
-    efat.init( context );
-    efat.createTypes();
+  getEnumFilterType( enumName: string ) {
+    return new EnumFilterType( enumName );
   }
-
-
 
   /**
    *
@@ -159,11 +156,11 @@ export class MongoDbResolver extends Resolver {
 		_.forEach( filter, (condition, field) => {
       const attribute = entity.getAttribute(field);
 			if( ! attribute ) return;
-			const filterType = attribute.getFilterAttributeType();
-			const expression = filterType ? filterType.getFilterExpression( condition, field ) : null;
-			if( expression ) filterQuery[`${field}`] = expression;
+      const filterType = entity.context.filterType( _.toString(attribute.graphqlType) ); // oder filterType?
+      if( ! filterType ) return;
+			const expression = filterType.getFilterExpression( condition, field );
+			if( expression ) _.set( filterQuery, field, expression );
     });
-
 		return filterQuery;
 	}
 

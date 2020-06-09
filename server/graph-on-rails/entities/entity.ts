@@ -1,11 +1,11 @@
 import inflection from 'inflection';
 import _ from 'lodash';
 
-import { Attribute } from '../builder/attribute';
 import { GorContext } from '../core/gor-context';
 import { CrudAction, EntityPermissions } from './entity-permissions';
 import { EntitySeeder } from './entity-seeder';
 import { EntityValidator, ValidationViolation } from './entity-validator';
+import { TypeAttribute } from './type-attribute';
 
 //
 //
@@ -14,14 +14,6 @@ export type EntityReference = {
   required?:boolean;
 }
 
-//
-//
-export type TypeAttribute = {
-  type:string;
-	filterType?:string;
-  validation?:any; // todo validation type
-  unique?:string|boolean
-}
 
 //
 //
@@ -93,10 +85,11 @@ export abstract class Entity {
   protected getPermissions():null|{[role:string]:boolean|string|{[action:string]:string|object|(string|object)[]}} { return null }
   protected getEquality():{[typeName:string]:string[]} {return {}}
 
-  public getAttribute( name:string): Attribute {
-    const attr = this.attributes[name];
-    const type = attr ? attr.type : undefined;
-    return new Attribute( name, type, this.graphx );
+  /**
+   *
+   */
+  getAttribute(name:string):TypeAttribute {
+    return this.attributes[name];
   }
 
   /**

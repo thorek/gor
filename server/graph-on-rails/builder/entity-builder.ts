@@ -7,12 +7,12 @@ import {
   GraphQLList,
   GraphQLNonNull,
   GraphQLObjectType,
-  GraphQLString,
 } from 'graphql';
 import _ from 'lodash';
 
-import { Entity, EntityReference, TypeAttribute } from '../entities/entity';
+import { Entity, EntityReference } from '../entities/entity';
 import { SchemaBuilder } from './schema-builder';
+import { TypeAttribute } from '../entities/type-attribute';
 
 //
 //
@@ -37,23 +37,10 @@ export class EntityBuilder extends SchemaBuilder {
 
 	//
 	//
-	protected createEnums():void {
-		_.forEach( this.entity.enum, (keyValues:any, name:string) => {
-			const values = {};
-			_.forEach( keyValues, (value,key) => _.set( values, key, { value }));
-			this.graphx.type( name, { name, values, from: GraphQLEnumType	} );
-			this.resolver.addEnumFilterAttributeType( name, this.context );
-		});
-	}
-
-
-	//
-	//
 	protected createObjectType():void {
-    this.createEnums();
-		const name = this.entity.typeName;
+   	const name = this.entity.typeName;
 		this.graphx.type( name, { name, fields: () => {
-			const fields = {  id: { type: GraphQLID } };
+			const fields = {  id: { type: new GraphQLNonNull(GraphQLID) } };
 			return this.setAttributes( fields );
 		} });
 	}
@@ -198,8 +185,8 @@ export class EntityBuilder extends SchemaBuilder {
    * @param fields
    */
   protected setAttributes( fields:any ):any {
-		_.forEach( this.getAttributes(), (attribute,name) => {
-			_.set( fields, name, { type: attribute.getType()} );
+		_.forEach( this.attributes(), (attribute, name) => {
+      _.set( fields, name, { type: this.getGraphQLType(attribute) } );
     });
     return fields;
 	}
@@ -211,8 +198,9 @@ export class EntityBuilder extends SchemaBuilder {
 		const name = this.entity.filterName;
 		this.graphx.type( name, { name, from: GraphQLInputObjectType, fields: () => {
 			const fields = { id: { type: GraphQLID } };
-			_.forEach( this.getAttributes(), (attribute, name) => {
-				_.set( fields, name, { type: attribute.getFilterInputType() } );
+			_.forEach( this.attributes(), (attribute, name) => {
+        const type = this.getFilterType(attribute);
+				if( type ) _.set( fields, name, { type } );
 			});
 			return fields;
 		} });

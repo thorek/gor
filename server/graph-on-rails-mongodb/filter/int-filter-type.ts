@@ -1,22 +1,24 @@
 import _ from 'lodash';
-import { FilterTypeBuilder } from '../../graph-on-rails/builder/filter-type-builder';
+import { FilterType } from '../../graph-on-rails/builder/filter-type';
+import { GraphQLInt, GraphQLList } from 'graphql';
 
 /**
  *
  */
-export class IntFilterTypeBuilder extends FilterTypeBuilder{
+export class IntFilterType extends FilterType{
 
-	name() { return 'Int' }
+  graphqlType() { return GraphQLInt }
+
 	attributes() { return {
-		eq: { type: 'int' },
-		ne: { type: 'int' },
-		le: { type: 'int' },
-		lt: { type: 'int' },
-		ge: { type: 'int' },
-		gt: { type: 'int' },
-		isIn: { type: '[int]' },
-		notIn: { type: '[int]' },
-		between: { type: '[int]' },
+		eq: { graphqlType: GraphQLInt },
+		ne: { graphqlType: GraphQLInt },
+		le: { graphqlType: GraphQLInt },
+		lt: { graphqlType: GraphQLInt },
+		ge: { graphqlType: GraphQLInt },
+		gt: { graphqlType: GraphQLInt },
+		isIn: { graphqlType: new GraphQLList(GraphQLInt) },
+		notIn: { graphqlType: new GraphQLList(GraphQLInt) },
+		between: { graphqlType: new GraphQLList(GraphQLInt) },
 	}}
 
 	//

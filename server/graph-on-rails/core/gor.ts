@@ -1,6 +1,6 @@
 import { ApolloServer, ApolloServerExpressConfig } from 'apollo-server-express';
 import fs from 'fs';
-import { GraphQLSchema } from 'graphql';
+import { GraphQLSchema, GraphQLString, GraphQLInt } from 'graphql';
 import depthLimit from 'graphql-depth-limit';
 import _ from 'lodash';
 import path from 'path';
@@ -13,7 +13,12 @@ import { ConfigEntity } from '../entities/config-entity';
 import { Entity } from '../entities/entity';
 import { GorConfig, GorContext } from './gor-context';
 import { SchemaFactory } from './schema-factory';
+import { EnumBuilder } from 'graph-on-rails/builder/enum-builder';
 
+type DefinitionType = {
+  enum:{[name:string]:{}}
+  entity:{[name:string]:{}}
+}
 
 /**
  *
@@ -73,33 +78,41 @@ export class Gor {
    */
   private builders() {
     if( this._builders ) return this._builders;
-    const domainBuilders = this.getDomainBuilders();
-    const defaultFilterBuilders = this.context.resolver.getScalarFilterTypes();
+    const configTypeBuilders = this.getConfigTypeBuilder();
+    const scalarFilterTypeBuilders = this.context.resolver.getScalarFilterTypes();
+    const customEntityBuilders = _.map( this.customEntities, entity => new EntityBuilder( entity ) );
     this._builders = [
-      ...defaultFilterBuilders,
-      ...domainBuilders
+      ...scalarFilterTypeBuilders,
+      ...configTypeBuilders,
+      ...customEntityBuilders
     ];
     return this._builders;
   }
 
-  /**
-   *
-   */
-  private getDomainBuilders():SchemaBuilder[] {
-    const entitiesOrBuilders = _.concat( this.getConfigEntities(), this.customEntities );
-    return _.map( entitiesOrBuilders, entityOrBuilder => {
-      return entityOrBuilder instanceof Entity ? new EntityBuilder( entityOrBuilder ) : entityOrBuilder;
-    });
-  }
 
   /**
    *
    */
-  private getConfigEntities():(Entity|SchemaBuilder)[] {
-    return _.flatten( _.map( this.configFolders, folder => {
+  private getConfigTypeBuilder():SchemaBuilder[] {
+    const configs = this.getConfigDefinitions();
+    const builder:SchemaBuilder[] = _.compact( _.map( configs.entity,
+      (config, name) => this.createEntityBuilder( name, config )) );
+    builder.push( ... _.compact( _.map( configs.enum,
+      (config, name) => this.createEnumBuilder( name, config )) ) )
+    return builder;
+  }
+
+
+  /**
+   *
+   */
+  private getConfigDefinitions():DefinitionType {
+    const configs:DefinitionType = { enum: {}, entity: {} };
+    _.forEach( this.configFolders, folder => {
       const files = this.getConfigFiles( folder );
-      return _.compact( _.flatten( _.map( files, file => this.createConfigurationTypes( folder, file ) ) ) );
-    }));
+      _.forEach( files, file => this.parseConfigFile( configs, folder, file ) );
+    });
+    return configs;
   }
 
   /**
@@ -125,20 +138,39 @@ export class Gor {
   /**
    *
    */
-  private createConfigurationTypes( folder:string, file:string ):(Entity|SchemaBuilder)[] {
-    const builder:(ConfigEntity|EnumConfigBuilder)[] = [];
+  private parseConfigFile( configs:any, folder:string, file:string ):void {
     try {
       file = path.join( folder, file );
       const content = fs.readFileSync( file).toString();
-      const configs = YAML.parse(content);
-      builder.push( ... _.map( configs['entity'], (entityConfig, name) => ConfigEntity.create(
-        name, entityConfig ) ) );
-      builder.push( ... _.map( configs['enum'], (enumConfig, name) => EnumConfigBuilder.create(
-        name, enumConfig ) ) );
-    } catch ( e ){
-      console.warn( `[${file}]: ${e}`);
+      const config = YAML.parse(content);
+      _.merge( configs, config );
+    } catch ( error ){
+      console.warn( `Error parsing file [${file}]:`, error );
     }
-    return builder;
   }
+
+  /**
+   *
+   */
+  private createEntityBuilder( name:string, config:any ):undefined|EntityBuilder{
+    try {
+      const entity = ConfigEntity.create(name, config );
+      return new EntityBuilder( entity );
+    } catch (error) {
+      console.log( `Error building entity [${name}]`, error );
+    }
+  }
+
+  /**
+   *
+   */
+  private createEnumBuilder( name:string, config:any ):undefined|EnumBuilder{
+    try {
+      return EnumConfigBuilder.create( name, config );
+    } catch (error) {
+      console.log( `Error building enum [${name}]`, error );
+    }
+  }
+
 
 }

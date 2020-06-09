@@ -1,0 +1,4 @@
+entity:
+  Omega:
+    attributes:
+      name: string

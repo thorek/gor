@@ -5,7 +5,7 @@ import { GorContext } from '../graph-on-rails/core/gor-context';
 import { Seeder } from '../graph-on-rails/core/seeder';
 import { EntityAccessor } from '../graph-on-rails/entities/entity-accessor';
 
-fdescribe('Validations', () => {
+describe('Validations', () => {
 
   let context!:GorContext;
   const accessor = new EntityAccessor();
@@ -27,9 +27,9 @@ fdescribe('Validations', () => {
     expect( result ).toHaveLength( 1 );
 
     result = await alpha.validate( {},{ alpha: { name: "x" } }, {} );
-    expect( result ).toHaveLength( 1 );
+    expect( result ).toHaveLength( 2 );
 
-    result = await alpha.validate( {},{ alpha: { name: "Cool this" } }, {} );
+    result = await alpha.validate( {},{ alpha: { name: "Cool this", some: "Some that" } }, {} );
     expect( result ).toHaveLength( 0 );
   })
 
@@ -82,7 +82,7 @@ fdescribe('Validations', () => {
   it('should have validation violation for unique attribute', async () => {
     const alpha = context.entities['Alpha'];
 
-    let result = await alpha.validate( {},{ alpha: { name: "a1" } }, {} );
+    let result = await alpha.validate( {},{ alpha: { name: "a1", some: "some" } }, {} );
     expect( result ).toHaveLength( 1 );
     expect( result ).toEqual( expect.arrayContaining([
       expect.objectContaining( {

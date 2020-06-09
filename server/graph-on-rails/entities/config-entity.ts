@@ -1,14 +1,18 @@
 import _ from 'lodash';
 
-import { GorContext } from '../core/gor-context';
+import { FilterType } from '../builder/filter-type';
 import { Entity } from './entity';
+import { TypeAttribute } from './type-attribute';
 
 /**
  *
  */
 export type AttributeConfig = {
   type:string;
-  validation:any;
+  filterType?:string|boolean;
+  validation?:any;
+  required?:boolean
+  unique?:boolean
 }
 
 /**
@@ -31,7 +35,6 @@ export type EntityConfig  = {
   path?:string;
   parent?:string;
 
-  enum:{[name:string]:{[key:string]:string}}
   seeds:{[name:string]:any}
   permissions:null|{[role:string]:boolean|string|{[action:string]:string|object|(string|object)[]}}
   equality:null|string|{[typeName:string]:string[]}
@@ -62,9 +65,8 @@ export class ConfigEntity extends Entity {
   protected getTypeName() { return this.entityConfig.typeName || super.getTypeName() }
   protected getAttributes() {
     if( ! this.entityConfig.attributes ) return super.getAttributes();
-    return _.mapValues( this.entityConfig.attributes, attr => {
-      return _.isString(attr) ? { type: attr } : attr;
-    });
+    const attributes = _.mapValues( this.entityConfig.attributes, (attrConfig, name) => this.buildAttribute( name, attrConfig ) );
+    return _.pickBy( attributes, _.identity ) as {[name:string]:TypeAttribute};
   }
 	protected getAssocTo() {
     if( ! this.entityConfig.assocTo ) return super.getAssocTo();
@@ -88,10 +90,6 @@ export class ConfigEntity extends Entity {
       return _.isString(hm) ? { type: hm } : hm;
     });
    }
-   protected getEnum(){
-     if( ! this.entityConfig.enum ) return super.getEnum();
-     return this.entityConfig.enum;
-   }
   protected getPlural() { return this.entityConfig.plural || super.getPlural() }
 	protected getSingular() { return this.entityConfig.singular || super.getSingular() }
   protected getCollection() { return this.entityConfig.collection || super.getCollection() }
@@ -105,4 +103,30 @@ export class ConfigEntity extends Entity {
     if( ! sr ) return super.getEquality();
     return _.isString( sr ) ? _.set( {}, sr, _.map( this.assocTo, bt => bt.type ) ) : sr;
   }
+
+  /**
+   *
+   */
+  private buildAttribute( name:string, attrConfig:AttributeConfig|string ):TypeAttribute {
+    if( _.isString( attrConfig ) ) attrConfig = { type: attrConfig };
+    attrConfig.type = _.capitalize( attrConfig.type );
+    if( _.endsWith( attrConfig.type, '!' ) ){
+      attrConfig.type = attrConfig.type.slice(0, -1);
+      attrConfig.required = true;
+    }
+    if( attrConfig.filterType === false ) {
+      attrConfig.filterType = undefined;
+    } else {
+      if( ! attrConfig.filterType ) attrConfig.filterType = FilterType.getFilterName( attrConfig.type );
+    }
+
+    return {
+      graphqlType: attrConfig.type,
+      filterType: attrConfig.filterType as string,
+      validation: attrConfig.validation,
+      unique: attrConfig.unique,
+      required: attrConfig.required
+    }
+  }
+
 }
