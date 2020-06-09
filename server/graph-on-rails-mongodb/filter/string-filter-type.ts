@@ -1,6 +1,6 @@
 import _ from 'lodash';
 import { FilterType } from '../../graph-on-rails/builder/filter-type';
-import { GraphQLString, GraphQLBoolean, GraphQLList, GraphQLID } from 'graphql';
+import { GraphQLString, GraphQLBoolean, GraphQLList, GraphQLID, concatAST } from 'graphql';
 
 /**
  *
@@ -12,28 +12,42 @@ export class StringFilterType extends FilterType{
   //
   //
   attributes() { return {
-		ne: { graphqlType: GraphQLString },
-		eq: { graphqlType: GraphQLString },
+		is: { graphqlType: GraphQLString },
+		isNot: { graphqlType: GraphQLString },
 		in: { graphqlType: new GraphQLList(GraphQLString) },
 		notIn: { graphqlType: new GraphQLList(GraphQLString) },
 		contains: { graphqlType: GraphQLString },
-		notContains: { graphqlType: GraphQLString },
+		doesNotContain: { graphqlType: GraphQLString },
     beginsWith: { graphqlType: GraphQLString },
+    endsWith: { graphqlType: GraphQLString },
     caseSensitive: { graphqlType: GraphQLBoolean }
   }}
 
   //
 	//
 	getFilterExpression( condition:any, field:string ):any {
-		const operator = _.toString( _.first( _.keys( condition ) ) );
-		const operand = condition[operator];
+    const caseSensitive = _.get( condition, 'caseSensitive' ) === true;
+    delete condition.caseSensitive;
+    const operations = _.compact( _.map( condition,
+      (operand, operator) => this.getOperation( operator, operand, caseSensitive ) ) );
+    return _.size( operations ) > 1 ? { $and: operations } : _.first( operations );
+  }
+
+  //
+  //
+  private getOperation( operator:string, operand:any, caseSensitive:boolean ):any {
+    const i = caseSensitive ? undefined : 'i';
 		switch( operator ){
-			case 'eq': return {'$eq': operand};
-			case 'nw': return {'$nw': operand } ;
-			case 'contains': return {$regex : new RegExp(`.*${operand}.*`, 'i') };
-			case 'notContains':return {$regex : new RegExp(`.*^[${operand}].*`, 'i') };
-			case 'beginsWith': return {$regex : new RegExp(`${operand}.*`, 'i') };
+      case 'is': return {'$eq': operand};
+			case 'isNot': return {'$ne': operand } ;
+      case 'in': return { "$in": operand };
+      case 'notIn': return { "$nin": operand };
+      case 'contains': return {$regex : new RegExp(`.*${operand}.*`, i) };
+			case 'doesNotContain':return {$regex : new RegExp(`.*^[${operand}].*`, i) };
+      case 'beginsWith': return {$regex : new RegExp(`${operand}.*`, i) };
+      case 'endsWith': return {$regex : new RegExp(`.*${operand}`, i) };
 		}
 		console.warn(`StringFilterType unknown operator '${operator}' `);
-	}
+
+  }
 }
