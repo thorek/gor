@@ -30,20 +30,20 @@ describe('Relations', () => {
 
   it('should find items', async () => {
     const alpha = context.entities['Alpha'];
-    const a1 = await alpha.resolver.resolveTypes( alpha, {}, { filter: { name: { eq: "a1" } } }, {} );
+    const a1 = await alpha.resolver.resolveTypes( alpha, {}, { filter: { name: { is: "a1" } } }, {} );
     expect( a1 ).toHaveLength(1);
     const arr = await alpha.resolver.resolveTypes( alpha, {}, { filter: { name: { contains: "a" } } }, {} );
     expect( arr ).toHaveLength(3);
-    const aX = await alpha.resolver.resolveTypes( alpha, {}, { filter:  {name: { eq: "aX" } } }, {} );
+    const aX = await alpha.resolver.resolveTypes( alpha, {}, { filter:  {name: { is: "aX" } } }, {} );
     expect( aX ).toHaveLength(0);
   })
 
   it( 'finds items along a assocToChain', async () =>{
     const alpha = context.entities['Alpha'];
-    const a1 = _.first( await alpha.resolver.resolveTypes( alpha, {}, { filter: { name: { eq: "a1" } } }, {} ) );
+    const a1 = _.first( await alpha.resolver.resolveTypes( alpha, {}, { filter: { name: { is: "a1" } } }, {} ) );
     const d1 = await accessor.getItemFromAssocToChain( { entity:alpha, item:a1}, "Delta", {} );
     expect( d1.name ).toEqual("d1");
-    const a3 = _.first( await alpha.resolver.resolveTypes( alpha, {}, { filter: { name: { eq: "a3" } } }, {} ) );
+    const a3 = _.first( await alpha.resolver.resolveTypes( alpha, {}, { filter: { name: { is: "a3" } } }, {} ) );
     const g2 = await accessor.getItemFromAssocToChain( { entity:alpha, item:a3 }, "Delta.Gamma", {} );
     expect( g2.name ).toEqual("g2");
   })
@@ -56,13 +56,13 @@ describe('Relations', () => {
 
   it('should find assocToMany', async ()=> {
     const phi = context.entities['Phi'];
-    const phi1 = _.first( await phi.resolver.resolveTypes( phi, {}, { filter: { name: { eq: "phi1" } } }, {} ) );
+    const phi1 = _.first( await phi.resolver.resolveTypes( phi, {}, { filter: { name: { is: "phi1" } } }, {} ) );
     expect( phi1.chiIds ).toHaveLength( 2 );
   })
 
   it( 'should resolve assocTo', async () => {
     const delta = context.entities['Delta'];
-    const d1 = _.first( await delta.resolver.resolveTypes( delta, {}, { filter: { name: { eq: "d1" } } }, {} ) );
+    const d1 = _.first( await delta.resolver.resolveTypes( delta, {}, { filter: { name: { is: "d1" } } }, {} ) );
     const deltaId = d1.id;
     expect( deltaId ).toBeDefined();
     const alpha = context.entities['Alpha'];
@@ -72,7 +72,7 @@ describe('Relations', () => {
 
   it('shoud resolve assocFrom - advers of assocTo', async ()=> {
     const delta = context.entities['Delta'];
-    const d1 = _.first( await delta.resolver.resolveTypes( delta, {}, { filter: { name: { eq: "d1" } } }, {} ) );
+    const d1 = _.first( await delta.resolver.resolveTypes( delta, {}, { filter: { name: { is: "d1" } } }, {} ) );
 
     const alpha = context.entities['Alpha'];
     const alphas = await delta.resolver.resolveAssocFromTypes( delta, alpha, { id: d1.id }, {}, {} );
@@ -81,7 +81,7 @@ describe('Relations', () => {
 
   it('shoud resolve assocFrom - advers of assocToMany', async ()=> {
     const chi = context.entities['Chi'];
-    const chi1 = _.first( await chi.resolver.resolveTypes( chi, {}, { filter: { name: { eq: "chi1" } } }, {} ) );
+    const chi1 = _.first( await chi.resolver.resolveTypes( chi, {}, { filter: { name: { is: "chi1" } } }, {} ) );
 
     const phi = context.entities['Phi'];
     const phis = await chi.resolver.resolveAssocFromTypes( chi, phi, { id: chi1.id }, {}, {} );

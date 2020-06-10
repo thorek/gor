@@ -61,7 +61,7 @@ describe('Validations', () => {
     ]));
 
     const alpha = context.entities['Alpha'];
-    const a1 = _.first( await context.resolver.resolveTypes( alpha, {}, { filter: { name: { eq: "a1" } } }, {} ) );
+    const a1 = _.first( await context.resolver.resolveTypes( alpha, {}, { filter: { name: { is: "a1" } } }, {} ) );
     result = await beta.validate( {},{ beta: { name: "someName", deltaId: a1.id } }, {} );
     expect( result ).toHaveLength( 1 );
     expect( result ).toEqual( expect.arrayContaining([
@@ -72,7 +72,7 @@ describe('Validations', () => {
     ]));
 
     const delta = context.entities['Delta'];
-    const d1 = _.first( await context.resolver.resolveTypes( delta, {}, { filter: { name: { eq: "d1" } } }, {} ) );
+    const d1 = _.first( await context.resolver.resolveTypes( delta, {}, { filter: { name: { is: "d1" } } }, {} ) );
     result = await beta.validate( {},{ beta: { name: "someName", deltaId: d1.id } }, {} );
     expect( result ).toHaveLength( 0 );
   })
@@ -97,8 +97,8 @@ describe('Validations', () => {
   it('should have validation violation for unique attribute with scope', async () => {
     const alpha = context.entities['Alpha'];
     const delta = context.entities['Delta'];
-    const d1 = _.first( await context.resolver.resolveTypes( delta, {}, { filter: { name: { eq: "d1" } } }, {} ) );
-    const d2 = _.first( await context.resolver.resolveTypes( delta, {}, { filter: { name: { eq: "d2" } } }, {} ) );
+    const d1 = _.first( await context.resolver.resolveTypes( delta, {}, { filter: { name: { is: "d1" } } }, {} ) );
+    const d2 = _.first( await context.resolver.resolveTypes( delta, {}, { filter: { name: { is: "d2" } } }, {} ) );
 
     let result = await alpha.validate( {},{ alpha: { name: "aX", some: "some1", deltaId: d1.id } }, {} );
     expect( result ).toHaveLength( 1 );
