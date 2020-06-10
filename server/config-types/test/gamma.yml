@@ -2,6 +2,7 @@ entity:
   Gamma:
     attributes:
       name: string
+      foo: string
     seeds:
       g1:
         name: g1

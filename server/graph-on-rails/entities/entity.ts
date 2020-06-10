@@ -64,6 +64,10 @@ export abstract class Entity {
   get permissions() { return this.getPermissions() }
   get equality() { return this.getEquality() }
   get description() { return this.getDescription() }
+  get entites() { return this.getEntites() }
+  get typeField() { return this.getTypeField() }
+  get typeEnumName() { return this.getTypeEnumName() }
+  get isUnion():boolean { return _.size( this.entites ) > 0 }
 
   protected abstract getName():string;
 	protected getTypeName() { return inflection.camelize( this.name ) }
@@ -86,6 +90,9 @@ export abstract class Entity {
   protected getPermissions():null|{[role:string]:boolean|string|{[action:string]:string|object|(string|object)[]}} { return null }
   protected getEquality():{[typeName:string]:string[]} {return {}}
   protected getDescription():string|undefined { return }
+  protected getEntites():Entity[] { return [] }
+  protected getTypeField():string { return `${this.singular}Type` }
+  protected getTypeEnumName():string { return `${this.singular}Types` }
 
   /**
    *

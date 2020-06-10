@@ -98,7 +98,7 @@ export class Gor {
     const builder:SchemaBuilder[] = _.compact( _.map( configs.entity,
       (config, name) => this.createEntityBuilder( name, config )) );
     builder.push( ... _.compact( _.map( configs.enum,
-      (config, name) => this.createEnumBuilder( name, config )) ) )
+    (config, name) => this.createEnumBuilder( name, config )) ) )
     return builder;
   }
 
@@ -152,7 +152,7 @@ export class Gor {
   /**
    *
    */
-  private createEntityBuilder( name:string, config:any ):undefined|EntityBuilder{
+  private createEntityBuilder( name:string, config:any ):undefined|EntityBuilder {
     try {
       const entity = ConfigEntity.create(name, config );
       return new EntityBuilder( entity );

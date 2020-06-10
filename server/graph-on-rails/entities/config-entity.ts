@@ -40,6 +40,8 @@ export type EntityConfig  = {
   permissions:null|{[role:string]:boolean|string|{[action:string]:string|object|(string|object)[]}}
   equality:null|string|{[typeName:string]:string[]}
   description?:string
+
+  entities?:string[]
 }
 
 /**
@@ -106,6 +108,9 @@ export class ConfigEntity extends Entity {
     return _.isString( sr ) ? _.set( {}, sr, _.map( this.assocTo, bt => bt.type ) ) : sr;
   }
   protected getDescription():string|undefined { return this.entityConfig.description || super.getDescription() }
+  protected getEntites():Entity[] {
+    return _.compact( _.map( this.entityConfig.entities, entity => this.context.entities[entity] ) );
+  }
 
   /**
    *

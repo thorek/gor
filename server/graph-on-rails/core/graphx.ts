@@ -1,4 +1,4 @@
-import { GraphQLBoolean, GraphQLList, GraphQLObjectType, GraphQLSchema, GraphQLString, GraphQLNonNull, GraphQLType, GraphQLID, GraphQLInt } from 'graphql';
+import { GraphQLBoolean, GraphQLList, GraphQLObjectType, GraphQLSchema, GraphQLString, GraphQLNonNull, GraphQLType, GraphQLID, GraphQLInt, GraphQLUnionType } from 'graphql';
 import _ from 'lodash';
 
 import { GorContext } from './gor-context';
@@ -81,7 +81,8 @@ export class GraphX {
 			description: obj.description,
 			args: obj.args,
 			fields: [obj.fields],
-			values: obj.values,
+      values: obj.values,
+      types: obj.types,
 			extend: (fields:any) => this.rawTypes[name].fields.push(fields instanceof Function ? fields : () => fields)
 		};
 	}
@@ -100,6 +101,44 @@ export class GraphX {
    *
    */
 	generate = () => {
+
+    // this.type('GO', {
+    //   name: "GO",
+    //   from: GraphQLUnionType,
+    //   types: () => [this.type('Gamma'), this.type('Omega')]
+    // })
+
+    // this.type('Foo', {
+    //   name: "Foo",
+    //   fields: () => ({
+    //     name: {  type: GraphQLString },
+    //     go: {
+    //       type: this.type('GO'),
+    //       resolve: (root:any, args:any, context:any) => {
+    //         return _.sample([
+    //           {
+    //             __typename: 'Omega',
+    //             name: "A mega Omega",
+    //             bar: 23
+    //           },
+    //           {
+    //             __typename: 'Gamma',
+    //             name: "Gamma gamma gamma chameloan",
+    //             foo: "A Fools Garden"
+    //           }
+    //         ])
+    //       }
+    //     }
+    //   })
+    // });
+
+		// this.type( 'query' ).extend( () => {
+		// 	return _.set( {}, 'foo', {
+		// 		type: this.type('Foo'),
+		// 		resolve: (root:any, args:any, context:any) => ({name: "A foo fool" })
+		// 	});
+    // });
+
 
     this.generateMetaData();
     this.generateTypes();
@@ -131,6 +170,7 @@ export class GraphX {
         resolve: (root:any, args:any, context:any) => _.values( _.get( context, 'gorContext.entities') )
 			});
     });
+
   }
 
   /**
@@ -138,12 +178,19 @@ export class GraphX {
    */
   private generateTypes = () => {
     _.forEach( this.rawTypes, (item, key) => {
-			this.rawTypes[key] = new item.from({
+      if( item.from === GraphQLUnionType ){
+        console.log( item.name, "item.types", item.types );
+        this.rawTypes[key] = new GraphQLUnionType({
+          name: item.name,
+          types: _.map( item.types(), type => type ),
+          description: item.description
+        });
+      } else this.rawTypes[key] = new item.from({
 				name: item.name,
 				description: item.description,
 				args: item.args,
 				fields: this.fnFromArray(item.fields),
-				values: item.values
+        values: item.values,
 			});
     });
   }

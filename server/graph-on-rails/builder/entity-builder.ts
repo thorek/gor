@@ -1,5 +1,5 @@
 import { GorContext } from 'graph-on-rails/core/gor-context';
-import { GraphQLBoolean, GraphQLID, GraphQLInputObjectType, GraphQLList, GraphQLNonNull, GraphQLObjectType } from 'graphql';
+import { GraphQLBoolean, GraphQLID, GraphQLInputObjectType, GraphQLList, GraphQLNonNull, GraphQLObjectType, GraphQLUnionType, GraphQLString, GraphQLEnumType } from 'graphql';
 import _ from 'lodash';
 
 import { Entity, EntityReference } from '../entities/entity';
@@ -30,7 +30,8 @@ export class EntityBuilder extends SchemaBuilder {
 	//
 	//
 	protected createObjectType():void {
-   	const name = this.entity.typeName;
+    if( this.entity.isUnion ) return;
+     const name = this.entity.typeName;
 		this.graphx.type( name, {
       name,
       fields: () => {
@@ -39,17 +40,41 @@ export class EntityBuilder extends SchemaBuilder {
       },
       description: this.entity.description
     });
-	}
+  }
 
 	//
 	//
 	extendTypes():void {
+    this.createUnionType();
 		this.createInputType();
 		this.createFilterType();
 		this.addReferences();
 		this.addQueries();
     this.addMutations();
 	}
+
+    //
+  //
+  protected createUnionType():void {
+    if( ! this.entity.isUnion ) return;
+    const name = this.entity.typeName;
+    this.graphx.type( name, {
+      from: GraphQLUnionType,
+      name,
+      types: () => _.compact( _.map( this.entity.entites, entity => this.graphx.type(entity.typeName) ) ),
+      description: this.entity.description
+    });
+    this.createUnionTypeEnum();
+  }
+
+  //
+  //
+  protected createUnionTypeEnum():void {
+    const name = this.entity.typeEnumName;
+    const values = _.reduce( this.entity.entites,
+      (values, entity) => _.set( values, entity.name, {value: entity.name } ), {}  );
+    this.graphx.type( name, { name, values, from: GraphQLEnumType });
+  }
 
 	//
 	//
@@ -99,7 +124,9 @@ export class EntityBuilder extends SchemaBuilder {
   //
   private addAssocToForeignKeyToInput( fields:any, ref:EntityReference ):any {
     const refEntity = this.context.entities[ref.type];
-    return _.set( fields, refEntity.foreignKey, { type: GraphQLID });
+    _.set( fields, refEntity.foreignKey, { type: GraphQLID });
+    if( refEntity.isUnion ) _.set( fields, refEntity.typeField, { type: this.graphx.type( refEntity.typeEnumName ) } );
+    return fields;
   }
 
   //
@@ -251,7 +278,7 @@ export class EntityBuilder extends SchemaBuilder {
   private async saveEntity( root: any, args: any, context:any ) {
     let validationViolations = await this.entity.validate( root, args, context );
     if( _.size( validationViolations ) ) return { validationViolations };
-    return _.set( {errors: []}, this.entity.singular, this.resolver.saveEntity( this.entity, root, args, context ) );
+    return _.set( {validationViolations: []}, this.entity.singular, this.resolver.saveEntity( this.entity, root, args, context ) );
   }
 
   /**

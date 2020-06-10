@@ -1,0 +1,23 @@
+enum:
+  ConfidentialityMeasureCategory:
+    - access_control
+    - transport_control
+    - pseudonymization
+    - encryption
+
+  IntegrityMeasureCategory:
+    - input_control
+
+  AvailabilityMeasureCategory:
+    - availability
+    - recovery
+
+  FormalMeasureCategory:
+    - agreement
+    - management
+    - intervenibility
+    - transparency
+    - data_minimisation
+    - unlinked purposes
+
+

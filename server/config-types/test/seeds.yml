@@ -3,5 +3,7 @@ entity:
     seeds:
       o1:
         name: o1
+        bar: 1
       o2:
         name: o2
+        bar: 2

@@ -2,3 +2,4 @@ entity:
   Omega:
     attributes:
       name: string
+      bar: int

@@ -16,7 +16,7 @@ import { Gor } from './graph-on-rails/core/gor';
   const gor = await Gor.create("d2Prom");
 
   gor.addConfigFolder( './server/config-types/d2prom' );
-  gor.addCustomEntities( new OrganisationalUnit() );
+  // gor.addCustomEntities( new OrganisationalUnit() );
 
   const users:{[token:string]:any} = {
     admin: { id: 100, username: "Admin", roles: ["admin"], clientId: "5ec3b745d3a47f8284414125" },

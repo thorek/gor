@@ -1,3 +1,4 @@
+import _ from 'lodash';
 import { EnumBuilder } from './enum-builder';
 
 /**
@@ -14,7 +15,14 @@ export type EnumConfig  = {
 export class EnumConfigBuilder extends EnumBuilder {
 
   name(): string { return this._name }
-  enum(){ return this.config }
+  enum(){
+    if( ! _.isArray( this.config) ) return this.config;
+    const e = {};
+    _.forEach( this.config, item => {
+      _.set( e, _.toUpper( item ), _.toLower( item ) );
+    })
+    return e;
+ }
 
 
   /**

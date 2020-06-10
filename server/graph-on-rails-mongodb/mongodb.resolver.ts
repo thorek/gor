@@ -105,8 +105,21 @@ export class MongoDbResolver extends Resolver {
    *
    */
   async resolveAssocToType( refType:Entity, root:any, args:any, context:any ):Promise<any> {
+    if( refType.isUnion ) return this.resolveAssocToUnionType( refType, root, args, context );
     const id = _.get( root, refType.foreignKey );
     return this.findById( refType, id );
+  }
+
+  /**
+   *
+   */
+  async resolveAssocToUnionType( refType:Entity, root:any, args:any, context:any ):Promise<any> {
+    console.log( refType.name, {root} )
+    const id = _.get( root, refType.foreignKey );
+    const unionType = refType.context.entities[_.get( root, refType.typeField )];
+    const result = await this.findById( unionType, id );
+    _.set( result, '__typename', unionType.typeName );
+    return result;
   }
 
   /**
