@@ -1,4 +1,4 @@
-import { GraphQLBoolean, GraphQLList, GraphQLObjectType, GraphQLSchema, GraphQLString, GraphQLNonNull, GraphQLType, GraphQLID, GraphQLInt, GraphQLUnionType } from 'graphql';
+import { GraphQLBoolean, GraphQLList, GraphQLObjectType, GraphQLSchema, GraphQLString, GraphQLNonNull, GraphQLType, GraphQLID, GraphQLInt, GraphQLUnionType, GraphQLInterfaceType } from 'graphql';
 import _ from 'lodash';
 
 import { GorContext } from './gor-context';
@@ -75,7 +75,6 @@ export class GraphX {
 	private createType( name:string, obj:any ){
 		if (this.rawTypes[name]) throw new Error(`Type '${name}' already exists.`);
 		return this.rawTypes[name] = {
-      filterExpression: obj.filterExpression,
 			from: obj.from || GraphQLObjectType,
 			name: obj.name,
 			description: obj.description,
@@ -83,7 +82,8 @@ export class GraphX {
 			fields: [obj.fields],
       values: obj.values,
       types: obj.types,
-			extend: (fields:any) => this.rawTypes[name].fields.push(fields instanceof Function ? fields : () => fields)
+      interfaceTypes: obj.interfaceTypes,
+			extendFields: (fields:any) => this.rawTypes[name].fields.push(fields instanceof Function ? fields : () => fields),
 		};
 	}
 
@@ -101,44 +101,6 @@ export class GraphX {
    *
    */
 	generate = () => {
-
-    // this.type('GO', {
-    //   name: "GO",
-    //   from: GraphQLUnionType,
-    //   types: () => [this.type('Gamma'), this.type('Omega')]
-    // })
-
-    // this.type('Foo', {
-    //   name: "Foo",
-    //   fields: () => ({
-    //     name: {  type: GraphQLString },
-    //     go: {
-    //       type: this.type('GO'),
-    //       resolve: (root:any, args:any, context:any) => {
-    //         return _.sample([
-    //           {
-    //             __typename: 'Omega',
-    //             name: "A mega Omega",
-    //             bar: 23
-    //           },
-    //           {
-    //             __typename: 'Gamma',
-    //             name: "Gamma gamma gamma chameloan",
-    //             foo: "A Fools Garden"
-    //           }
-    //         ])
-    //       }
-    //     }
-    //   })
-    // });
-
-		// this.type( 'query' ).extend( () => {
-		// 	return _.set( {}, 'foo', {
-		// 		type: this.type('Foo'),
-		// 		resolve: (root:any, args:any, context:any) => ({name: "A foo fool" })
-		// 	});
-    // });
-
 
     this.generateMetaData();
     this.generateTypes();
@@ -164,7 +126,7 @@ export class GraphX {
         parent: { type: GraphQLString, resolve: (obj) => obj.parent() }
     }});
 
-    this.type('query').extend( () => {
+    this.type('query').extendFields( () => {
       return _.set( {}, 'metaData', {
         type: new GraphQLList( metaDataType ),
         resolve: (root:any, args:any, context:any) => _.values( _.get( context, 'gorContext.entities') )
@@ -178,20 +140,35 @@ export class GraphX {
    */
   private generateTypes = () => {
     _.forEach( this.rawTypes, (item, key) => {
+      console.log( item.name, {"item.types": item.types, "item.interfaceTypes": item.interfaceTypes ? item.interfaceTypes() : undefined } );
       if( item.from === GraphQLUnionType ){
-        console.log( item.name, "item.types", item.types );
         this.rawTypes[key] = new GraphQLUnionType({
           name: item.name,
           types: _.map( item.types(), type => type ),
           description: item.description
         });
-      } else this.rawTypes[key] = new item.from({
-				name: item.name,
-				description: item.description,
-				args: item.args,
-				fields: this.fnFromArray(item.fields),
-        values: item.values,
-			});
+      } else if( item.from === GraphQLInterfaceType ){
+        this.rawTypes[key] = new GraphQLInterfaceType({
+          name: item.name,
+          description: item.description,
+          fields: this.fnFromArray(item.fields)
+        });
+      } else if( item.from === GraphQLObjectType ){
+        this.rawTypes[key] = new GraphQLObjectType({
+          name: item.name,
+          description: item.description,
+          fields: this.fnFromArray(item.fields),
+          interfaces: item.interfaceTypes ? item.interfaceTypes() : []
+        });
+      } else {
+        this.rawTypes[key] = new item.from({
+          name: item.name,
+          description: item.description,
+          args: item.args,
+          fields: this.fnFromArray(item.fields),
+          values: item.values
+			  });
+      }
     });
   }
 

@@ -43,12 +43,17 @@ entity:
         required: false
         description: if set this value will override the priority calculated by probality x damage
 
-  DataSecurityRiskSource:
+  DataSecurityRiskSourceUnion:
     entities:
       - DataAtom
       - ProcessingActivity
       - OrganisationalUnit
       - Organisation
+
+  DataSecurityRiskSource:
+    interface: true
+    attributes:
+      description: string
 
   DataSecurityRequirement:
     attributes:
@@ -56,8 +61,6 @@ entity:
       description:
         - type: string
           required: false
-    assocFrom:
-      - MeasureApplication
     assocTo:
       - RiskAssessment
       - DataSecurityRiskSource
@@ -95,24 +98,26 @@ entity:
       "5":
 
   DataAtom:
+    implements:
+      - DataSecurityRiskSource
     attributes:
       description: string
 
   ProcessingActivity:
+    implements: DataSecurityRiskSource
     attributes:
       name: string!
       purpose: string
-      description: string
 
   OrganisationalUnit:
+    implements: DataSecurityRiskSource
     attributes:
       name: string!
-      description: string
 
   Organisation:
+    implements: DataSecurityRiskSource
     attributes:
       name: string!
-      description: string
     assocFrom:
       - DataSecurityRequirement
 

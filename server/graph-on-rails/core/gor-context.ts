@@ -10,6 +10,8 @@ import { Validator } from '../validation/validator';
 import { GraphX } from './graphx';
 import { Resolver } from './resolver';
 import { SchemaBuilder } from '../builder/schema-builder';
+import { TypeAttribute } from 'graph-on-rails/entities/type-attribute';
+import { GraphQLType, GraphQLNonNull, GraphQLString, GraphQLID, GraphQLInt, GraphQLFloat, GraphQLBoolean } from 'graphql';
 
 export type GorConfig = {
   name?:string
@@ -19,6 +21,14 @@ export type GorConfig = {
   entitySeeder?:(entity:Entity) => EntitySeeder
   contextUser?:string
   contextRoles?:string
+}
+
+const typesMap:{[scalar:string]:GraphQLType} = {
+  Id: GraphQLID,
+  String: GraphQLString,
+  Int: GraphQLInt,
+  Float: GraphQLFloat,
+  Boolean: GraphQLBoolean
 }
 
 export class GorContext {
@@ -77,4 +87,29 @@ export class GorContext {
 
   readonly contextUser = this.config.contextUser;
   readonly contextRoles = this.config.contextRoles;
+
+
+  /**
+   *
+   */
+  getGraphQLType( attr:TypeAttribute, addRequired:boolean ):GraphQLType {
+    const type = _.isString( attr.graphqlType ) ? this.getTypeForName(attr.graphqlType ) : attr.graphqlType;
+    return addRequired && attr.required ? new GraphQLNonNull( type ) : type;
+  }
+
+  /**
+   *
+   * @param name
+   */
+  private getTypeForName( name:string ):GraphQLType {
+    let type = typesMap[name];
+    if( type ) return type;
+    try {
+      return this.graphx.type(name);
+    } catch (error) {
+      console.error(`no such graphqlType - using GraphQLString instead`, name );
+    }
+    return GraphQLString;
+  }
+
 }

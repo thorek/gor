@@ -42,6 +42,8 @@ export type EntityConfig  = {
   description?:string
 
   entities?:string[]
+  interface?:boolean
+  implements?:string|string[]
 }
 
 /**
@@ -111,6 +113,12 @@ export class ConfigEntity extends Entity {
   protected getEntites():Entity[] {
     return _.compact( _.map( this.entityConfig.entities, entity => this.context.entities[entity] ) );
   }
+  protected getImplements():Entity[] {
+    if( ! this.entityConfig.implements ) return super.getImplements();
+    if( ! _.isArray( this.entityConfig.implements ) ) this.entityConfig.implements = [this.entityConfig.implements];
+    return _.compact( _.map( this.entityConfig.implements, entity => this.context.entities[entity] ) );
+  }
+  protected getIsInterface():boolean { return this.entityConfig.interface === true }
 
   /**
    *

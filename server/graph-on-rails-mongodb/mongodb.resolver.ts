@@ -105,7 +105,7 @@ export class MongoDbResolver extends Resolver {
    *
    */
   async resolveAssocToType( refType:Entity, root:any, args:any, context:any ):Promise<any> {
-    if( refType.isUnion ) return this.resolveAssocToUnionType( refType, root, args, context );
+    if( refType.isPolymorph ) return this.resolveAssocToPolymorphType( refType, root, args, context );
     const id = _.get( root, refType.foreignKey );
     return this.findById( refType, id );
   }
@@ -113,12 +113,12 @@ export class MongoDbResolver extends Resolver {
   /**
    *
    */
-  async resolveAssocToUnionType( refType:Entity, root:any, args:any, context:any ):Promise<any> {
-    console.log( refType.name, {root} )
+  private async resolveAssocToPolymorphType( refType:Entity, root:any, args:any, context:any ):Promise<any> {
     const id = _.get( root, refType.foreignKey );
-    const unionType = refType.context.entities[_.get( root, refType.typeField )];
-    const result = await this.findById( unionType, id );
-    _.set( result, '__typename', unionType.typeName );
+    const polymorphType = refType.context.entities[_.get( root, refType.typeField )];
+    console.log( "resolveAssocToPolymorphType", polymorphType.typeName )
+    const result = await this.findById( polymorphType, id );
+    _.set( result, '__typename', polymorphType.typeName );
     return result;
   }
 

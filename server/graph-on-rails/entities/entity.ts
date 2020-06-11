@@ -45,7 +45,7 @@ export abstract class Entity {
 
   get name() { return this.getName() }
   get typeName(){ return this.getTypeName() }
-  get attributes() { return this.getAttributes() }
+  get attributes() { return this.getAttributes() }
   get assocTo() { return this.getAssocTo() }
   get assocToMany() { return this.getAssocToMany() }
   get assocFrom() { return this.getAssocFrom() }
@@ -53,7 +53,8 @@ export abstract class Entity {
   get plural() { return this.getPlural() }
   get foreignKey() { return this.getForeignKey() }
   get foreignKeys() { return this.getForeignKeys() }
-  get inputName() { return this.getInputName() }
+  get createInputTypeName() { return this.getCreateInputTypeName() }
+  get updateInputTypeName() { return this.getUpdateInputTypeName() }
   get filterName() { return this.getFilterName() }
   get collection() { return this.getCollection() }
   get label() { return this.getLabel() }
@@ -64,10 +65,16 @@ export abstract class Entity {
   get permissions() { return this.getPermissions() }
   get equality() { return this.getEquality() }
   get description() { return this.getDescription() }
-  get entites() { return this.getEntites() }
+  get entities() { return this.getEntites() }
   get typeField() { return this.getTypeField() }
-  get typeEnumName() { return this.getTypeEnumName() }
-  get isUnion():boolean { return _.size( this.entites ) > 0 }
+  get typesEnumName() { return this.getTypeEnumName() }
+  get isInterface():boolean { return this.getIsInterface() }
+  get isUnion():boolean { return ! _.isEmpty( this.entities ) }
+  get isPolymorph():boolean { return this.isUnion || this.isInterface }
+  get implements():Entity[] { return _.filter( this.getImplements(), entity => entity.isInterface ) }
+  get createMutationName():string { return this.getCreateMutationName() }
+  get updateMutationName():string { return this.getUpdateMutationName() }
+  get mutationResultName():string { return this.getMutationResultName() }
 
   protected abstract getName():string;
 	protected getTypeName() { return inflection.camelize( this.name ) }
@@ -75,7 +82,8 @@ export abstract class Entity {
   protected getPlural() { return inflection.pluralize( this.singular ) }
   protected getForeignKey() { return `${this.singular}Id` }
   protected getForeignKeys() { return `${this.singular}Ids` }
-  protected getInputName() { return `${this.typeName}Input` }
+  protected getCreateInputTypeName() { return `Create${this.typeName}Input` }
+  protected getUpdateInputTypeName() { return `Update${this.typeName}Input` }
   protected getFilterName() { return `${this.typeName}Filter` }
   protected getCollection() { return this.plural }
   protected getLabel() { return inflection.titleize(  this.plural )  }
@@ -91,8 +99,14 @@ export abstract class Entity {
   protected getEquality():{[typeName:string]:string[]} {return {}}
   protected getDescription():string|undefined { return }
   protected getEntites():Entity[] { return [] }
+  protected getIsInterface():boolean { return false }
+  protected getImplements():Entity[] { return [] }
   protected getTypeField():string { return `${this.singular}Type` }
-  protected getTypeEnumName():string { return `${this.singular}Types` }
+  protected getTypeEnumName():string { return `${this.typeName}Types` }
+  protected getCreateMutationName():string { return `create${this.typeName}` }
+  protected getUpdateMutationName():string { return `update${this.typeName}` }
+  protected getMutationResultName():string { return `Save${this.typeName}MutationResult` }
+
 
   /**
    *
@@ -132,6 +146,14 @@ export abstract class Entity {
    */
   async validate( root: any, args: any, context:any ):Promise<ValidationViolation[]> {
     return await this.entityValidator.validate( root, args, context );
+  }
+
+  /**
+   * @returns true if the given entity is an interface and this entity implements it
+   */
+  implementsEntityInterface( entity:Entity):boolean {
+    if( ! entity.isInterface ) return false;
+    return _.includes( this.implements, entity );
   }
 
 }

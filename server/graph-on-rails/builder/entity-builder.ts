@@ -1,5 +1,5 @@
 import { GorContext } from 'graph-on-rails/core/gor-context';
-import { GraphQLBoolean, GraphQLID, GraphQLInputObjectType, GraphQLList, GraphQLNonNull, GraphQLObjectType, GraphQLUnionType, GraphQLString, GraphQLEnumType } from 'graphql';
+import { GraphQLBoolean, GraphQLID, GraphQLInputObjectType, GraphQLList, GraphQLNonNull, GraphQLObjectType, GraphQLUnionType, GraphQLString, GraphQLEnumType, GraphQLInterfaceType, GraphQLType } from 'graphql';
 import _ from 'lodash';
 
 import { Entity, EntityReference } from '../entities/entity';
@@ -31,12 +31,13 @@ export class EntityBuilder extends SchemaBuilder {
 	//
 	protected createObjectType():void {
     if( this.entity.isUnion ) return;
-     const name = this.entity.typeName;
+    const from = this.entity.isInterface ? GraphQLInterfaceType : GraphQLObjectType;
+    const name = this.entity.typeName;
 		this.graphx.type( name, {
-      name,
+      from, name,
       fields: () => {
-			  const fields = {  id: { type: new GraphQLNonNull(GraphQLID) } };
-			  return this.setAttributes( fields );
+			  const fields = { id: { type: new GraphQLNonNull(GraphQLID) } };
+			  return _.merge( fields, this.getAttributeFields( true ) );
       },
       description: this.entity.description
     });
@@ -46,14 +47,17 @@ export class EntityBuilder extends SchemaBuilder {
 	//
 	extendTypes():void {
     this.createUnionType();
-		this.createInputType();
+    this.createEntityTypesEnum();
+    this.createCreateInputType();
+    this.createUpdateInputType();
 		this.createFilterType();
+    this.addInterfaces();
 		this.addReferences();
 		this.addQueries();
     this.addMutations();
 	}
 
-    //
+  //
   //
   protected createUnionType():void {
     if( ! this.entity.isUnion ) return;
@@ -61,24 +65,45 @@ export class EntityBuilder extends SchemaBuilder {
     this.graphx.type( name, {
       from: GraphQLUnionType,
       name,
-      types: () => _.compact( _.map( this.entity.entites, entity => this.graphx.type(entity.typeName) ) ),
+      types: () => _.compact( _.map( this.entity.entities, entity => this.graphx.type(entity.typeName) ) ),
       description: this.entity.description
     });
-    this.createUnionTypeEnum();
   }
 
   //
   //
-  protected createUnionTypeEnum():void {
-    const name = this.entity.typeEnumName;
-    const values = _.reduce( this.entity.entites,
+  protected createEntityTypesEnum():void {
+    if( ! this.entity.isPolymorph ) return;
+    const entities = this.entity.isUnion ?
+      this.entity.entities :
+      _.filter( this.context.entities, entity => entity.implementsEntityInterface( this.entity ) );
+    const name = this.entity.typesEnumName;
+    const values = _.reduce( entities,
       (values, entity) => _.set( values, entity.name, {value: entity.name } ), {}  );
     this.graphx.type( name, { name, values, from: GraphQLEnumType });
   }
 
 	//
 	//
-	addReferences():void {
+	protected addInterfaces():void {
+    if( _.isEmpty( this.entity.implements ) ) return;
+    _.forEach( this.entity.implements, entity => this.addFieldsFromInterface( entity ) );
+    _.set( this.graphx.type(this.entity.typeName), 'interfaceTypes',
+      () => _.map( this.entity.implements, entity => this.graphx.type(entity.typeName)) );
+	}
+
+  //
+  //
+  protected addFieldsFromInterface( entity:Entity ):void {
+    this.graphx.type(this.entity.typeName).extendFields( () => this.getAttributeFields( true, entity ) );
+    this.graphx.type(this.entity.filterName).extendFields( () => this.getAttributeFields( false, entity ) );
+    this.graphx.type(this.entity.createInputTypeName).extendFields( () => this.getAttributeFields( true, entity ) );
+    this.graphx.type(this.entity.updateInputTypeName).extendFields( () => this.getAttributeFields( false, entity ) );
+  }
+
+	//
+	//
+	protected addReferences():void {
     this.addAssocTo();
     this.addAssocToMany();
 		this.addAssocFrom();
@@ -86,8 +111,8 @@ export class EntityBuilder extends SchemaBuilder {
 
 	//
 	//
-	addMutations():void {
-		this.addSaveMutation();
+	protected addMutations():void {
+    this.addSaveMutations();
 		this.addDeleteMutation();
 	}
 
@@ -103,9 +128,9 @@ export class EntityBuilder extends SchemaBuilder {
 	//
 	protected addAssocTo():void {
     const assocTo = _.filter( this.entity.assocTo, bt => this.checkReference( 'assocTo', bt ) );
-		this.graphx.type(this.entity.typeName).extend(
+		this.graphx.type(this.entity.typeName).extendFields(
       () => _.reduce( assocTo, (fields, ref) => this.addAssocToReferenceToType( fields, ref ), {} ));
-    this.graphx.type(this.entity.inputName).extend(
+    this.graphx.type(this.entity.createInputTypeName).extendFields(
       () => _.reduce( assocTo, (fields, ref) => this.addAssocToForeignKeyToInput( fields, ref ), {} ));
   }
 
@@ -113,9 +138,9 @@ export class EntityBuilder extends SchemaBuilder {
 	//
 	protected addAssocToMany():void {
     const assocToMany = _.filter( this.entity.assocToMany, bt => this.checkReference( 'assocTo', bt ) );
-		this.graphx.type(this.entity.typeName).extend(
+		this.graphx.type(this.entity.typeName).extendFields(
       () => _.reduce( assocToMany, (fields, ref) => this.addAssocToManyReferenceToType( fields, ref ), {} ));
-    this.graphx.type(this.entity.inputName).extend(
+    this.graphx.type(this.entity.createInputTypeName).extendFields(
       () => _.reduce( assocToMany, (fields, ref) => this.addAssocToManyForeignKeysToInput( fields, ref ), {} ));
 	}
 
@@ -125,7 +150,8 @@ export class EntityBuilder extends SchemaBuilder {
   private addAssocToForeignKeyToInput( fields:any, ref:EntityReference ):any {
     const refEntity = this.context.entities[ref.type];
     _.set( fields, refEntity.foreignKey, { type: GraphQLID });
-    if( refEntity.isUnion ) _.set( fields, refEntity.typeField, { type: this.graphx.type( refEntity.typeEnumName ) } );
+    if( refEntity.isPolymorph ) _.set( fields, refEntity.typeField,
+      { type: this.graphx.type( refEntity.typesEnumName ) } );
     return fields;
   }
 
@@ -162,7 +188,7 @@ export class EntityBuilder extends SchemaBuilder {
 	//
 	protected addAssocFrom():void {
     const assocFrom = _.filter( this.entity.assocFrom, assocFrom => this.checkReference( 'assocFrom', assocFrom ) );
-		this.graphx.type(this.entity.typeName).extend(
+		this.graphx.type(this.entity.typeName).extendFields(
       () => _.reduce( assocFrom, (fields, ref) => this.addAssocFromReferenceToType( fields, ref ), {} ));
   }
 
@@ -195,11 +221,19 @@ export class EntityBuilder extends SchemaBuilder {
   /**
    *
    */
-  protected createInputType():void {
-		const name = this.entity.inputName;
+  protected createCreateInputType():void {
+		const name = this.entity.createInputTypeName;
+		this.graphx.type( name, { name, from: GraphQLInputObjectType, fields: () => this.getAttributeFields( true ) });
+	}
+
+  /**
+   *
+   */
+  protected createUpdateInputType():void {
+		const name = this.entity.updateInputTypeName;
 		this.graphx.type( name, { name, from: GraphQLInputObjectType, fields: () => {
-			const fields = { id: { type: GraphQLID }};
-			return this.setAttributes( fields );
+			const fields = { id: { type: new GraphQLNonNull(GraphQLID) }};
+			return _.merge( fields, this.getAttributeFields( false ) );
 		}});
 	}
 
@@ -207,9 +241,13 @@ export class EntityBuilder extends SchemaBuilder {
    *
    * @param fields
    */
-  protected setAttributes( fields:any ):any {
-		_.forEach( this.attributes(), (attribute, name) => {
-      _.set( fields, name, { type: this.getGraphQLType(attribute), description: attribute.description } );
+  protected getAttributeFields( addRequired:boolean, entity?:Entity,  ):any {
+    const attributes = entity ? entity.attributes : this.attributes();
+    const fields = {};
+		_.forEach( attributes, (attribute, name) => {
+      _.set( fields, name, {
+        type: this.context.getGraphQLType(attribute, addRequired),
+        description: attribute.description } );
     });
     return fields;
 	}
@@ -233,7 +271,7 @@ export class EntityBuilder extends SchemaBuilder {
    *
    */
 	protected addTypeQuery(){
-		this.graphx.type( 'query' ).extend( () => {
+		this.graphx.type( 'query' ).extendFields( () => {
 			return _.set( {}, this.entity.singular, {
 				type: this.graphx.type(this.entity.typeName),
 				args: { id: { type: GraphQLID } },
@@ -246,7 +284,7 @@ export class EntityBuilder extends SchemaBuilder {
    *
    */
   protected addTypesQuery(){
-		this.graphx.type( 'query' ).extend( () => {
+		this.graphx.type( 'query' ).extendFields( () => {
 			return _.set( {}, this.entity.plural, {
 				type: new GraphQLList( this.graphx.type(this.entity.typeName) ),
 				args: { filter: { type: this.graphx.type(this.entity.filterName) } },
@@ -258,19 +296,29 @@ export class EntityBuilder extends SchemaBuilder {
   /**
    *
    */
-  protected addSaveMutation():void {
-		this.graphx.type( 'mutation' ).extend( () => {
-      const typeName = this.entity.typeName;
-      const singular = this.entity.singular;
-      const args = _.set( {}, this.entity.singular, { type: this.graphx.type(this.entity.inputName)} );
-      let fields = { validationViolations: { type: new GraphQLNonNull( new GraphQLList(this.graphx.type('ValidationViolation'))) } };
-      fields = _.set( fields, singular, {type: this.graphx.type(typeName) } );
-      const type = new GraphQLObjectType( { name: `Save${typeName}MutationResult`, fields } );
-      return _.set( {}, `save${typeName}`, {
-				type,	args, resolve: (root:any, args:any, context:any ) => this.saveEntity( root, args, context )
-			});
-		});
-	}
+  protected addSaveMutations():void {
+    if( this.entity.isPolymorph ) return;
+    const type = new GraphQLObjectType( { name: this.entity.mutationResultName, fields: () => {
+      const fields = { validationViolations: {
+          type: new GraphQLNonNull( new GraphQLList( this.graphx.type('ValidationViolation')) ) } };
+      return _.set( fields, this.entity.singular, {type: this.graphx.type(this.entity.typeName) } );
+    }});
+    this.addSaveMutation( this.entity.createMutationName, this.entity.createInputTypeName, type );
+    this.addSaveMutation( this.entity.updateMutationName, this.entity.updateInputTypeName, type );
+  }
+
+  /**
+   *
+   */
+  protected addSaveMutation( mutationName:string, inputType:string, type:GraphQLType ):void{
+    this.graphx.type( 'mutation' ).extendFields( () => {
+      const args = _.set( {}, this.entity.singular, { type: this.graphx.type(inputType)} );
+      return _.set( {}, mutationName, {
+        type,	args, resolve: (root:any, args:any, context:any ) => this.saveEntity( root, args, context )
+      });
+    });
+  }
+
 
   /**
    *
@@ -285,7 +333,7 @@ export class EntityBuilder extends SchemaBuilder {
    *
    */
 	protected addDeleteMutation():void {
-		this.graphx.type( 'mutation' ).extend( () => {
+		this.graphx.type( 'mutation' ).extendFields( () => {
 			return _.set( {}, `delete${this.entity.typeName}`, {
 				type: GraphQLBoolean,
 				args: { id: { type: GraphQLID } },
