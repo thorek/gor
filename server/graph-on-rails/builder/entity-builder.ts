@@ -37,7 +37,7 @@ export class EntityBuilder extends SchemaBuilder {
       from, name,
       fields: () => {
 			  const fields = { id: { type: new GraphQLNonNull(GraphQLID) } };
-			  return _.merge( fields, this.getAttributeFields( true ) );
+			  return _.merge( fields, this.getAttributeFields( true, true ) );
       },
       description: this.entity.description
     });
@@ -95,10 +95,10 @@ export class EntityBuilder extends SchemaBuilder {
   //
   //
   protected addFieldsFromInterface( entity:Entity ):void {
-    this.graphx.type(this.entity.typeName).extendFields( () => this.getAttributeFields( true, entity ) );
-    this.graphx.type(this.entity.filterName).extendFields( () => this.getAttributeFields( false, entity ) );
-    this.graphx.type(this.entity.createInputTypeName).extendFields( () => this.getAttributeFields( true, entity ) );
-    this.graphx.type(this.entity.updateInputTypeName).extendFields( () => this.getAttributeFields( false, entity ) );
+    this.graphx.type(this.entity.typeName).extendFields( () => this.getAttributeFields( true, true, entity ) );
+    this.graphx.type(this.entity.filterName).extendFields( () => this.getAttributeFields( false, false, entity ) );
+    this.graphx.type(this.entity.createInputTypeName).extendFields( () => this.getAttributeFields( true, false, entity ) );
+    this.graphx.type(this.entity.updateInputTypeName).extendFields( () => this.getAttributeFields( false, false, entity ) );
   }
 
 	//
@@ -223,7 +223,7 @@ export class EntityBuilder extends SchemaBuilder {
    */
   protected createCreateInputType():void {
 		const name = this.entity.createInputTypeName;
-		this.graphx.type( name, { name, from: GraphQLInputObjectType, fields: () => this.getAttributeFields( true ) });
+		this.graphx.type( name, { name, from: GraphQLInputObjectType, fields: () => this.getAttributeFields( true, false ) });
 	}
 
   /**
@@ -233,7 +233,7 @@ export class EntityBuilder extends SchemaBuilder {
 		const name = this.entity.updateInputTypeName;
 		this.graphx.type( name, { name, from: GraphQLInputObjectType, fields: () => {
 			const fields = { id: { type: new GraphQLNonNull(GraphQLID) }};
-			return _.merge( fields, this.getAttributeFields( false ) );
+			return _.merge( fields, this.getAttributeFields( false, false ) );
 		}});
 	}
 
@@ -241,13 +241,22 @@ export class EntityBuilder extends SchemaBuilder {
    *
    * @param fields
    */
-  protected getAttributeFields( addRequired:boolean, entity?:Entity,  ):any {
+  protected getAttributeFields( addRequired:boolean, addVirtual:boolean, entity?:Entity,  ):any {
     const attributes = entity ? entity.attributes : this.attributes();
     const fields = {};
 		_.forEach( attributes, (attribute, name) => {
-      _.set( fields, name, {
+      const fieldConfig = {
         type: this.context.getGraphQLType(attribute, addRequired),
-        description: attribute.description } );
+        description: attribute.description
+      };
+      if( attribute.virtual ){
+        if( ! addVirtual ) return;
+        if( ! _.isFunction( _.get( this.context.virtualResolver, [this.entity.name, name ] ) ) ){
+          fieldConfig.type = GraphQLString;
+          console.warn(`no virtual resolver for '${this.entity.name}:${name}'`);
+        }
+      }
+      _.set( fields, name, fieldConfig );
     });
     return fields;
 	}
@@ -275,7 +284,7 @@ export class EntityBuilder extends SchemaBuilder {
 			return _.set( {}, this.entity.singular, {
 				type: this.graphx.type(this.entity.typeName),
 				args: { id: { type: GraphQLID } },
-				resolve: (root:any, args:any, context:any) => this.resolver.resolveType( this.entity, root, args, context )
+				resolve: (root:any, args:any, context:any) => this.entity.resolveType( {root, args, context} )
 			});
     });
 	}
@@ -288,7 +297,7 @@ export class EntityBuilder extends SchemaBuilder {
 			return _.set( {}, this.entity.plural, {
 				type: new GraphQLList( this.graphx.type(this.entity.typeName) ),
 				args: { filter: { type: this.graphx.type(this.entity.filterName) } },
-        resolve: (root:any, args:any, context:any) => this.resolver.resolveTypes( this.entity, root, args, context )
+        resolve: (root:any, args:any, context:any) => this.entity.resolveTypes( {root, args, context} )
 			});
 		});
 	}

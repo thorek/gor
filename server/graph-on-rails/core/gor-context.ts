@@ -12,6 +12,8 @@ import { Resolver } from './resolver';
 import { SchemaBuilder } from '../builder/schema-builder';
 import { TypeAttribute } from 'graph-on-rails/entities/type-attribute';
 import { GraphQLType, GraphQLNonNull, GraphQLString, GraphQLID, GraphQLInt, GraphQLFloat, GraphQLBoolean } from 'graphql';
+import { ResolverContext } from './resolver-context';
+import { EntityItem } from './entity-item';
 
 export type GorConfig = {
   name?:string
@@ -36,7 +38,7 @@ export class GorContext {
   readonly graphx = new GraphX();
   readonly entities:{[name:string]:Entity} = {};
   readonly filterTypes:{[name:string]:FilterType} = {};
-  readonly virtualResolver:{[entity:string]:{[attribute:string]: ( rctx:ResolverContext ) => any }} =  {}
+  readonly virtualResolver:{[entity:string]:{[attribute:string]: ( rctx:ResolverContext, item:EntityItem ) => Promise<any> }} =  {}
 
   private constructor( private config:GorConfig ){}
 

@@ -69,7 +69,7 @@ export abstract class Resolver {
   /**
    *
    */
-  abstract findByAttribute( entity:Entity, ...attrValue:{name:string,value:any}[] ):Promise<any[]>;
+  abstract findByAttribute( entity:Entity, attrValue:{[name:string]:any} ):Promise<any[]>;
 
   /**
    *

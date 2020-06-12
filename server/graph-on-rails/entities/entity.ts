@@ -6,6 +6,7 @@ import { CrudAction, EntityPermissions } from './entity-permissions';
 import { EntitySeeder } from './entity-seeder';
 import { EntityValidator, ValidationViolation } from './entity-validator';
 import { TypeAttribute } from './type-attribute';
+import { ResolverContext } from 'graph-on-rails/core/resolver-context';
 
 //
 //
@@ -145,7 +146,7 @@ export abstract class Entity {
    *
    */
   async validate( root: any, args: any, context:any ):Promise<ValidationViolation[]> {
-    return await this.entityValidator.validate( root, args, context );
+    return await this.entityValidator.validate( {root, args, context} );
   }
 
   /**
@@ -154,6 +155,49 @@ export abstract class Entity {
   implementsEntityInterface( entity:Entity):boolean {
     if( ! entity.isInterface ) return false;
     return _.includes( this.implements, entity );
+  }
+
+  /**
+   *
+   */
+  async resolveType( resolverCtx:ResolverContext ):Promise<any> {
+    const item = await this.resolver.resolveType( this, resolverCtx.root, resolverCtx.args, resolverCtx.context );
+    return this.resolveVirtualAttributes( resolverCtx, item );
+  }
+
+  /**
+   *
+   */
+  async resolveTypes( resolverCtx:ResolverContext ):Promise<any> {
+    const items = await this.resolver.resolveTypes( this, resolverCtx.root, resolverCtx.args, resolverCtx.context );
+    return _.map( items, item => this.resolveVirtualAttributes( resolverCtx, item ) );
+  }
+
+  /**
+   *
+   */
+  async findByAttribute( resolverCtx:ResolverContext, attrValue:{[name:string]:any} ):Promise<any[]>{
+    const items = await this.resolver.findByAttribute( this, attrValue );
+    for( const item of items ) await this.resolveVirtualAttributes( resolverCtx, item );
+    return items;
+  }
+
+  /**
+   *
+   */
+  private async resolveVirtualAttributes( resolverCtx:ResolverContext, item:any ):Promise<any> {
+    for( const name of _.keys(this.attributes) ){
+      const attribute = this.attributes[name];
+      if( attribute.virtual ) await this.resolveVirtualAttribute( resolverCtx, item, name );
+    }
+  }
+
+  /**
+   *
+   */
+  private async resolveVirtualAttribute( resolverCtx:ResolverContext, item:any, name:string ):Promise<any> {
+    const resolver = _.get( this.context.virtualResolver, [item.entity.name, name] );
+    _.set( item, name, await resolver(resolverCtx, { entity:this, item } ) );
   }
 
 }

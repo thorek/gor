@@ -55,16 +55,18 @@ export class MongoDbResolver extends Resolver {
    *
    */
   async findByExpression( entity:Entity, filter:any ):Promise<any[]> {
+    console.log( entity.name, JSON.stringify( filter ))
     const collection = this.getCollection( entity );
     const items = await collection.find( filter ).toArray();
+    console.log( {items})
 		return _.map( items, item => this.buildOutItem( item ) );
   }
 
   /**
    *
    */
-  async findByAttribute( entity:Entity, ...attrValue:{name:string,value:any}[] ):Promise<any[]> {
-    const expression = { $and: _.map( attrValue, av => _.set({}, av.name, { $eq: _.toString(av.value) }) ) };
+  async findByAttribute( entity:Entity, attrValue:{[name:string]:any} ):Promise<any[]> {
+    const expression = { $and: _.map( attrValue, (value, attribute) => _.set({}, attribute, { $eq: value } ) ) };
     return this.findByExpression( entity, expression );
   }
 

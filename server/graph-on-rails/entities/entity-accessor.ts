@@ -1,12 +1,9 @@
 import _ from 'lodash';
 
-import { Entity } from './entity';
+import { EntityItem } from '../core/entity-item';
 
-export type EntityItem = {
-  entity:Entity
-  item:any
-}
-
+//
+//
 export class EntityAccessor {
 
   /**

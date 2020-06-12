@@ -28,7 +28,7 @@ export class Gor {
   private _builders?:SchemaBuilder[];
   private _schema?:GraphQLSchema;
   private configFolders:string[] = [];
-  private customEntities:Entity[] = [];
+  private customBuilders:SchemaBuilder[] = [];
 
   private constructor( public readonly context:GorContext ){}
 
@@ -50,8 +50,15 @@ export class Gor {
   /**
    *
    */
+  addCustomBuilder( ... builder:SchemaBuilder[] ):void {
+    this.customBuilders.push( ... builder );
+  }
+
+  /**
+   *
+   */
   addCustomEntities( ...entities:Entity[] ):void {
-    this.customEntities.push( ...entities );
+    this.customBuilders.push( ... _.map( entities, entity => new EntityBuilder( entity ) ) );
   }
 
   /**
@@ -80,11 +87,10 @@ export class Gor {
     if( this._builders ) return this._builders;
     const configTypeBuilders = this.getConfigTypeBuilder();
     const scalarFilterTypeBuilders = this.context.resolver.getScalarFilterTypes();
-    const customEntityBuilders = _.map( this.customEntities, entity => new EntityBuilder( entity ) );
     this._builders = [
       ...scalarFilterTypeBuilders,
       ...configTypeBuilders,
-      ...customEntityBuilders
+      ...this.customBuilders
     ];
     return this._builders;
   }

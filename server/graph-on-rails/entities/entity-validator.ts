@@ -3,6 +3,7 @@ import _ from 'lodash';
 import { Validator } from '../validation/validator';
 import { Entity, EntityReference } from './entity';
 import { TypeAttribute } from './type-attribute';
+import { ResolverContext } from '../core/resolver-context';
 
 //
 //
@@ -27,12 +28,12 @@ export class EntityValidator  {
   /**
    *
    */
-  async validate( root:any, args:any, context:any ):Promise<ValidationViolation[]> {
-    const attributes = await this.getAttributes( args );
+  async validate( resolverCtx:ResolverContext ):Promise<ValidationViolation[]> {
+    const attributes = await this.getAttributes( resolverCtx.args );
     const violations:ValidationViolation[] = [];
     violations.push( ... await this.validateRequiredAssocTos( attributes ) );
-    violations.push( ... await this.validateUniqe( attributes ) );
-    violations.push( ... await this.validator.validate( attributes, root, args, context ) );
+    violations.push( ... await this.validateUniqe( attributes, resolverCtx ) );
+    violations.push( ... await this.validator.validate( attributes, resolverCtx ) );
     return violations;
   }
 
@@ -79,12 +80,12 @@ export class EntityValidator  {
   /**
    *
    */
-  private async validateUniqe( attributes:any ):Promise<ValidationViolation[]> {
+  private async validateUniqe( attributes:any, resolverCtx:ResolverContext ):Promise<ValidationViolation[]> {
     const violations:ValidationViolation[] = [];
     for( const name of _.keys(this.entity.attributes) ){
       const attribute = this.entity.attributes[name];
       if( ! attribute.unique ) continue;
-      const violation = await this.validateUniqeAttribute( name, attribute, attributes );
+      const violation = await this.validateUniqeAttribute( name, attribute, attributes, resolverCtx );
       if( violation ) violations.push( violation );
     }
     return violations;
@@ -93,19 +94,20 @@ export class EntityValidator  {
   /**
    *
    */
-  private async validateUniqeAttribute( name:string, attribute:TypeAttribute, attributes:any ):Promise<ValidationViolation|undefined> {
+  private async validateUniqeAttribute( name:string, attribute:TypeAttribute, attributes:any, resolverCtx:ResolverContext ):Promise<ValidationViolation|undefined> {
     const value = _.get( attributes, name );
     if( _.isUndefined( value ) ) return;
-    const attrValues = [{name, value}];
+    const attrValues = _.set({}, name, value );
     let scopeMsg = "";
     if( _.isString( attribute.unique ) ){
       const scopeEntity = this.context.entities[attribute.unique];
       const scope = scopeEntity ? scopeEntity.foreignKey : attribute.unique;
       const scopeValue = _.get( attributes, scope );
-      attrValues.push({name:scope, value:scopeValue});
+      _.set(attrValues, scope, scopeValue );
       scopeMsg = ` within scope '${attribute.unique}'`;
     }
-    const result = await this.resolver.findByAttribute( this.entity, ...attrValues );
+    const result = await this.entity.findByAttribute(resolverCtx, attrValues );
+    console.log({result})
     const violation = {attribute: name, violation: `value '${value}' must be unique` + scopeMsg }
     return this.isUniqueResult( attributes, result ) ? undefined : violation;
   }

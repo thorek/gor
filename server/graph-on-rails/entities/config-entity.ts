@@ -11,7 +11,7 @@ export type AttributeConfig = {
   filterType?:string|boolean;
   validation?:any;
   required?:boolean
-  unique?:boolean
+  unique?:boolean|string
   description?:string
   virtual?:boolean
 }
@@ -23,7 +23,7 @@ export type EntityConfig  = {
   typeName?:string;
 
   attributes?:{[name:string]:string|AttributeConfig};
-  assocTo?:[string|{type:string}];
+  assocTo?:(string|{type:string, required?:boolean})[];
   assocToMany?:[string|{type:string}];
   assocFrom?:string[];
 
@@ -36,9 +36,9 @@ export type EntityConfig  = {
   path?:string;
   parent?:string;
 
-  seeds:{[name:string]:any}
-  permissions:null|{[role:string]:boolean|string|{[action:string]:string|object|(string|object)[]}}
-  equality:null|string|{[typeName:string]:string[]}
+  seeds?:{[name:string]:any}
+  permissions?:null|{[role:string]:boolean|string|{[action:string]:string|object|(string|object)[]}}
+  equality?:null|string|{[typeName:string]:string[]}
   description?:string
 
   entities?:string[]

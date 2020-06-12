@@ -2,9 +2,6 @@ entity:
   Phi:
     attributes:
       name: string
-      notReal:
-        virtual: true
-        type: string
     assocToMany:
       - Chi
     seeds:
