@@ -8,5 +8,6 @@ export type TypeAttribute = {
   unique?:string|boolean;
   required?:boolean;
   description?:string
+  virtual?:boolean
 }
 

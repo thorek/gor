@@ -2,9 +2,10 @@ import { AuthenticationError } from 'apollo-server-express';
 import compression from 'compression';
 import cors from 'cors';
 import express from 'express';
+import { ResolverContext } from 'graph-on-rails/core/gor-context';
 import { createServer } from 'http';
+import _ from 'lodash';
 
-import { OrganisationalUnit } from './custom-types/organisational-unit';
 import { Gor } from './graph-on-rails/core/gor';
 
 (async () => {
@@ -14,6 +15,10 @@ import { Gor } from './graph-on-rails/core/gor';
   app.use(compression());
 
   const gor = await Gor.create("d2Prom");
+
+  _.set( gor.context.virtualResolver, 'RiskAssessment', {
+    priority: ( resolverCtx:ResolverContext ) => { return "HIGH" }
+  })
 
   gor.addConfigFolder( './server/config-types/d2prom' );
   // gor.addCustomEntities( new OrganisationalUnit() );

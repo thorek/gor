@@ -40,7 +40,7 @@ entity:
         description: Reasoning why a certain damage is assumed
       priority:
         type: Priority
-        required: false
+        virtual: true
         description: if set this value will override the priority calculated by probality x damage
 
   DataSecurityRiskSourceUnion:
@@ -58,9 +58,10 @@ entity:
   DataSecurityRequirement:
     attributes:
       specific: SecuritySpecifics
-      description:
-        - type: string
-          required: false
+      description: string
+      priority:
+        type: Priority
+        description: if set this value will override the priority from RiskAssessment
     assocTo:
       - RiskAssessment
       - DataSecurityRiskSource

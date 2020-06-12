@@ -1,5 +1,5 @@
 enum:
   Priority:
-    - normal_1
-    - high_2
-    - very_high_3
+    NORMAL: 10
+    HIGH: 20
+    VERY_HIGH: 30

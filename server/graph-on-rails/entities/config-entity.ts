@@ -1,6 +1,5 @@
 import _ from 'lodash';
 
-import { FilterType } from '../builder/filter-type';
 import { Entity } from './entity';
 import { TypeAttribute } from './type-attribute';
 
@@ -14,6 +13,7 @@ export type AttributeConfig = {
   required?:boolean
   unique?:boolean
   description?:string
+  virtual?:boolean
 }
 
 /**
@@ -131,14 +131,17 @@ export class ConfigEntity extends Entity {
       attrConfig.required = true;
     }
     if( attrConfig.filterType === true ) attrConfig.filterType === undefined;
-
+    if( attrConfig.virtual ){
+      if( attrConfig.filterType ) console.warn( this.name, `[${name}]`, 'filterType makes no sense for virtual attribute' )
+    }
     return {
       graphqlType: attrConfig.type,
       filterType: attrConfig.filterType as string|false|undefined,
       validation: attrConfig.validation,
       unique: attrConfig.unique,
       required: attrConfig.required,
-      description: attrConfig.description
+      description: attrConfig.description,
+      virtual: attrConfig.virtual
     }
   }
 

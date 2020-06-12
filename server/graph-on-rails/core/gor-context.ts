@@ -36,6 +36,7 @@ export class GorContext {
   readonly graphx = new GraphX();
   readonly entities:{[name:string]:Entity} = {};
   readonly filterTypes:{[name:string]:FilterType} = {};
+  readonly virtualResolver:{[entity:string]:{[attribute:string]: ( rctx:ResolverContext ) => any }} =  {}
 
   private constructor( private config:GorConfig ){}
 

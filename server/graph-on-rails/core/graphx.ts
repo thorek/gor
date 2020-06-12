@@ -140,7 +140,6 @@ export class GraphX {
    */
   private generateTypes = () => {
     _.forEach( this.rawTypes, (item, key) => {
-      console.log( item.name, {"item.types": item.types, "item.interfaceTypes": item.interfaceTypes ? item.interfaceTypes() : undefined } );
       if( item.from === GraphQLUnionType ){
         this.rawTypes[key] = new GraphQLUnionType({
           name: item.name,
