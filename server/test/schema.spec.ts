@@ -1,18 +1,18 @@
 import _ from 'lodash';
 
-import { Gor } from '../graph-on-rails/core/gor';
-import { GorContext } from '../graph-on-rails/core/gor-context';
+import { Runtime } from '../graph-on-rails/core/runtime';
+import { GorContext } from '../graph-on-rails/core/runtime-context';
 import { Seeder } from '../graph-on-rails/core/seeder';
 import { printSchema } from 'graphql';
 
 
 describe('Schema Generation', () => {
 
-  let gor!:Gor;
+  let gor!:Runtime;
   let context!:GorContext;
 
   beforeAll( async () => {
-    gor = await Gor.create( "tests" );
+    gor = await Runtime.create( "tests" );
     gor.addConfigFolder( './config-types/test' );
     await gor.server({});
     await Seeder.create( gor.context ).seed( true, {} );

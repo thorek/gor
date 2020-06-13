@@ -1,7 +1,7 @@
 import _ from 'lodash';
 
-import { Gor } from '../graph-on-rails/core/gor';
-import { GorContext } from '../graph-on-rails/core/gor-context';
+import { Runtime } from '../graph-on-rails/core/runtime';
+import { GorContext } from '../graph-on-rails/core/runtime-context';
 import { Seeder } from '../graph-on-rails/core/seeder';
 import { ConfigEntity } from '../graph-on-rails/entities/config-entity';
 
@@ -10,7 +10,7 @@ xdescribe('Virtual Attributes', () => {
   let context!:GorContext;
   jest.spyOn(global.console, 'warn').mockImplementation();
   beforeAll( async () => {
-    const gor = await Gor.create( "tests:virtual-attributes" );
+    const gor = await Runtime.create( "tests:virtual-attributes" );
     gor.addCustomEntities( ConfigEntity.create( 'Alpha', {
       attributes: {
         name: { type: 'string' },

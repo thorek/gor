@@ -5,7 +5,7 @@ import express from 'express';
 import { createServer } from 'http';
 import _ from 'lodash';
 
-import { Gor } from './graph-on-rails/core/gor';
+import { Runtime } from './graph-on-rails/core/runtime';
 
 (async () => {
 
@@ -13,7 +13,7 @@ import { Gor } from './graph-on-rails/core/gor';
   app.use('*', cors());
   app.use(compression());
 
-  const gor = await Gor.create("d2Prom");
+  const gor = await Runtime.create("d2Prom");
 
   _.set( gor.context.virtualResolver, 'RiskAssessment', {
     priority: () => { return "HIGH" }

@@ -1,4 +1,4 @@
-import { GorContext } from 'graph-on-rails/core/gor-context';
+import { GorContext } from 'graph-on-rails/core/runtime-context';
 import { GraphQLBoolean, GraphQLID, GraphQLInputObjectType, GraphQLList, GraphQLNonNull, GraphQLObjectType, GraphQLUnionType, GraphQLString, GraphQLEnumType, GraphQLInterfaceType, GraphQLType } from 'graphql';
 import _ from 'lodash';
 

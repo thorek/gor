@@ -1,7 +1,7 @@
 import { GraphQLType } from 'graphql';
 import _ from 'lodash';
 
-import { GorContext } from '../core/gor-context';
+import { GorContext } from '../core/runtime-context';
 import { TypeAttribute } from '../entities/type-attribute';
 
 /**

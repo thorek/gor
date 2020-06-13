@@ -1,7 +1,7 @@
 import _ from 'lodash';
 
-import { Gor } from '../graph-on-rails/core/gor';
-import { GorContext } from '../graph-on-rails/core/gor-context';
+import { Runtime } from '../graph-on-rails/core/runtime';
+import { GorContext } from '../graph-on-rails/core/runtime-context';
 import { Seeder } from '../graph-on-rails/core/seeder';
 import { EntityAccessor } from '../graph-on-rails/entities/entity-accessor';
 
@@ -12,7 +12,7 @@ describe('Relations', () => {
   const accessor = new EntityAccessor();
 
   beforeAll( async () => {
-    const gor = await Gor.create( "tests" );
+    const gor = await Runtime.create( "tests" );
     gor.addConfigFolder( './config-types/test' );
     await gor.server({});
     await Seeder.create( gor.context ).seed( true, {} );

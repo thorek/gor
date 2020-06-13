@@ -24,7 +24,6 @@ export class EntityValidator  {
     this.validator = entity.context.validator( entity );
   }
 
-
   /**
    *
    */
@@ -107,7 +106,6 @@ export class EntityValidator  {
       scopeMsg = ` within scope '${attribute.unique}'`;
     }
     const result = await this.entity.findByAttribute(resolverCtx, attrValues );
-    console.log({result})
     const violation = {attribute: name, violation: `value '${value}' must be unique` + scopeMsg }
     return this.isUniqueResult( attributes, result ) ? undefined : violation;
   }

@@ -23,7 +23,7 @@ type DefinitionType = {
 /**
  *
  */
-export class Gor {
+export class Runtime {
 
   private _builders?:SchemaBuilder[];
   private _schema?:GraphQLSchema;
@@ -35,9 +35,9 @@ export class Gor {
   /**
    *
    */
-  static async create( config:GorConfig|string = "default" ):Promise<Gor>{
+  static async create( config:GorConfig|string = "default" ):Promise<Runtime>{
     const context = await GorContext.create( config );
-    return new Gor( context );
+    return new Runtime( context );
   }
 
   /**

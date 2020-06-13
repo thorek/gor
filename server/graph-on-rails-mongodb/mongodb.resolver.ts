@@ -55,10 +55,12 @@ export class MongoDbResolver extends Resolver {
    *
    */
   async findByExpression( entity:Entity, filter:any ):Promise<any[]> {
-    console.log( entity.name, JSON.stringify( filter ))
+    // console.log( entity.name, JSON.stringify( filter ))
     const collection = this.getCollection( entity );
     const items = await collection.find( filter ).toArray();
-    console.log( {items})
+    // console.log( {items})
+    // console.log( await collection.find( {} ).toArray() )
+
 		return _.map( items, item => this.buildOutItem( item ) );
   }
 

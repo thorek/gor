@@ -1,7 +1,7 @@
 import { GraphQLInputObjectType, GraphQLType } from 'graphql';
 import _ from 'lodash';
 
-import { GorContext } from '../core/gor-context';
+import { GorContext } from '../core/runtime-context';
 import { SchemaBuilder } from './schema-builder';
 
 

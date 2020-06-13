@@ -1,7 +1,7 @@
 import inflection from 'inflection';
 import _ from 'lodash';
 
-import { GorContext } from '../core/gor-context';
+import { GorContext } from '../core/runtime-context';
 import { CrudAction, EntityPermissions } from './entity-permissions';
 import { EntitySeeder } from './entity-seeder';
 import { EntityValidator, ValidationViolation } from './entity-validator';
