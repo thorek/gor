@@ -5,7 +5,7 @@ import { Runtime } from '../graph-on-rails/core/runtime';
 import { Seeder } from '../graph-on-rails/core/seeder';
 
 
-describe('Relations', () => {
+xdescribe('Relations', () => {
 
   let context!:Context;
 

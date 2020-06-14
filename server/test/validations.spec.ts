@@ -54,6 +54,10 @@ describe('Validations', () => {
     context = runtime.context;
   })
 
+  it("no", () => {
+    expect(true).toBeTruthy()
+  })
+
   //
   //
   it('should validate attributes', async () => {
@@ -153,7 +157,7 @@ describe('Validations', () => {
 
   //
   //
-  fit('should have validation violation for unique attribute with scope', async () => {
+  it('should have validation violation for unique attribute with scope', async () => {
     const alpha = context.entities['Alpha'];
     const delta = context.entities['Delta'];
     const delta1:any = _.first( await delta.findByAttribute({name: 'delta1'}) );
@@ -191,10 +195,9 @@ describe('Validations', () => {
   it( 'should not complain for update with the same unique value', async () => {
     const alpha = context.entities['Alpha'];
     const alpha1:any = _.first( await alpha.findByAttribute({name: 'alpha1'}));
-    resolverCtx.args = { alpha: { id: _.toString(alpha1.id) } };
+    resolverCtx.args = { alpha: { id: _.toString(alpha1.id), name: 'alpha1' } };
     const result = await alpha.validate( resolverCtx );
     expect( result ).toHaveLength( 0 );
-
   })
 
 })

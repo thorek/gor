@@ -5,7 +5,7 @@ import { Runtime } from '../graph-on-rails/core/runtime';
 import { Seeder } from '../graph-on-rails/core/seeder';
 import { Context } from '../graph-on-rails/core/context';
 
-describe('Virtual Attributes', () => {
+xdescribe('Virtual Attributes', () => {
 
   let runtime!:Runtime;
   let context:Context;

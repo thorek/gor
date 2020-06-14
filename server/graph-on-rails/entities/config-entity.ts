@@ -51,6 +51,8 @@ export type EntityConfig  = {
  */
 export class ConfigEntity extends Entity {
 
+  _attributes?:{[name:string]:TypeAttribute} = undefined
+
   /**
    *
    */
@@ -71,8 +73,11 @@ export class ConfigEntity extends Entity {
   protected getTypeName() { return this.entityConfig.typeName || super.getTypeName() }
   protected getAttributes() {
     if( ! this.entityConfig.attributes ) return super.getAttributes();
-    const attributes = _.mapValues( this.entityConfig.attributes, (attrConfig, name) => this.buildAttribute( name, attrConfig ) );
-    return _.pickBy( attributes, _.identity ) as {[name:string]:TypeAttribute};
+    if( ! this._attributes ) {
+      const attributes = _.mapValues( this.entityConfig.attributes, (attrConfig, name) => this.buildAttribute( name, attrConfig ) );
+      this._attributes = _.pickBy( attributes, _.identity ) as {[name:string]:TypeAttribute};
+    }
+    return this._attributes;
   }
 	protected getAssocTo() {
     if( ! this.entityConfig.assocTo ) return super.getAssocTo();
