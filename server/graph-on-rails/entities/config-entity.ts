@@ -10,7 +10,7 @@ export type AttributeConfig = {
   type:string;
   filterType?:string|boolean;
   validation?:any;
-  required?:boolean
+  required?:boolean|'create'|'update'
   unique?:boolean|string
   description?:string
   virtual?:boolean

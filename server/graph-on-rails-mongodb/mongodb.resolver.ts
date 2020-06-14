@@ -9,6 +9,7 @@ import { CrudAction } from '../graph-on-rails/entities/entity-permissions';
 import { EnumFilterType } from './filter/enum-filter-type';
 import { IntFilterType } from './filter/int-filter-type';
 import { StringFilterType } from './filter/string-filter-type';
+import { ResolverContext } from '../graph-on-rails/core/resolver-context';
 
 /**
  *
@@ -55,12 +56,8 @@ export class MongoDbResolver extends Resolver {
    *
    */
   async findByExpression( entity:Entity, filter:any ):Promise<any[]> {
-    // console.log( entity.name, JSON.stringify( filter ))
     const collection = this.getCollection( entity );
     const items = await collection.find( filter ).toArray();
-    // console.log( {items})
-    // console.log( await collection.find( {} ).toArray() )
-
 		return _.map( items, item => this.buildOutItem( item ) );
   }
 
@@ -100,26 +97,26 @@ export class MongoDbResolver extends Resolver {
   /**
    *
    */
-  async resolveType( entity:Entity, root:any, args:any, context:any ):Promise<any> {
-    const id = _.get( args, 'id' );
+  async resolveType( entity:Entity, resolverCtx:ResolverContext ):Promise<any> {
+    const id = _.get( resolverCtx.args, 'id' );
     return this.findById( entity, id );
   }
 
   /**
    *
    */
-  async resolveAssocToType( refType:Entity, root:any, args:any, context:any ):Promise<any> {
-    if( refType.isPolymorph ) return this.resolveAssocToPolymorphType( refType, root, args, context );
-    const id = _.get( root, refType.foreignKey );
+  async resolveAssocToType( refType:Entity, resolverCtx:ResolverContext ):Promise<any> {
+    if( refType.isPolymorph ) return this.resolveAssocToPolymorphType( refType, resolverCtx );
+    const id = _.get( resolverCtx.root, refType.foreignKey );
     return this.findById( refType, id );
   }
 
   /**
    *
    */
-  private async resolveAssocToPolymorphType( refType:Entity, root:any, args:any, context:any ):Promise<any> {
-    const id = _.get( root, refType.foreignKey );
-    const polymorphType = refType.context.entities[_.get( root, refType.typeField )];
+  private async resolveAssocToPolymorphType( refType:Entity, resolverCtx:ResolverContext ):Promise<any> {
+    const id = _.get( resolverCtx.root, refType.foreignKey );
+    const polymorphType = refType.context.entities[_.get( resolverCtx.root, refType.typeField )];
     console.log( "resolveAssocToPolymorphType", polymorphType.typeName )
     const result = await this.findById( polymorphType, id );
     _.set( result, '__typename', polymorphType.typeName );
@@ -129,17 +126,17 @@ export class MongoDbResolver extends Resolver {
   /**
    *
    */
-  async resolveAssocFromTypes( entity:Entity, refType:Entity, root:any, args:any, context:any ):Promise<any[]> {
+  async resolveAssocFromTypes( entity:Entity, refType:Entity, resolverCtx:ResolverContext ):Promise<any[]> {
     const attr = refType.isAssocToMany( entity ) ? entity.foreignKeys : entity.foreignKey;
-    const filter = _.set({}, attr, _.toString(root.id) );
+    const filter = _.set({}, attr, _.toString(resolverCtx.root.id) );
     return this.findByExpression( refType, filter );
   }
 
   /**
    *
    */
-  async resolveAssocToManyTypes( entity:Entity, refType:Entity, root:any, args:any, context:any ):Promise<any[]> {
-    const foreignKeys = _.map( _.get( root, refType.foreignKeys ), foreignKey => new ObjectId( foreignKey ) );
+  async resolveAssocToManyTypes( entity:Entity, refType:Entity, resolverCtx:ResolverContext ):Promise<any[]> {
+    const foreignKeys = _.map( _.get( resolverCtx.root, refType.foreignKeys ), foreignKey => new ObjectId( foreignKey ) );
     const filter = { _id: { $in: foreignKeys } };
     return this.findByExpression( refType, filter );
   }
@@ -147,28 +144,28 @@ export class MongoDbResolver extends Resolver {
   /**
    *
    */
-  async resolveTypes( entity:Entity, root:any, args:any, context:any ):Promise<any[]> {
-    let filter = this.getFilterQuery( entity, root, args, context );
+  async resolveTypes( entity:Entity, resolverCtx:ResolverContext ):Promise<any[]> {
+    let filter = this.getFilterQuery( entity, resolverCtx );
     _.set( filter, 'deleted', { $ne: true } );
-    filter = await this.addPermissions( entity, "read", filter, context );
+    filter = await this.addPermissions( entity, "read", filter, resolverCtx );
     return this.findByExpression( entity, filter );
   }
 
   /**
    *
    */
-  async saveEntity( entity:Entity, root:any, args:any, context:any ):Promise<any> {
-    const attrs = _.get( args, entity.singular );
+  async saveEntity( entity:Entity, resolverCtx:ResolverContext ):Promise<any> {
+    const attrs = _.get( resolverCtx.args, entity.singular );
     return _.has( attrs, 'id' ) ?
-      this.updateEntity( entity, attrs, context ) :
-      this.createEntity( entity, attrs, context );
+      this.updateEntity( entity, attrs, resolverCtx ) :
+      this.createEntity( entity, attrs, resolverCtx );
   }
 
   /**
    *
    */
-	protected getFilterQuery( entity:Entity, root:any, args:any, context:any ):FilterQuery<any> {
-    const filter = _.get( args, 'filter');
+	protected getFilterQuery( entity:Entity, resolverCtx:ResolverContext ):FilterQuery<any> {
+    const filter = _.get( resolverCtx.args, 'filter');
     const filterQuery:FilterQuery<any> = {};
 		_.forEach( filter, (condition, field) => {
       const attribute = entity.getAttribute(field);
@@ -193,29 +190,28 @@ export class MongoDbResolver extends Resolver {
 
 	//
 	//
-	protected async updateEntity( entity:Entity, attrs: any, context: any ):Promise<any> {
+	protected async updateEntity( entity:Entity, attrs: any, resolverCtx:ResolverContext ):Promise<any> {
     const _id = new ObjectId( attrs.id );
     delete attrs.id;
     const collection = this.getCollection( entity );
     const result = await collection.updateOne( { _id }, { $set: attrs }, { upsert: false } );
-		return this.resolveType( entity, {}, { id: _id }, context );
+    return this.findById( entity, _id );
 	}
 
 	//
 	//
 	protected async createEntity( entity:Entity, attrs: any, context: any ):Promise<any> {
     const collection = this.getCollection( entity );
-		const result = await collection.insertOne( attrs );
-		const item:any = await collection.findOne( new ObjectId(result.insertedId ) );
-		return this.buildOutItem( item );
+    const result = await collection.insertOne( attrs );
+    return this.findById( entity, result.insertedId );
 	}
 
   /**
    *
    */
-	async deleteEntity( entityType:Entity, root:any, args:any, context:any  ):Promise<boolean> {
+	async deleteEntity( entityType:Entity, resolverCtx:ResolverContext  ):Promise<boolean> {
     const collection = this.getCollection( entityType );
-    const id = _.get( args, 'id' );
+    const id = _.get( resolverCtx.args, 'id' );
 		const result = await collection.updateOne( {"_id": new ObjectId( id )}, {
 			$set: { "deleted": true }
 		});
@@ -247,8 +243,8 @@ export class MongoDbResolver extends Resolver {
   /**
    *
    */
-  protected async addPermissions( entity:Entity, action:CrudAction, filter:any, context:any ):Promise<any> {
-    let ids = await entity.getPermittedIds( action, context );
+  protected async addPermissions( entity:Entity, action:CrudAction, filter:any, resolverCtx:ResolverContext ):Promise<any> {
+    let ids = await entity.getPermittedIds( action, resolverCtx );
     if( ids === true ) return filter;
     if( ids === false ) ids = [];
     return { $and: [ { _id: { $in: ids } }, filter ] };
@@ -257,13 +253,13 @@ export class MongoDbResolver extends Resolver {
   /**
    *
    */
-  async getPermittedIds( entity:Entity, permission:object, context:any ):Promise<number[]> {
+  async getPermittedIds( entity:Entity, permission:object, resolverCtx:ResolverContext ):Promise<number[]> {
     let expression:string|object = _.get( permission, 'filter' );
     if( _.isString( expression ) ) {
-      expression = ts( expression, context );
+      expression = ts( expression, resolverCtx.context );
       expression = JSON.parse( expression as string );
     } else {
-      expression = this.buildPermittedIdsFilter( entity, permission, context );
+      expression = this.buildPermittedIdsFilter( entity, permission, resolverCtx.context );
     }
     const result = await this.findByExpression( entity, expression );
     return _.map( result, item => _.get(item, '_id' ) );

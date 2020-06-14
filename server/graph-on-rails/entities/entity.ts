@@ -1,12 +1,13 @@
 import inflection from 'inflection';
 import _ from 'lodash';
 
-import { GorContext } from '../core/runtime-context';
+import { Context } from '../core/context';
 import { CrudAction, EntityPermissions } from './entity-permissions';
 import { EntitySeeder } from './entity-seeder';
 import { EntityValidator, ValidationViolation } from './entity-validator';
 import { TypeAttribute } from './type-attribute';
-import { ResolverContext } from 'graph-on-rails/core/resolver-context';
+import { ResolverContext } from '../core/resolver-context';
+import { EntityResolveHandler } from './entity-resolve-handler';
 
 //
 //
@@ -15,33 +16,35 @@ export type EntityReference = {
   required?:boolean;
 }
 
-
 //
 //
 export abstract class Entity {
 
-  private _context!:GorContext;
+  private _context!:Context;
   get context() { return this._context }
-  get graphx() {return this.context.graphx };
-  get resolver() {return this.context.resolver };
+  get graphx() { return this.context.graphx }
+  get resolver() { return this.context.resolver }
+  get entitySeeder() { return this._entitySeeder }
+  get entityPermissions() { return this._entityPermissions }
+  get entityResolveHandler() { return this._entityResolveHandler }
+  get entityValidator() { return this._entityValidator }
 
-  public entitySeeder!:EntitySeeder;
-  public entityPermissions!:EntityPermissions;
-  protected entityValidator!:EntityValidator;
+
+  protected _entitySeeder!:EntitySeeder;
+  protected _entityResolveHandler!:EntityResolveHandler;
+  protected _entityPermissions!:EntityPermissions;
+  protected _entityValidator!:EntityValidator;
 
   /**
    *
    */
-  init( context:GorContext ){
+  init( context:Context ){
     this._context = context;
-
-    // this.addLockRelations();
-
     this.context.entities[this.typeName] = this;
-    this.entitySeeder = this.context.entitySeeder( this );
-    this.entityPermissions = this.context.entityPermissions( this );
-    this.entitySeeder = this.context.entitySeeder( this );
-    this.entityValidator = new EntityValidator( this )
+    this._entityResolveHandler = this.context.entityResolveHandler( this );
+    this._entitySeeder = this.context.entitySeeder( this );
+    this._entityPermissions = this.context.entityPermissions( this );
+    this._entityValidator = new EntityValidator( this )
   }
 
   get name() { return this.getName() }
@@ -83,8 +86,8 @@ export abstract class Entity {
   protected getPlural() { return inflection.pluralize( this.singular ) }
   protected getForeignKey() { return `${this.singular}Id` }
   protected getForeignKeys() { return `${this.singular}Ids` }
-  protected getCreateInputTypeName() { return `Create${this.typeName}Input` }
-  protected getUpdateInputTypeName() { return `Update${this.typeName}Input` }
+  protected getCreateInputTypeName() { return `${this.typeName}CreateInput` }
+  protected getUpdateInputTypeName() { return `${this.typeName}UpdateInput` }
   protected getFilterName() { return `${this.typeName}Filter` }
   protected getCollection() { return this.plural }
   protected getLabel() { return inflection.titleize(  this.plural )  }
@@ -137,16 +140,16 @@ export abstract class Entity {
   /**
    *
    */
-  async getPermittedIds( action:CrudAction, context:any ):Promise<boolean|number[]> {
+  async getPermittedIds( action:CrudAction, resolverCtx:ResolverContext ):Promise<boolean|number[]> {
     if( ! this.entityPermissions ) throw new Error("no EntityPermission provider" );
-    return this.entityPermissions.getPermittedIds( action, context );
+    return this.entityPermissions.getPermittedIds( action, resolverCtx );
   }
 
   /**
    *
    */
-  async validate( root: any, args: any, context:any ):Promise<ValidationViolation[]> {
-    return await this.entityValidator.validate( {root, args, context} );
+  async validate( resolverCtx:ResolverContext ):Promise<ValidationViolation[]> {
+    return await this.entityValidator.validate( resolverCtx );
   }
 
   /**
@@ -160,44 +163,16 @@ export abstract class Entity {
   /**
    *
    */
-  async resolveType( resolverCtx:ResolverContext ):Promise<any> {
-    const item = await this.resolver.resolveType( this, resolverCtx.root, resolverCtx.args, resolverCtx.context );
-    return this.resolveVirtualAttributes( resolverCtx, item );
+  findById( id:any ):Promise<any> {
+    return this.entityResolveHandler.findById( id );
   }
+
 
   /**
    *
    */
-  async resolveTypes( resolverCtx:ResolverContext ):Promise<any> {
-    const items = await this.resolver.resolveTypes( this, resolverCtx.root, resolverCtx.args, resolverCtx.context );
-    return _.map( items, item => this.resolveVirtualAttributes( resolverCtx, item ) );
-  }
-
-  /**
-   *
-   */
-  async findByAttribute( resolverCtx:ResolverContext, attrValue:{[name:string]:any} ):Promise<any[]>{
-    const items = await this.resolver.findByAttribute( this, attrValue );
-    for( const item of items ) await this.resolveVirtualAttributes( resolverCtx, item );
-    return items;
-  }
-
-  /**
-   *
-   */
-  private async resolveVirtualAttributes( resolverCtx:ResolverContext, item:any ):Promise<any> {
-    for( const name of _.keys(this.attributes) ){
-      const attribute = this.attributes[name];
-      if( attribute.virtual ) await this.resolveVirtualAttribute( resolverCtx, item, name );
-    }
-  }
-
-  /**
-   *
-   */
-  private async resolveVirtualAttribute( resolverCtx:ResolverContext, item:any, name:string ):Promise<any> {
-    const resolver = _.get( this.context.virtualResolver, [item.entity.name, name] );
-    _.set( item, name, await resolver(resolverCtx, { entity:this, item } ) );
+  findByAttribute( attrValue:{[name:string]:any} ):Promise<any> {
+    return this.entityResolveHandler.findByAttribute( attrValue );
   }
 
 }

@@ -1,12 +1,12 @@
 import { GraphQLInputObjectType, GraphQLType } from 'graphql';
 import _ from 'lodash';
 
-import { GorContext } from '../core/runtime-context';
+import { Context } from '../core/context';
 import { SchemaBuilder } from './schema-builder';
 
 
 /**
- * Base class for all Filter Attributes
+ * Base class for all Filter Types
  */
 export abstract class FilterType extends SchemaBuilder {
 
@@ -17,7 +17,7 @@ export abstract class FilterType extends SchemaBuilder {
 
 	//
 	//
-	init( context:GorContext ):void {
+	init( context:Context ):void {
     super.init( context );
     _.set( context.filterTypes, this.name(), this );
 	}

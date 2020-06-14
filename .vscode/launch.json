@@ -23,7 +23,9 @@
         "${workspaceRoot}/server/node_modules/.bin/jest",
         "--runInBand",
         "--config",
-        "${workspaceRoot}/server/jest.config.json"
+        "${workspaceRoot}/server/jest.config.json",
+        "${relativeFile}",
+        "--detectOpenHandles"
       ],
       "windows": {
         "args": [

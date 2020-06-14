@@ -2,6 +2,7 @@ import _ from 'lodash';
 import { AuthenticationError } from 'apollo-server-express';
 import { Entity } from './entity';
 import { EntityModule } from './entity-module';
+import { ResolverContext } from '../core/resolver-context';
 
 export type CrudAction = "read" | "create" | "update" | "delete";
 
@@ -13,13 +14,13 @@ export class EntityPermissions extends EntityModule {
   /**
    *
    */
-  async getPermittedIds( action:CrudAction, context:any ):Promise<boolean|number[]> {
+  async getPermittedIds( action:CrudAction, resolverCtx:ResolverContext ):Promise<boolean|number[]> {
     if( ! this.isUserAndRolesDefined() ) return true;
     if( ! this.entity.permissions ) return true;
-    const roles = this.getUserRoles( context );
+    const roles = this.getUserRoles( resolverCtx );
     let ids:number[] = [];
     for( const role of roles ){
-      const roleIds = await this.getPermittedIdsForRole( role, action, context );
+      const roleIds = await this.getPermittedIdsForRole( role, action, resolverCtx );
       if( roleIds === true ) return true;
       if( roleIds ) ids = _.concat( ids, roleIds );
     }
@@ -29,13 +30,13 @@ export class EntityPermissions extends EntityModule {
   /**
    * @returns true if all items can be accessed, false when none, or the array of ObjectIDs that accessible items must match
    */
-  protected async getPermittedIdsForRole( role:string, action:CrudAction, context:any ):Promise<boolean|number[]> {
+  protected async getPermittedIdsForRole( role:string, action:CrudAction, resolverCtx:ResolverContext ):Promise<boolean|number[]> {
     let permissions = this.getActionPermissionsForRole( role, action );
     if( _.isBoolean( permissions ) ) return permissions;
-    if( _.isString( permissions ) ) return await this.getPermittedIdsForRole( permissions, action, context );
+    if( _.isString( permissions ) ) return await this.getPermittedIdsForRole( permissions, action, resolverCtx );
     let ids:number[][] = [];
     for( const permission of permissions as (string|object)[] ){
-      const actionIds = await this.getIdsForActionPermission( role, permission, context );
+      const actionIds = await this.getIdsForActionPermission( role, permission, resolverCtx );
       if( _.isBoolean( actionIds) ) {
         if( actionIds === false ) return false;
       } else ids.push( actionIds );
@@ -48,17 +49,17 @@ export class EntityPermissions extends EntityModule {
    *  in this or a assocTo entity. If it is an object it is delegated to the resolver to use to return the
    *  permitted ids
    */
-  protected async getIdsForActionPermission( role:string, permission:string|object, context:any ):Promise<boolean|number[]> {
-    if( _.isString( permission ) ) return await this.getIdsForReference( role, permission, context );
-    return this.resolvePermittedIds( permission, context );
+  protected async getIdsForActionPermission( role:string, permission:string|object, resolverCtx:ResolverContext ):Promise<boolean|number[]> {
+    if( _.isString( permission ) ) return await this.getIdsForReference( role, permission, resolverCtx );
+    return this.resolvePermittedIds( permission, resolverCtx );
   }
 
   /**
    *
    */
-  private async resolvePermittedIds( permission:object, context:any ):Promise<boolean|number[]>{
+  private async resolvePermittedIds( permission:object, resolverCtx:ResolverContext ):Promise<boolean|number[]>{
     try {
-      return await this.entity.resolver.getPermittedIds( this.entity, permission, context );
+      return await this.entity.resolver.getPermittedIds( this.entity, permission, resolverCtx );
     } catch (error) {
       console.error(`'${this.entity.name}' resolver could not resolve permission`, permission, error);
       return false;
@@ -68,18 +69,18 @@ export class EntityPermissions extends EntityModule {
   /**
    *
    */
-  protected async getIdsForReference( role:string, permissionReference:string, context:any ):Promise<boolean|number[]> {
+  protected async getIdsForReference( role:string, permissionReference:string, resolverCtx:ResolverContext ):Promise<boolean|number[]> {
     const entityAction = _.split( permissionReference, '.' );
     const action = _.last( entityAction ) as string;
     const entity = _.size( entityAction ) === 1 ? this.entity : this.getAssocToEntity( _.first( entityAction ) );
-    return entity ? this.resolvePermittedIdsForAssocTo( entity, role, action, context ) : false;
+    return entity ? this.resolvePermittedIdsForAssocTo( entity, role, action, resolverCtx ) : false;
   }
 
   /**
    *
    */
-  private async resolvePermittedIdsForAssocTo( entity:Entity, role:string, action:string, context:any ):Promise<boolean|number[]>{
-    const ids = await entity.entityPermissions.getPermittedIdsForRole( role, action as CrudAction, context );
+  private async resolvePermittedIdsForAssocTo( entity:Entity, role:string, action:string, resolverCtx:ResolverContext ):Promise<boolean|number[]>{
+    const ids = await entity.entityPermissions.getPermittedIdsForRole( role, action as CrudAction, resolverCtx );
     if( _.isBoolean( ids ) ) return ids;
     try {
       return await this.entity.resolver.getPermittedIdsForForeignKeys( this.entity, entity.foreignKey, ids );
@@ -218,8 +219,8 @@ export class EntityPermissions extends EntityModule {
   /**
    *
    */
-  protected getUserRoles( context:any ):string[] {
-    const user = _.get( context, this.context.contextUser as string );
+  protected getUserRoles( resolverCtx:ResolverContext ):string[] {
+    const user = _.get( resolverCtx.context, this.context.contextUser as string );
     if( ! user ) throw "should not happen, no user in context";
     let roles:any = _.get( user, this.context.contextRoles as string );
     if( ! roles ) throw new AuthenticationError( `User has no role - ${JSON.stringify( user ) }` );

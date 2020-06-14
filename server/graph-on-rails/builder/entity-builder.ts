@@ -1,16 +1,46 @@
-import { GorContext } from 'graph-on-rails/core/runtime-context';
-import { GraphQLBoolean, GraphQLID, GraphQLInputObjectType, GraphQLList, GraphQLNonNull, GraphQLObjectType, GraphQLUnionType, GraphQLString, GraphQLEnumType, GraphQLInterfaceType, GraphQLType } from 'graphql';
+import {
+  GraphQLBoolean,
+  GraphQLEnumType,
+  GraphQLFloat,
+  GraphQLID,
+  GraphQLInputObjectType,
+  GraphQLInt,
+  GraphQLInterfaceType,
+  GraphQLList,
+  GraphQLNonNull,
+  GraphQLObjectType,
+  GraphQLString,
+  GraphQLType,
+  GraphQLUnionType,
+} from 'graphql';
 import _ from 'lodash';
 
+import { Context } from '../core/context';
 import { Entity, EntityReference } from '../entities/entity';
 import { TypeAttribute } from '../entities/type-attribute';
 import { SchemaBuilder } from './schema-builder';
+
+const typesMap:{[scalar:string]:GraphQLType} = {
+  Id: GraphQLID,
+  String: GraphQLString,
+  Int: GraphQLInt,
+  Float: GraphQLFloat,
+  Boolean: GraphQLBoolean
+}
+
+type AttributePurpose = 'createInput'|'updateInput'|'filter'|'type';
+
+type AttrFieldConfig = {
+  type: GraphQLType
+  description?:string
+}
 
 //
 //
 export class EntityBuilder extends SchemaBuilder {
 
   name() { return this.entity.name }
+  get resolveHandler() { return this.entity.entityResolveHandler }
   attributes():{[name:string]:TypeAttribute} { return this.entity.attributes };
 
 	//
@@ -22,7 +52,7 @@ export class EntityBuilder extends SchemaBuilder {
   /**
    *
    */
-  init( context:GorContext ){
+  init( context:Context ){
     super.init( context );
     this.entity.init( context );
   }
@@ -37,7 +67,7 @@ export class EntityBuilder extends SchemaBuilder {
       from, name,
       fields: () => {
 			  const fields = { id: { type: new GraphQLNonNull(GraphQLID) } };
-			  return _.merge( fields, this.getAttributeFields( true, true ) );
+			  return _.merge( fields, this.getAttributeFields( 'type' ) );
       },
       description: this.entity.description
     });
@@ -95,10 +125,10 @@ export class EntityBuilder extends SchemaBuilder {
   //
   //
   protected addFieldsFromInterface( entity:Entity ):void {
-    this.graphx.type(this.entity.typeName).extendFields( () => this.getAttributeFields( true, true, entity ) );
-    this.graphx.type(this.entity.filterName).extendFields( () => this.getAttributeFields( false, false, entity ) );
-    this.graphx.type(this.entity.createInputTypeName).extendFields( () => this.getAttributeFields( true, false, entity ) );
-    this.graphx.type(this.entity.updateInputTypeName).extendFields( () => this.getAttributeFields( false, false, entity ) );
+    this.graphx.type(this.entity.typeName).extendFields( () => this.getAttributeFields( 'type', entity ) );
+    this.graphx.type(this.entity.filterName).extendFields( () => this.getAttributeFields( 'filter', entity ) );
+    this.graphx.type(this.entity.createInputTypeName).extendFields( () => this.getAttributeFields( 'createInput', entity ) );
+    this.graphx.type(this.entity.updateInputTypeName).extendFields( () => this.getAttributeFields( 'updateInput', entity ) );
   }
 
 	//
@@ -169,7 +199,7 @@ export class EntityBuilder extends SchemaBuilder {
     const refObjectType = this.graphx.type(refEntity.typeName);
     return _.set( fields, refEntity.singular, {
       type: refObjectType,
-      resolve: (root:any, args:any, context:any ) => this.resolver.resolveAssocToType( refEntity, root, args, context )
+      resolve: (root:any, args:any, context:any ) => this.resolveHandler.resolveAssocToType( refEntity, {root, args, context} )
     });
   }
 
@@ -180,7 +210,8 @@ export class EntityBuilder extends SchemaBuilder {
     const refObjectType = this.graphx.type(refEntity.typeName);
     return _.set( fields, refEntity.plural, {
       type: new GraphQLList( refObjectType),
-      resolve: (root:any, args:any, context:any ) => this.resolver.resolveAssocToManyTypes( this.entity, refEntity, root, args, context )
+      resolve: (root:any, args:any, context:any ) =>
+        this.resolveHandler.resolveAssocToManyTypes( refEntity, {root, args, context} )
     });
   }
 
@@ -199,7 +230,8 @@ export class EntityBuilder extends SchemaBuilder {
     const refObjectType = this.graphx.type(refEntity.typeName)
     return _.set( fields, refEntity.plural, {
       type: new GraphQLList( refObjectType ),
-      resolve: (root:any, args:any, context:any ) => this.resolver.resolveAssocFromTypes( this.entity, refEntity, root, args, context )
+      resolve: (root:any, args:any, context:any ) =>
+        this.resolveHandler.resolveAssocFromTypes( refEntity, {root, args, context} )
     });
   }
 
@@ -223,7 +255,7 @@ export class EntityBuilder extends SchemaBuilder {
    */
   protected createCreateInputType():void {
 		const name = this.entity.createInputTypeName;
-		this.graphx.type( name, { name, from: GraphQLInputObjectType, fields: () => this.getAttributeFields( true, false ) });
+		this.graphx.type( name, { name, from: GraphQLInputObjectType, fields: () => this.getAttributeFields( 'createInput' ) });
 	}
 
   /**
@@ -233,33 +265,52 @@ export class EntityBuilder extends SchemaBuilder {
 		const name = this.entity.updateInputTypeName;
 		this.graphx.type( name, { name, from: GraphQLInputObjectType, fields: () => {
 			const fields = { id: { type: new GraphQLNonNull(GraphQLID) }};
-			return _.merge( fields, this.getAttributeFields( false, false ) );
+			return _.merge( fields, this.getAttributeFields( 'updateInput' ) );
 		}});
 	}
 
   /**
    *
-   * @param fields
    */
-  protected getAttributeFields( addRequired:boolean, addVirtual:boolean, entity?:Entity,  ):any {
+  protected getAttributeFields( purpose:AttributePurpose, entity?:Entity,  ):any {
     const attributes = entity ? entity.attributes : this.attributes();
-    const fields = {};
-		_.forEach( attributes, (attribute, name) => {
-      const fieldConfig = {
-        type: this.context.getGraphQLType(attribute, addRequired),
-        description: attribute.description
-      };
-      if( attribute.virtual ){
-        if( ! addVirtual ) return;
-        if( ! _.isFunction( _.get( this.context.virtualResolver, [this.entity.name, name ] ) ) ){
-          fieldConfig.type = GraphQLString;
-          console.warn(`no virtual resolver for '${this.entity.name}:${name}'`);
-        }
-      }
-      _.set( fields, name, fieldConfig );
-    });
-    return fields;
-	}
+    const fields = _.mapValues( attributes, (attribute, name) => this.getFieldConfig(name, attribute, purpose));
+    return _.pickBy( fields, _.identity);
+  }
+
+  //
+  //
+  private getFieldConfig(name:string, attribute:TypeAttribute, purpose:AttributePurpose ):AttrFieldConfig|undefined {
+    const addNonNull = this.addNonNull( name, attribute, purpose);
+    const fieldConfig = {
+      type: this.getGraphQLType(attribute, addNonNull ),
+      description: attribute.description
+    };
+    if( this.skipVirtual( name, attribute, purpose, fieldConfig ) ) return;
+    return fieldConfig;
+  }
+
+  //
+  //
+  private addNonNull( name:string, attribute:TypeAttribute, purpose:AttributePurpose ):boolean {
+    if( ! attribute.required || purpose === 'filter' ) return false;
+    if( attribute.required === true ) return _.includes( ['createInput', 'updateInput', 'type'], purpose );
+    if( attribute.required === 'create' ) return _.includes( ['createInput', 'type'], purpose );
+    if( attribute.required === 'update' ) return _.includes( ['updateInput'], purpose );
+    throw `unallowed required attribute for '${this.entity.name}:{name}'`;
+  }
+
+  //
+  //
+  private skipVirtual(name:string, attribute:TypeAttribute, purpose:AttributePurpose, fieldConfig:any ):boolean {
+    if( ! attribute.virtual ) return false;
+    if( purpose !== 'type' ) return true;
+    if( ! _.isFunction( _.get( this.context.virtualResolver, [this.entity.name, name ] ) ) ){
+      fieldConfig.type = GraphQLString;
+      console.warn(`no virtual resolver for '${this.entity.name}:${name}'`);
+    }
+    return false;
+  }
 
   /**
    *
@@ -269,6 +320,7 @@ export class EntityBuilder extends SchemaBuilder {
 		this.graphx.type( name, { name, from: GraphQLInputObjectType, fields: () => {
 			const fields = { id: { type: GraphQLID } };
 			_.forEach( this.attributes(), (attribute, name) => {
+        if( attribute.virtual ) return;
         const type = this.getFilterType(attribute);
 				if( type ) _.set( fields, name, { type } );
 			});
@@ -284,7 +336,7 @@ export class EntityBuilder extends SchemaBuilder {
 			return _.set( {}, this.entity.singular, {
 				type: this.graphx.type(this.entity.typeName),
 				args: { id: { type: GraphQLID } },
-				resolve: (root:any, args:any, context:any) => this.entity.resolveType( {root, args, context} )
+				resolve: ( root:any, args:any, context:any ) => this.resolveHandler.resolveType( {root, args, context} )
 			});
     });
 	}
@@ -297,7 +349,7 @@ export class EntityBuilder extends SchemaBuilder {
 			return _.set( {}, this.entity.plural, {
 				type: new GraphQLList( this.graphx.type(this.entity.typeName) ),
 				args: { filter: { type: this.graphx.type(this.entity.filterName) } },
-        resolve: (root:any, args:any, context:any) => this.entity.resolveTypes( {root, args, context} )
+        resolve: (root:any, args:any, context:any) => this.resolveHandler.resolveTypes( {root, args, context} )
 			});
 		});
 	}
@@ -312,31 +364,34 @@ export class EntityBuilder extends SchemaBuilder {
           type: new GraphQLNonNull( new GraphQLList( this.graphx.type('ValidationViolation')) ) } };
       return _.set( fields, this.entity.singular, {type: this.graphx.type(this.entity.typeName) } );
     }});
-    this.addSaveMutation( this.entity.createMutationName, this.entity.createInputTypeName, type );
-    this.addSaveMutation( this.entity.updateMutationName, this.entity.updateInputTypeName, type );
+    this.addCreateMutation( type );
+    this.addUpdateMutation( type );
   }
 
   /**
    *
    */
-  protected addSaveMutation( mutationName:string, inputType:string, type:GraphQLType ):void{
+  protected addCreateMutation(  type:GraphQLType ):void{
     this.graphx.type( 'mutation' ).extendFields( () => {
-      const args = _.set( {}, this.entity.singular, { type: this.graphx.type(inputType)} );
-      return _.set( {}, mutationName, {
-        type,	args, resolve: (root:any, args:any, context:any ) => this.saveEntity( root, args, context )
+      const args = _.set( {}, this.entity.singular, { type: this.graphx.type(this.entity.createInputTypeName)} );
+      return _.set( {}, this.entity.createMutationName, {
+        type,	args, resolve: (root:any, args:any, context:any ) => this.resolveHandler.createType( {root, args, context} )
       });
     });
   }
 
-
   /**
    *
    */
-  private async saveEntity( root: any, args: any, context:any ) {
-    let validationViolations = await this.entity.validate( root, args, context );
-    if( _.size( validationViolations ) ) return { validationViolations };
-    return _.set( {validationViolations: []}, this.entity.singular, this.resolver.saveEntity( this.entity, root, args, context ) );
+  protected addUpdateMutation(  type:GraphQLType ):void{
+    this.graphx.type( 'mutation' ).extendFields( () => {
+      const args = _.set( {}, this.entity.singular, { type: this.graphx.type(this.entity.updateInputTypeName)} );
+      return _.set( {}, this.entity.updateMutationName, {
+        type,	args, resolve: (root:any, args:any, context:any ) => this.resolveHandler.updateType( {root, args, context} )
+      });
+    });
   }
+
 
   /**
    *
@@ -346,9 +401,33 @@ export class EntityBuilder extends SchemaBuilder {
 			return _.set( {}, `delete${this.entity.typeName}`, {
 				type: GraphQLBoolean,
 				args: { id: { type: GraphQLID } },
-				resolve: (root:any, args:any, context:any ) => this.resolver.deleteEntity( this.entity, root, args, context )
+				resolve: (root:any, args:any, context:any ) => this.resolveHandler.deleteType( {root, args, context} )
 			});
 		});
   }
+
+  /**
+   *
+   */
+  private getGraphQLType( attr:TypeAttribute, addNonNull:boolean ):GraphQLType {
+    const type = _.isString( attr.graphqlType ) ? this.getTypeForName(attr.graphqlType ) : attr.graphqlType;
+    return addNonNull ? new GraphQLNonNull( type ) : type;
+  }
+
+    /**
+   *
+   * @param name
+   */
+  private getTypeForName( name:string ):GraphQLType {
+    let type = typesMap[name];
+    if( type ) return type;
+    try {
+      return this.graphx.type(name);
+    } catch (error) {
+      console.error(`no such graphqlType - using GraphQLString instead`, name );
+    }
+    return GraphQLString;
+  }
+
 
 }

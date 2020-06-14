@@ -113,12 +113,26 @@ entity:
   OrganisationalUnit:
     implements: DataSecurityRiskSource
     attributes:
-      name: string!
+      name:
+        type: string
+        required: true
+        unique: Organisation
+        validation:
+          length:
+            minimum: 2
+            maximum: 50
 
   Organisation:
     implements: DataSecurityRiskSource
     attributes:
-      name: string!
+      name:
+        type: string
+        required: true
+        unique: true
+        validation:
+          length:
+            minimum: 2
+            maximum: 50
     assocFrom:
       - DataSecurityRequirement
 

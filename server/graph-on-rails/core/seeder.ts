@@ -1,7 +1,7 @@
 import _ from 'lodash';
 
 import { Entity } from '../entities/entity';
-import { GorContext } from './gor-context';
+import { Context } from './context';
 
 export class Seeder {
 
@@ -12,18 +12,18 @@ export class Seeder {
   /**
    *
    */
-  static create( context:GorContext ):Seeder {
+  static create( context:Context ):Seeder {
     return new Seeder( _.values(context.entities) );
   }
 
 	//
 	//
-  async seed( truncate:boolean, context:any ):Promise<number> {
+  async seed( truncate:boolean ):Promise<number> {
     const entities = _.filter( this.entities, entity => ( entity instanceof Entity ) ) as Entity[];
     if( truncate ) await Promise.all( _.map( entities, async entity => await entity.entitySeeder.truncate() ) );
     const idsMap = {};
-    await Promise.all( _.map( entities, async entity => _.merge( idsMap, await entity.entitySeeder.seedAttributes( context) ) ) );
-    await Promise.all( _.map( entities, async entity => _.merge( idsMap, await entity.entitySeeder.seedReferences( idsMap, context ) ) ) );
+    await Promise.all( _.map( entities, async entity => _.merge( idsMap, await entity.entitySeeder.seedAttributes() ) ) );
+    await Promise.all( _.map( entities, async entity => _.merge( idsMap, await entity.entitySeeder.seedReferences( idsMap ) ) ) );
     return _.sum( _.map( idsMap, entityIdsMap => _.size( _.values( entityIdsMap ) ) ) );
 	}
 }

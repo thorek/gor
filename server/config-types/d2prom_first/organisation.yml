@@ -3,6 +3,7 @@ entity:
     attributes:
       name:
         type: string
+        unique: true
         description: wird in den erstellten Dokumenten verwendet, daher ohne vollständige Rechtliche Form
     assocFrom:
       - OrganisationalUnit

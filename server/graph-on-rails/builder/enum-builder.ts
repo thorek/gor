@@ -25,7 +25,7 @@ export abstract class EnumBuilder extends SchemaBuilder {
 	//
 	//
 	protected createEnumFilter():void {
-    const filterType = this.resolver.getEnumFilterType( this.name() );
+    const filterType = this.context.resolver.getEnumFilterType( this.name() );
     filterType.init( this.context );
     filterType.createTypes();
     filterType.extendTypes();

@@ -20,20 +20,20 @@ export class EntitySeeder extends EntityModule {
   /**
    *
    */
-  public async seedAttributes( context:any ):Promise<any> {
+  public async seedAttributes():Promise<any> {
     const ids = {};
-    await Promise.all( _.map( this.entity.seeds, (seed, name) => this.seedInstanceAttributes( name, seed, ids, context ) ) );
+    await Promise.all( _.map( this.entity.seeds, (seed, name) => this.seedInstanceAttributes( name, seed, ids ) ) );
     return _.set( {}, this.entity.typeName, ids );
   }
 
   /**
    *
    */
-  private async seedInstanceAttributes( name:string, seed:any, ids:any, context:any ):Promise<any> {
+  private async seedInstanceAttributes( name:string, seed:any, ids:any ):Promise<any> {
     try {
       const args = _.set( {}, this.entity.singular, _.pick( seed, _.keys( this.entity.attributes ) ) );
-      const entity = await this.resolver.saveEntity( this.entity, {}, args, context );
-      _.set( ids, name, entity.id );
+      const item:any = await this.entity.resolver.saveEntity( this.entity, {root:{}, args, context:{}} );
+      _.set( ids, name, item.id );
     } catch (error) {
       console.error( `Entity '${this.entity.typeName }' could not seed an instance`, seed, error );
     }
@@ -42,13 +42,13 @@ export class EntitySeeder extends EntityModule {
   /**
    *
    */
-  public async seedReferences( idsMap:any, context:any ):Promise<void> {
+  public async seedReferences( idsMap:any ):Promise<void> {
     await Promise.all( _.map( this.entity.seeds, async (seed, name) => {
       await Promise.all( _.map( this.entity.assocTo, async assocTo => {
-        await this.seedAssocTo( assocTo, seed, idsMap, name, context );
+        await this.seedAssocTo( assocTo, seed, idsMap, name );
       }));
       await Promise.all( _.map( this.entity.assocToMany, async assocToMany => {
-        await this.seedAssocToMany( assocToMany, seed, idsMap, name, context );
+        await this.seedAssocToMany( assocToMany, seed, idsMap, name );
       }));
     }));
   }
@@ -56,13 +56,13 @@ export class EntitySeeder extends EntityModule {
   /**
    *
    */
-  private async seedAssocTo( assocTo: EntityReference, seed: any, idsMap: any, name: string, context:any ):Promise<void> {
+  private async seedAssocTo( assocTo: EntityReference, seed: any, idsMap: any, name: string ):Promise<void> {
     try {
       const refEntity = this.context.entities[assocTo.type];
       if ( refEntity && _.has( seed, refEntity.typeName ) ) {
         const refName = _.get( seed, refEntity.typeName );
         const refId = _.get( idsMap, [refEntity.typeName, refName] );
-        if ( refId ) await this.updateAssocTo( idsMap, name, refEntity, refId, context );
+        if ( refId ) await this.updateAssocTo( idsMap, name, refEntity, refId );
       }
     }
     catch ( error ) {
@@ -73,14 +73,14 @@ export class EntitySeeder extends EntityModule {
   /**
    *
    */
-  private async seedAssocToMany( assocToMany: EntityReference, seed: any, idsMap: any, name: string, context:any ):Promise<void> {
+  private async seedAssocToMany( assocToMany: EntityReference, seed: any, idsMap: any, name: string ):Promise<void> {
     try {
       const refEntity = this.context.entities[assocToMany.type];
       if ( refEntity && _.has( seed, refEntity.typeName ) ) {
         const refNames:string[] = _.get( seed, refEntity.typeName );
         // const refId =
         const refIds = _.compact( _.map( refNames, refName => _.get( idsMap, [refEntity.typeName, refName] ) ) );
-        await this.updateAssocToMany( idsMap, name, refEntity, refIds, context );
+        await this.updateAssocToMany( idsMap, name, refEntity, refIds );
       }
     }
     catch ( error ) {
@@ -92,24 +92,24 @@ export class EntitySeeder extends EntityModule {
   /**
    *
    */
-  private async updateAssocTo( idsMap: any, name: string, refEntity: Entity, refId: string, context:any ) {
+  private async updateAssocTo( idsMap: any, name: string, refEntity: Entity, refId: string ) {
     const id = _.get( idsMap, [this.entity.typeName, name] );
-    const entity = await this.resolver.resolveType( this.entity, {}, { id }, context );
-    _.set( entity, refEntity.foreignKey, _.toString(refId) );
-    const args = _.set( {}, this.entity.singular, entity );
-    await this.resolver.saveEntity( this.entity, {}, args, context );
+    const item = await this.entity.entityResolveHandler.findById( id );
+    _.set( item, refEntity.foreignKey, _.toString(refId) );
+    const args = _.set( {}, this.entity.singular, item );
+    await this.entity.entityResolveHandler.updateType( { root:{}, args, context:{} } );
   }
 
   /**
    *
    */
-  private async updateAssocToMany( idsMap:any, name:string, refEntity:Entity, refIds:any[], context:any ) {
+  private async updateAssocToMany( idsMap:any, name:string, refEntity:Entity, refIds:any[] ) {
     refIds = _.map( refIds, refId => _.toString( refId ) );
     const id = _.get( idsMap, [this.entity.typeName, name] );
-    const entity = await this.resolver.resolveType( this.entity, {}, { id }, context );
-    _.set( entity, refEntity.foreignKeys, refIds );
-    const args = _.set( {}, this.entity.singular, entity );
-    await this.resolver.saveEntity( this.entity, {}, args, context );
+    const item = await this.entity.entityResolveHandler.findById( id );
+    _.set( item, refEntity.foreignKeys, refIds );
+    const args = _.set( {}, this.entity.singular, item );
+    await this.entity.entityResolveHandler.updateType( { root:{}, args, context:{} } );
   }
 
 

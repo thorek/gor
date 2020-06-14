@@ -67,7 +67,7 @@ export class EntityValidator  {
     const foreignKey = _.get( attributes, refEntity.foreignKey );
     if( ! foreignKey ) return {attribute: refEntity.foreignKey, violation: "must be provided"};
     try {
-      const result = await this.resolver.resolveType( refEntity, {}, { id: foreignKey }, {} );
+      const result = await refEntity.findById( foreignKey );
       if( _.size( result ) ) return;
     } catch (error) {
       return { attribute: refEntity.foreignKey, violation: _.toString(error) };
@@ -105,7 +105,7 @@ export class EntityValidator  {
       _.set(attrValues, scope, scopeValue );
       scopeMsg = ` within scope '${attribute.unique}'`;
     }
-    const result = await this.entity.findByAttribute(resolverCtx, attrValues );
+    const result = await this.entity.findByAttribute( attrValues );
     const violation = {attribute: name, violation: `value '${value}' must be unique` + scopeMsg }
     return this.isUniqueResult( attributes, result ) ? undefined : violation;
   }

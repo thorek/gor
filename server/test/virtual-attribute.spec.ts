@@ -1,45 +1,69 @@
+import { printSchema } from 'graphql';
 import _ from 'lodash';
 
 import { Runtime } from '../graph-on-rails/core/runtime';
-import { GorContext } from '../graph-on-rails/core/runtime-context';
 import { Seeder } from '../graph-on-rails/core/seeder';
-import { ConfigEntity } from '../graph-on-rails/entities/config-entity';
+import { Context } from '../graph-on-rails/core/context';
 
-xdescribe('Virtual Attributes', () => {
+describe('Virtual Attributes', () => {
 
-  let context!:GorContext;
-  jest.spyOn(global.console, 'warn').mockImplementation();
+  let runtime!:Runtime;
+  let context:Context;
+
+  const consoleSpy = jest.spyOn(console, 'warn').mockImplementation();
+
   beforeAll( async () => {
-    const gor = await Runtime.create( "tests:virtual-attributes" );
-    gor.addCustomEntities( ConfigEntity.create( 'Alpha', {
-      attributes: {
-        name: { type: 'string' },
-        notReal: { type: 'string', virtual: true },
+    runtime = await Runtime.create( "test:virtual-attributes", {
+      domainConfiguration: {
+        entity: {
+          Alpha: {
+            attributes: {
+              name: { type: 'string' },
+              some: { type: 'int' },
+              virtualA: { type: 'string!', virtual: true },
+              virtualB: { type: 'int', virtual: true },
+              virtualC: { type: 'string', virtual: true }
+            },
+            seeds: {
+              "alpha1": { name: "alpha1" },
+              "alpha2": { name: "alpha2" }
+            }
+          }
+        }
       },
-      seeds: {
-        "alpha1": { name: "alpha1" },
-        "alpha2": { name: "alpha2" }
+      virtualResolver: {
+        Alpha: {
+          virtualA: () => { return "virtualA" },
+          virtualB: async () => { return 42 },
+        }
       }
-    }));
-    await gor.server();
-    await Seeder.create( gor.context ).seed( true, {} );
-    context = gor.context;
+    });
+    await runtime.server();
+    await Seeder.create( runtime.context ).seed( true );
+    context = runtime.context;
   })
+
+
+  //
+  //
+  it('should not include virtual attributes in input & filter type', async ()=> {
+    const schema = printSchema( await runtime.schema() );
+    expect( schema ).not.toContain("virtualA: StringFilter");
+  });
 
   //
   //
   it('should resolve a virtual attribute', async () => {
-    _.set( context.virtualResolver, 'Alpha', {
-      notReal: () => { return "virtually resolved" }
-    })
 
-    jest.spyOn(global.console, 'warn').mockImplementation();
+    expect(consoleSpy).toHaveBeenCalledWith("no virtual resolver for 'Alpha:virtualC'");
 
     const alpha = context.entities['Alpha'];
-    const alpha1 = _.first( await alpha.findByAttribute( {root:{}, args:{}, context:{}}, {name: "name", value: 'alpha1' } ) );
+    const alpha1 = _.first( await alpha.findByAttribute( { name: 'alpha1' } ) );
 
     expect( alpha1 ).toMatchObject({ name: "alpha1" } );
-    expect( alpha1 ).toMatchObject({ notReal: "virtually resolved" } );
+    expect( alpha1 ).toMatchObject({ virtualA: "virtualA" } );
+    expect( alpha1 ).toMatchObject({ virtualB: 42 } );
+    expect( alpha1 ).toMatchObject({ virtualC: "[no resolver for 'Alpha:virtualC' provided]" } );
   })
 
 })

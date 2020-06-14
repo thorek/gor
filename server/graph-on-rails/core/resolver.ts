@@ -1,5 +1,6 @@
 import { FilterType } from '../builder/filter-type';
 import { Entity } from '../entities/entity';
+import { ResolverContext } from './resolver-context';
 
 /**
  *
@@ -9,37 +10,37 @@ export abstract class Resolver {
   /**
    *
    */
-  abstract resolveType( entity:Entity, root:any, args:any, context:any ):Promise<any>;
+  abstract resolveType( entity:Entity, resolverCtx:ResolverContext ):Promise<any>;
 
   /**
    *
    */
-  abstract resolveTypes( entity:Entity, root:any, args:any, context:any ):Promise<any[]>;
+  abstract resolveTypes( entity:Entity, resolverCtx:ResolverContext ):Promise<any[]>;
 
   /**
    *
    */
-  abstract resolveAssocToType( refType:Entity, root:any, args:any, context:any ):Promise<any>;
+  abstract resolveAssocToType( refType:Entity, resolverCtx:ResolverContext ):Promise<any>;
 
   /**
    *
    */
-  abstract resolveAssocFromTypes( entity:Entity, refType:Entity, root:any, args:any, context:any ):Promise<any[]>;
+  abstract resolveAssocFromTypes( entity:Entity, refType:Entity, resolverCtx:ResolverContext ):Promise<any[]>;
 
   /**
    *
    */
-  abstract resolveAssocToManyTypes( entity:Entity, refType:Entity, root:any, args:any, context:any ):Promise<any[]>;
+  abstract resolveAssocToManyTypes( entity:Entity, refType:Entity, resolverCtx:ResolverContext ):Promise<any[]>;
 
   /**
    *
    */
-  abstract saveEntity( entity:Entity, root:any, args:any, context:any ):Promise<any>;
+  abstract saveEntity( entity:Entity, resolverCtx:ResolverContext ):Promise<any>;
 
   /**
    *
    */
-  abstract deleteEntity( entity:Entity, root:any, args:any, context:any  ):Promise<boolean>;
+  abstract deleteEntity( entity:Entity, resolverCtx:ResolverContext  ):Promise<boolean>;
 
   /**
    *
@@ -59,7 +60,7 @@ export abstract class Resolver {
   /**
    *
    */
-  abstract getPermittedIds( entity:Entity, expression:object, context:any ):Promise<number[]>;
+  abstract getPermittedIds( entity:Entity, expression:object, resolverCtx:ResolverContext ):Promise<number[]>;
 
   /**
    *

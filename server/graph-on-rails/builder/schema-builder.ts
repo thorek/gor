@@ -1,7 +1,7 @@
 import { GraphQLType } from 'graphql';
 import _ from 'lodash';
 
-import { GorContext } from '../core/runtime-context';
+import { Context } from '../core/context';
 import { TypeAttribute } from '../entities/type-attribute';
 
 /**
@@ -9,10 +9,9 @@ import { TypeAttribute } from '../entities/type-attribute';
  */
 export abstract class SchemaBuilder {
 
-  private _context!:GorContext;
+  private _context!:Context;
   get context() { return this._context }
   get graphx() {return this.context.graphx };
-  get resolver() {return this.context.resolver };
 
   abstract name():string;
   attributes():{[name:string]:TypeAttribute} { return {} };
@@ -23,7 +22,7 @@ export abstract class SchemaBuilder {
 
 	//
 	//
-	init( context:GorContext ):void {
+	init( context:Context ):void {
     this._context = context;
 	}
 

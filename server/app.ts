@@ -13,14 +13,13 @@ import { Runtime } from './graph-on-rails/core/runtime';
   app.use('*', cors());
   app.use(compression());
 
-  const gor = await Runtime.create("d2Prom");
-
-  _.set( gor.context.virtualResolver, 'RiskAssessment', {
-    priority: () => { return "HIGH" }
-  })
-
-  gor.addConfigFolder( './server/config-types/d2prom' );
-  // gor.addCustomEntities( new OrganisationalUnit() );
+  const virtualResolver = _.set( {},
+    'RiskAssessment', {
+      priority: () => { return "HIGH" }
+    }
+  );
+  const configFolder = ['./server/config-types/d2prom'];
+  const runtime = await Runtime.create( "D2PROM", { virtualResolver, configFolder } );
 
   const users:{[token:string]:any} = {
     admin: { id: 100, username: "Admin", roles: ["admin"], clientId: "5ec3b745d3a47f8284414125" },
@@ -32,10 +31,10 @@ import { Runtime } from './graph-on-rails/core/runtime';
     const token:string = contextExpress.req.headers.authorization || '';
     const user:any = users[token];
     if( ! user ) throw new AuthenticationError( `Token '${token}' cannot be resolved to a valid user.`);
-    return { user, context: gor.context };
+    return { user, context: runtime.context };
   }
 
-  const server = await gor.server({context});
+  const server = await runtime.server({context});
   server.applyMiddleware({ app, path: '/graphql' });
   const httpServer = createServer(app);
 

@@ -1,7 +1,7 @@
 import { GraphQLBoolean, GraphQLList, GraphQLObjectType, GraphQLSchema, GraphQLString, GraphQLNonNull, GraphQLType, GraphQLID, GraphQLInt, GraphQLUnionType, GraphQLInterfaceType } from 'graphql';
 import _ from 'lodash';
 
-import { GorContext } from './gor-context';
+import { Context } from './context';
 import { Seeder } from './seeder';
 
 
@@ -38,7 +38,7 @@ export class GraphX {
           type: GraphQLString,
           args: { truncate: { type: GraphQLBoolean } },
           resolve: ( root: any, args: any, context:any ) => Seeder.create(
-            context.context as GorContext ).seed( args.truncate, context )
+            context.context as Context ).seed( args.truncate )
         }
       } )
     } );
@@ -129,7 +129,7 @@ export class GraphX {
     this.type('query').extendFields( () => {
       return _.set( {}, 'metaData', {
         type: new GraphQLList( metaDataType ),
-        resolve: (root:any, args:any, context:any) => _.values( _.get( context, 'gorContext.entities') )
+        resolve: (root:any, args:any, context:any) => _.values( _.get( context, 'Context.entities') )
 			});
     });
 

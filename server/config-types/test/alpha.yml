@@ -12,7 +12,7 @@ entity:
       name:
         type: string
         unique: true
-        required: true
+        required: update
         validation:
           length:
             minimum: 2

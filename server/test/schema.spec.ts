@@ -1,29 +1,61 @@
-import _ from 'lodash';
+import { printSchema } from 'graphql';
 
 import { Runtime } from '../graph-on-rails/core/runtime';
-import { GorContext } from '../graph-on-rails/core/runtime-context';
-import { Seeder } from '../graph-on-rails/core/seeder';
-import { printSchema } from 'graphql';
+import { Entity } from '../graph-on-rails/entities/entity';
 
 
 describe('Schema Generation', () => {
 
-  let gor!:Runtime;
-  let context!:GorContext;
+  class ATestEntity extends Entity {
+    protected getName() { return "ATest" }
+  }
 
-  beforeAll( async () => {
-    gor = await Runtime.create( "tests" );
-    gor.addConfigFolder( './config-types/test' );
-    await gor.server({});
-    await Seeder.create( gor.context ).seed( true, {} );
-    context = gor.context;
-  })
+  class BTestEntity extends Entity {
+    protected getName() { return "BTest" }
+    protected getAssocTo() { return [{type: 'ATest'}]}
+  }
 
-  fit( 'should generate schema', async () => {
-    const schema = printSchema( await gor.schema() );
+
+  it( 'should generate schema from config', async () => {
+    const runtime = await Runtime.create( "test:schema", {configFolder: ['./config-types/test']});
+    const schema = printSchema( await runtime.schema() );
     expect( schema ).toContain("type Alpha");
     expect( schema ).toContain("type Beta");
     // console.log( schema );
   });
+
+  it( 'should generate schema with custom entity', async () => {
+    const runtime = await Runtime.create( "test:schema", {
+      entities: [ new ATestEntity(), new BTestEntity() ]
+    });
+    const schema = printSchema( await runtime.schema() );
+    expect( schema ).toContain("type ATest");
+    expect( schema ).toContain("type BTest");
+    expect( schema ).toContain("aTest: ATest");
+
+    // console.log( schema );
+  });
+
+  it('should distinguish required variants', async () => {
+    const runtime = await Runtime.create( "test:schema", {
+      domainConfiguration: {
+        entity: {
+          Alpha: {
+            attributes: {
+              alwaysRequired: { type: 'string', required: true },
+              noRequired: { type: 'string' },
+              explicitNoRequired: { type: 'string', required: false },
+              createRequired: { type: 'string', required: 'create' },
+              updateRequired: { type: 'string', required: 'update' },
+              virtualField: { type: 'string', virtual: true }
+            }
+          }
+        }
+      }
+    });
+    const schema = printSchema( await runtime.schema() );
+    expect( schema ).toContain("type Alpha");
+    console.log( schema )
+  })
 
 })
