@@ -3,8 +3,9 @@ import { EntityModule } from "./entity-module";
 import { ResolverContext } from "graph-on-rails/core/resolver-context";
 import { Entity } from './entity';
 
+//
+//
 export class EntityResolveHandler extends EntityModule {
-
 
   get resolver() { return this.entity.resolver }
 
@@ -14,7 +15,6 @@ export class EntityResolveHandler extends EntityModule {
   async findById( id:any ):Promise<any> {
     return this.resolver.findById( this.entity, id );
   }
-
 
   /**
    *
@@ -58,18 +58,12 @@ export class EntityResolveHandler extends EntityModule {
     return this.resolver.resolveAssocFromTypes( this.entity, refEntity, resolverCtx );
   }
 
-
-
   /**
    *
    */
   async resolveAssocToManyTypes( refEntity:Entity, resolverCtx:ResolverContext ):Promise<any> {
     return this.resolver.resolveAssocToManyTypes( this.entity, refEntity, resolverCtx );
   }
-
-
-
-
 
   /**
    *
