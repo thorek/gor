@@ -11,6 +11,7 @@ import { SchemaBuilder } from '../builder/schema-builder';
 import { ConfigEntity } from '../entities/config-entity';
 import { Context } from './context';
 
+
 type DefinitionType = {
   enum:{[name:string]:{}}
   entity:{[name:string]:{}}

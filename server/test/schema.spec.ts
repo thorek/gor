@@ -4,7 +4,7 @@ import { Runtime } from '../graph-on-rails/core/runtime';
 import { Entity } from '../graph-on-rails/entities/entity';
 
 
-xdescribe('Schema Generation', () => {
+describe('Schema Generation', () => {
 
   class ATestEntity extends Entity {
     protected getName() { return "ATest" }

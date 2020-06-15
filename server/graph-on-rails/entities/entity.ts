@@ -175,4 +175,11 @@ export abstract class Entity {
     return this.entityResolveHandler.findByAttribute( attrValue );
   }
 
+  /**
+   *
+   */
+  async findOneByAttribute( attrValue:{[name:string]:any} ):Promise<any> {
+    return _.first( await this.entityResolveHandler.findByAttribute( attrValue ) );
+  }
+
 }
