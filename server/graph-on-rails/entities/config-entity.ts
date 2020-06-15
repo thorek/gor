@@ -1,5 +1,5 @@
-import _ from 'lodash';
-
+import _, { at } from 'lodash';
+import inflection from 'inflection';
 import { Entity } from './entity';
 import { TypeAttribute } from './type-attribute';
 
@@ -8,6 +8,7 @@ import { TypeAttribute } from './type-attribute';
  */
 export type AttributeConfig = {
   type:string;
+  key?:string;
   filterType?:string|boolean;
   validation?:any;
   required?:boolean|'create'|'update'
@@ -23,9 +24,9 @@ export type EntityConfig  = {
   typeName?:string;
 
   attributes?:{[name:string]:string|AttributeConfig};
-  assocTo?:(string|{type:string, required?:boolean})[];
-  assocToMany?:[string|{type:string}];
-  assocFrom?:string[];
+  assocTo?:string|(string|{type:string, required?:boolean})[];
+  assocToMany?:string|(string|{type:string})[];
+  assocFrom?:string|string[];
 
 	plural?:string
 	singular?:string;
@@ -41,7 +42,7 @@ export type EntityConfig  = {
   equality?:null|string|{[typeName:string]:string[]}
   description?:string
 
-  entities?:string[]
+  union?:string[]
   interface?:boolean
   implements?:string|string[]
 }
@@ -81,18 +82,21 @@ export class ConfigEntity extends Entity {
   }
 	protected getAssocTo() {
     if( ! this.entityConfig.assocTo ) return super.getAssocTo();
+    if( ! _.isArray( this.entityConfig.assocTo) ) this.entityConfig.assocTo = [this.entityConfig.assocTo];
     return _.map( this.entityConfig.assocTo, bt => {
       return _.isString(bt) ? { type: bt } : bt;
     });
   }
 	protected getAssocToMany() {
     if( ! this.entityConfig.assocToMany ) return super.getAssocToMany();
+    if( ! _.isArray( this.entityConfig.assocToMany) ) this.entityConfig.assocToMany = [this.entityConfig.assocToMany];
     return _.map( this.entityConfig.assocToMany, bt => {
       return _.isString(bt) ? { type: bt } : bt;
     });
   }
   protected getAssocFrom(){
     if( ! this.entityConfig.assocFrom ) return super.getAssocFrom();
+    if( ! _.isArray( this.entityConfig.assocFrom) ) this.entityConfig.assocFrom = [this.entityConfig.assocFrom];
     if( ! _.isArray( this.entityConfig.assocFrom ) ){
       console.warn(`'${this.name}' assocFrom must be an array but is: `, this.entityConfig.assocFrom );
       return super.getAssocFrom();
@@ -116,7 +120,7 @@ export class ConfigEntity extends Entity {
   }
   protected getDescription():string|undefined { return this.entityConfig.description || super.getDescription() }
   protected getEntites():Entity[] {
-    return _.compact( _.map( this.entityConfig.entities, entity => this.context.entities[entity] ) );
+    return _.compact( _.map( this.entityConfig.union, entity => this.context.entities[entity] ) );
   }
   protected getImplements():Entity[] {
     if( ! this.entityConfig.implements ) return super.getImplements();
@@ -129,16 +133,12 @@ export class ConfigEntity extends Entity {
    *
    */
   private buildAttribute( name:string, attrConfig:AttributeConfig|string ):TypeAttribute {
-    if( _.isString( attrConfig ) ) attrConfig = { type: attrConfig };
-    attrConfig.type = _.capitalize( attrConfig.type );
-    if( _.endsWith( attrConfig.type, '!' ) ){
-      attrConfig.type = attrConfig.type.slice(0, -1);
-      attrConfig.required = true;
-    }
-    if( attrConfig.filterType === true ) attrConfig.filterType === undefined;
-    if( attrConfig.virtual ){
-      if( attrConfig.filterType ) console.warn( this.name, `[${name}]`, 'filterType makes no sense for virtual attribute' )
-    }
+    attrConfig = this.resolveShortcut( attrConfig );
+    this.resolveKey( attrConfig );
+    this.resolveScopedKey( attrConfig );
+    this.resolveExclamationMark( attrConfig );
+    this.resolveFilterType( attrConfig );
+    this.warnVirtual( name, attrConfig );
     return {
       graphqlType: attrConfig.type,
       filterType: attrConfig.filterType as string|false|undefined,
@@ -147,6 +147,46 @@ export class ConfigEntity extends Entity {
       required: attrConfig.required,
       description: attrConfig.description,
       virtual: attrConfig.virtual
+    }
+  }
+
+  private resolveShortcut( attrConfig:string|AttributeConfig):AttributeConfig {
+    if( _.isString( attrConfig ) ) attrConfig = { type: attrConfig };
+    if( ! attrConfig.type ) attrConfig.type = 'string';
+    return attrConfig;
+  }
+
+  private resolveKey( attrConfig:AttributeConfig ):void {
+    if( _.toLower(attrConfig.type) === 'key' ){
+      attrConfig.type = 'string';
+      attrConfig.required = true;
+      attrConfig.unique = true;
+    }
+  }
+
+  private resolveScopedKey( attrConfig:AttributeConfig ):void {
+    if( _.isString(attrConfig.key) ){
+      attrConfig.type = 'string';
+      attrConfig.required = true;
+      attrConfig.unique = attrConfig.key;
+    }
+  }
+
+  private resolveExclamationMark( attrConfig:AttributeConfig ):void {
+    if( _.endsWith( attrConfig.type, '!' ) ){
+      attrConfig.type = attrConfig.type.slice(0, -1);
+      attrConfig.required = true;
+    }
+  }
+
+  private resolveFilterType( attrConfig:AttributeConfig ):void {
+    if( attrConfig.filterType === true ) attrConfig.filterType === undefined;
+  }
+
+  private warnVirtual( name: string, attrConfig:AttributeConfig ):void {
+    if( attrConfig.virtual ){
+      if( attrConfig.filterType )
+        console.warn( this.name, `[${name}]`, 'filterType makes no sense for virtual attribute' )
     }
   }
 

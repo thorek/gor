@@ -77,8 +77,8 @@ export class EntitySeeder extends EntityModule {
     try {
       const refEntity = this.context.entities[assocToMany.type];
       if ( refEntity && _.has( seed, refEntity.typeName ) ) {
-        const refNames:string[] = _.get( seed, refEntity.typeName );
-        // const refId =
+        let refNames:string|string[] = _.get( seed, refEntity.typeName );
+        if( ! _.isArray(refNames) ) refNames = [refNames];
         const refIds = _.compact( _.map( refNames, refName => _.get( idsMap, [refEntity.typeName, refName] ) ) );
         await this.updateAssocToMany( idsMap, name, refEntity, refIds );
       }
@@ -87,7 +87,6 @@ export class EntitySeeder extends EntityModule {
       console.error( `Entity '${this.entity.typeName}' could not seed a reference`, assocToMany, name, error );
     }
   }
-
 
   /**
    *

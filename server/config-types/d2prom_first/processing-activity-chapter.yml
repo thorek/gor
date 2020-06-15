@@ -1,8 +1,0 @@
-entity:
-  ProcessingActivityChapter:
-    attributes:
-      name: string
-    assocFrom:
-      - ProcessingActivity
-    assocTo:
-      - ProcessingActivityCategory

@@ -18,6 +18,43 @@ enum:
     - intervenibility
     - transparency
     - data_minimisation
-    - unlinked purposes
+    - unlinked_purposes
 
 
+entity:
+  DataSecurityMeasureCategory:
+    attributes:
+      name: string!
+    assocToMany: Industry
+
+
+  DataSecurityMeasure:
+    interface: true
+    attributes:
+      name: string!
+      impact: Priority
+      description: string
+    assocToMany:
+      - DataSecurityMeasureCategory
+    assocFrom:
+      - MeasureApplication
+
+  AvailabilityMeasure:
+    implements: DataSecurityMeasure
+    attributes:
+      category: AvailabilityMeasureCategory
+
+  FormalMeasure:
+    implements: DataSecurityMeasure
+    attributes:
+      category: FormalMeasureCategory
+
+  ConfidentialityMeasure:
+    implements: DataSecurityMeasure
+    attributes:
+      category: ConfidentialityMeasureCategory
+
+  IntegrityMeasure:
+    implements: DataSecurityMeasure
+    attributes:
+      category: IntegrityMeasureCategory

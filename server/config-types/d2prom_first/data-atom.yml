@@ -1,9 +1,0 @@
-entity:
-  DataAtom:
-    attributes:
-      description: string
-    assocFrom:
-      - ProcessedData
-      - DataSubject
-    assocTo:
-      - ProcessingActivity

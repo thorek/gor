@@ -24,6 +24,7 @@ export class EntityResolveHandler extends EntityModule {
     let validationViolations = await this.entity.validate( resolverCtx );
     if( _.size( validationViolations ) ) return { validationViolations };
     const item = await this.entity.resolver.saveEntity( this.entity, resolverCtx );
+    this.resolveVirtualAttributes( resolverCtx, item );
     return _.set( {validationViolations: []}, this.entity.singular, item );
   }
 
@@ -106,11 +107,11 @@ export class EntityResolveHandler extends EntityModule {
    *
    */
   private async resolveVirtualAttribute( resolverCtx:ResolverContext, item:any, name:string ):Promise<void> {
-    const resolver = _.get( this.context.virtualResolver, [this.entity.name, name] );
-    const value = resolver ?
-      await Promise.resolve( resolver(resolverCtx, { entity: this.entity, item } ) ) :
-      `[no resolver for '${this.entity.name}:${name}' provided]`;
-    _.set( item, name, value);
+    let resolver = _.get( this.context.virtualResolver, [this.entity.name, name] );
+    if( ! _.isFunction( resolver ) ) resolver = () => {
+      return `[no resolver for '${this.entity.name}:${name}' provided]`
+    }
+    _.set( item, name, resolver);
   }
 
 }

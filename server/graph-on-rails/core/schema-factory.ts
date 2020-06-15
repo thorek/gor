@@ -165,7 +165,10 @@ export class SchemaFactory {
     context.graphx.init();
 
 		_.forEach( this.builders(), type => type.init( context ) );
-		_.forEach( this.builders(), type => type.createTypes() );
+    _.forEach( this.builders(), type => type.createTypes() );
+    _.forEach(
+      _.filter( this.builders(), builder => (builder instanceof EntityBuilder)) as EntityBuilder[],
+        builder => builder.createUnionType() );
 		_.forEach( this.builders(), type => type.extendTypes() );
 
     if( _.isFunction( context.extendSchema ) ) context.extendSchema( context );

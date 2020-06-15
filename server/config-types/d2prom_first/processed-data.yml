@@ -1,7 +1,0 @@
-entity:
-  ProcessedData:
-    attributes:
-      description: string
-    assocTo:
-      - DataAtom
-      - DataCategory

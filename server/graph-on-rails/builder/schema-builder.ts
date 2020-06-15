@@ -44,21 +44,6 @@ export abstract class SchemaBuilder {
 		return this.attributes()[name];
   }
 
-  /**
-   *
-   */
-  getFilterType( attr:TypeAttribute):GraphQLType|undefined {
-    if( attr.filterType === false ) return;
-    if( ! attr.filterType ){
-      const typeName = _.isString( attr.graphqlType ) ? attr.graphqlType : _.get(attr.graphqlType, 'name' ) as string;
-      attr.filterType = SchemaBuilder.getFilterName( typeName );
-    }
-    if( ! _.isString( attr.filterType ) ) return attr.filterType;
-    try {
-      return this.context.graphx.type(attr.filterType);
-    } catch (error) {
-      console.error(`no such filterType - skipping filter`, attr.filterType );
-    }
-  }
+
 }
 

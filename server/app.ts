@@ -15,7 +15,7 @@ import { Runtime } from './graph-on-rails/core/runtime';
 
   const virtualResolver = _.set( {},
     'RiskAssessment', {
-      priority: () => { return "HIGH" }
+      priority: () => { return 20 }
     }
   );
   const configFolder = ['./server/config-types/d2prom'];
