@@ -1,3 +1,4 @@
+
 import { AuthenticationError } from 'apollo-server-express';
 import compression from 'compression';
 import cors from 'cors';
@@ -6,6 +7,7 @@ import { createServer } from 'http';
 import _ from 'lodash';
 
 import { Runtime } from './graph-on-rails/core/runtime';
+import { ResolverContext } from './graph-on-rails/core/resolver-context';
 
 (async () => {
 
@@ -15,7 +17,14 @@ import { Runtime } from './graph-on-rails/core/runtime';
 
   const virtualResolver = _.set( {},
     'RiskAssessment', {
-      priority: () => { return 20 }
+      priority: (root:any ) => {
+        const probability = _.get( root, 'probability');
+        const damage = _.get( root, 'damage');
+        const result = probability * damage;
+        if( result <= 3 ) return 10;
+        if( result <= 8 ) return 20;
+        return 30;
+      }
     }
   );
   const configFolder = ['./server/config-types/d2prom'];

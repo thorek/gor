@@ -34,6 +34,7 @@ type AttributePurpose = 'createInput'|'updateInput'|'filter'|'type';
 type AttrFieldConfig = {
   type: GraphQLType
   description?:string
+  resolve?:any
 }
 
 //
@@ -311,7 +312,7 @@ export class EntityBuilder extends SchemaBuilder {
 
   //
   //
-  private skipVirtual(name:string, attribute:TypeAttribute, purpose:AttributePurpose, fieldConfig:any ):boolean {
+  private skipVirtual(name:string, attribute:TypeAttribute, purpose:AttributePurpose, fieldConfig:AttrFieldConfig ):boolean {
     if( ! attribute.virtual ) return false;
     if( purpose !== 'type' ) return true;
     let resolve = _.get( this.context.virtualResolver, [this.entity.name, name ] );
@@ -319,6 +320,7 @@ export class EntityBuilder extends SchemaBuilder {
       fieldConfig.type = GraphQLString;
       fieldConfig.description = "This attribute should be resolved via attribute resolver, but none was provided."
     }
+    fieldConfig.resolve = resolve
     return false;
   }
 
