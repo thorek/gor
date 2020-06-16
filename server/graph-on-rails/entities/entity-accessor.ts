@@ -76,9 +76,14 @@ export class EntityAccessor extends EntityModule {
    */
   private async resolveAssocTo( item:any ){
     for( const assocTo of this.entity.assocTo ){
-      const foreignEntity = this.context.entities[assocTo.type];
+      let foreignEntity = this.context.entities[assocTo.type];
+      const fieldName = foreignEntity.singular;
       const foreignKey = _.get( item, foreignEntity.foreignKey);
-      Object.defineProperty( item, foreignEntity.singular, {
+      if( foreignEntity.isPolymorph ){
+        const specificType = _.get( item, foreignEntity.typeField );
+        foreignEntity = this.context.entities[specificType];
+      }
+      Object.defineProperty( item, fieldName, {
         get: async () => { return foreignKey ? foreignEntity.findById( foreignKey ) : undefined }
       });
     }

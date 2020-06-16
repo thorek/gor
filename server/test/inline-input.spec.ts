@@ -4,7 +4,8 @@ import YAML from 'yaml';
 
 import { Context } from '../graph-on-rails/core/context';
 import { Runtime } from '../graph-on-rails/core/runtime';
-import { ResolverContext } from 'graph-on-rails/core/resolver-context';
+import { ResolverContext } from '../graph-on-rails/core/resolver-context';
+import { Seeder } from '../graph-on-rails/core/seeder';
 
 const domainConfiguration = YAML.parse(`
   enum:
@@ -20,6 +21,12 @@ const domainConfiguration = YAML.parse(`
       assocTo:
         - type: Beta
           input: true
+      seeds:
+        alphaSeed1:
+          name: alphaSeed1
+          beta:
+            name: betaSeed1
+            color: green
 
     Beta:
       attributes:
@@ -35,7 +42,8 @@ describe('Inline Input', () => {
     const runtime = await Runtime.create( "test:inline-input", { domainConfiguration } );
     await runtime.server({});
     context = runtime.context;
-    console.log( printSchema( await runtime.schema() ));
+    await Seeder.create( runtime.context ).seed( true );
+    // console.log( printSchema( await runtime.schema() ));
   })
 
   it('should find create entities',  async () => {
@@ -64,7 +72,7 @@ describe('Inline Input', () => {
       }
     }
     await alpha.entityResolveHandler.createType( resolverCtx );
-    const alpha3:any = alpha.findOneByAttribute({name: 'alpha3'});
+    const alpha3:any = await alpha.findOneByAttribute({name: 'alpha3'});
     const betaInline = await alpha3.beta;
     expect( betaInline ).toMatchObject({ name: 'betaInline', color: 'red' })
   })

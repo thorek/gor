@@ -70,7 +70,8 @@ entity:
     seeds:
       "1":
         DataSecurityRiskSource:
-          DataAtom: DataAtom:ContactData:VN
+          id: DataAtom:ContactData:VN
+          type: DataAtom
         RiskAssessment:
           probability: 2
           damage: 1
@@ -78,7 +79,8 @@ entity:
         description: Geringes Risiko
       "2":
         DataSecurityRiskSource:
-          DataAtom: DataAtom:HealthData:VP
+          id: DataAtom:HealthData:VP
+          type: DataAtom
         RiskAssessment:
           probability: 2
           damage: 4
@@ -86,7 +88,8 @@ entity:
         description: Hohes Risiko; Daten nach Art. 9 DSGVO
       "3":
         DataSecurityRiskSource:
-          ProcessingActivity: PA:BeratungHP
+          id: PA:BeratungHP
+          type: ProcessingActivity
         RiskAssessment:
           probability: 2
           damage: 1
@@ -94,7 +97,8 @@ entity:
         description: Geringes Risiko
       "4":
         DataSecurityRiskSource:
-          ProcessingActivity: PA:GWG
+          id: PA:GWG
+          type: ProcessingActivity
         RiskAssessment:
           probability: 3
           probabilityDescription: >
@@ -104,50 +108,58 @@ entity:
         description: Hohes Risiko; Daten nach Art. 9; Gefahr eines Identitätsdiebstahls
       "5":
         DataSecurityRiskSource:
-          OrganisationalUnit: mtpTraining
+          id: mtpTraining
+          type: OrganisationalUnit
         priority: HIGH
         specific: availability
         description: Geringes Risiko
       "6":
         DataSecurityRiskSource:
-          OrganisationalUnit: hrLogotech
+          id: hrLogotech
+          type: OrganisationalUnit
         RiskAssessment:
           probability: 3
         specific: confidantality
         description: Hohes Risiko; Daten nach Art. 9 DSGVO
       "7":
         DataSecurityRiskSource:
-          Organisation: papyr
+          id: papyr
+          type: Organisation
         priority: NORMAL
         specific: confidantality
         description: Geringes Risiko
       "8":
         DataSecurityRiskSource:
-          Organisation: papyr
+          id: papyr
+          type: Organisation
         priority: HIGH
         specific: integrity
         description: Gesetzliche Speicherungs-Vorschriften
       "9":
         DataSecurityRiskSource:
-          Organisation: papyr
+          id: papyr
+          type: Organisation
         priority: HIGH
         specific: availability
         description: Gesetzliche Speicherungs-Vorschriften
       "10":
         DataSecurityRiskSource:
-          Organisation: kanzlei
+          id: kanzlei
+          type: Organisation
         priority: VERY_HIGH
         specific: confidantality
         description: Hohes Risiko; Daten nach Art. 9 und nach §203 StGB
       "11":
         DataSecurityRiskSource:
-          Organisation: kanzlei
+          id: kanzlei
+          type: Organisation
         priority: VERY_HIGH
         specific: integrity
         description: Hohes Risiko; Daten nach Art. 9 und nach §203 StGB
       "12":
         DataSecurityRiskSource:
-          Organisation: kanzlei
+          id: kanzlei
+          type: Organisation
         priority: VERY_HIGH
         specific: availability
         description: Hohes Risiko; Daten nach Art. 9 und nach §203 StGB

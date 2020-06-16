@@ -31,7 +31,7 @@ export class EntitySeeder extends EntityModule {
    */
   private async seedInstanceAttributes( name:string, seed:any, ids:any ):Promise<any> {
     try {
-      const args = _.set( {}, this.entity.singular, _.pick( seed, _.keys( this.entity.attributes ) ) );
+      const args = _.set( {}, this.entity.singular, seed );
       const item:any = await this.entity.resolver.saveEntity( this.entity, {root:{}, args, context:{}} );
       _.set( ids, name, item.id );
     } catch (error) {
@@ -61,8 +61,15 @@ export class EntitySeeder extends EntityModule {
       const refEntity = this.context.entities[assocTo.type];
       if ( refEntity && _.has( seed, refEntity.typeName ) ) {
         const refName = _.get( seed, refEntity.typeName );
-        const refId = _.get( idsMap, [refEntity.typeName, refName] );
-        if ( refId ) await this.updateAssocTo( idsMap, name, refEntity, refId );
+        let refId = undefined;
+        let refType = undefined;
+        if( _.isString( refName ) ){
+          refId = _.get( idsMap, [refEntity.typeName, refName] );
+        } else {
+          refId = _.get( idsMap, [refName.type, refName.id] );
+          refType = refName.type;
+        }
+        if ( refId ) await this.updateAssocTo( idsMap, name, refEntity, refId, refType );
       }
     }
     catch ( error ) {
@@ -91,10 +98,11 @@ export class EntitySeeder extends EntityModule {
   /**
    *
    */
-  private async updateAssocTo( idsMap: any, name: string, refEntity: Entity, refId: string ) {
+  private async updateAssocTo( idsMap: any, name: string, refEntity: Entity, refId: string, refType?: string ) {
     const id = _.get( idsMap, [this.entity.typeName, name] );
     const item = await this.entity.findById( id, false );
     _.set( item, refEntity.foreignKey, _.toString(refId) );
+    if( refType ) _.set( item, refEntity.typeField, refType );
     const args = _.set( {}, this.entity.singular, item );
     await this.entity.entityResolveHandler.updateType( { root:{}, args, context:{} } );
   }
