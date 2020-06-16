@@ -5,7 +5,7 @@ import { ResolverContext } from '../graph-on-rails/core/resolver-context';
 import { Runtime } from '../graph-on-rails/core/runtime';
 import { Seeder } from '../graph-on-rails/core/seeder';
 
-xdescribe('Validations', () => {
+describe('Validations', () => {
 
   let context!:Context;
   const resolverCtx:ResolverContext = { root:{}, args:{}, context:{} };

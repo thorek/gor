@@ -94,7 +94,7 @@ export class EntityAccessor extends EntityModule {
       const foreignEntity = this.context.entities[assocToMany.type];
       const foreignKeys = _.get( item, foreignEntity.foreignKeys);
       Object.defineProperty( item, foreignEntity.plural, {
-        get: async () => { return _.size(foreignKeys) ? foreignEntity.findByIds( foreignKeys ) : undefined  }
+        get: async () => { return foreignEntity.findByIds( foreignKeys )  }
       });
     }
     return item;

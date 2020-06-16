@@ -35,7 +35,8 @@ describe('Virtual Attributes', () => {
             assocFrom: 'Alpha',
             seeds: {
               "beta1": { name: "beta1" },
-              "beta2": { name: "beta2" }
+              "beta2": { name: "beta2" },
+              "beta3": { name: "beta3" }
             }
           },
           Delta: {
@@ -77,6 +78,8 @@ describe('Virtual Attributes', () => {
     expect( await alpha1.beta ).toEqual( beta1 );
     const alpha2 = await alpha.findOneByAttribute( {name: 'alpha2'} );
     expect( await alpha2.beta ).toEqual( await alpha1.beta );
+    const alpha4 = await alpha.findOneByAttribute( {name: 'alpha4'} );
+    expect( await alpha4.beta ).toBeUndefined();
   })
 
   //
@@ -84,12 +87,15 @@ describe('Virtual Attributes', () => {
   it('should follow assocFrom', async ()=> {
     const beta = context.entities['Beta'];
     const beta1 = await beta.findOneByAttribute( {name: 'beta1'} );
-    const alphas = await beta1.alphas;
-    expect( alphas ).toHaveLength( 2 );
-    expect( alphas ).toEqual( expect.arrayContaining([
+    const alphas1 = await beta1.alphas;
+    expect( alphas1 ).toHaveLength( 2 );
+    expect( alphas1 ).toEqual( expect.arrayContaining([
       expect.objectContaining( { name: 'alpha1' }),
       expect.objectContaining( { name: 'alpha2' })
     ]));
+    const beta3 = await beta.findOneByAttribute( {name: 'beta3'} );
+    const alphas3 = await beta3.alphas;
+    expect( alphas3 ).toHaveLength( 0 );
   })
 
   //
@@ -98,8 +104,14 @@ describe('Virtual Attributes', () => {
     const delta = context.entities['Delta'];
 
     const delta1 = await delta.findOneByAttribute( {name: 'delta1' } );
-    const alphas = await delta1.alphas;
-    expect( alphas ).toHaveLength( 3 );
+    const alphas1 = await delta1.alphas;
+    expect( alphas1 ).toHaveLength( 3 );
+    const delta2 = await delta.findOneByAttribute( {name: 'delta2' } );
+    const alphas2 = await delta2.alphas;
+    expect( alphas2 ).toHaveLength( 2 );
+    const delta3 = await delta.findOneByAttribute( {name: 'delta3' } );
+    const alphas3 = await delta3.alphas;
+    expect( alphas3 ).toHaveLength( 0 );
   })
 
 })

@@ -58,7 +58,7 @@ export class MongoDbResolver extends Resolver {
   async findByIds( entity:Entity, ids:(ObjectId|string)[] ):Promise<any> {
     ids = _.map( ids, id => this.getObjectId( id, entity ) );
     const collection = this.getCollection( entity );
-		const items = await collection.find( {id: ids} ).toArray();
+		const items = await collection.find( {_id: { $in: ids }} ).toArray();
 		return _.map( items, item => this.buildOutItem( item ) );
   }
 
@@ -156,7 +156,6 @@ export class MongoDbResolver extends Resolver {
    */
   async resolveTypes( entity:Entity, resolverCtx:ResolverContext ):Promise<any[]> {
     let filter = this.getFilterQuery( entity, resolverCtx );
-    _.set( filter, 'deleted', { $ne: true } );
     filter = await this.addPermissions( entity, "read", filter, resolverCtx );
     return this.findByExpression( entity, filter );
   }
@@ -180,7 +179,7 @@ export class MongoDbResolver extends Resolver {
 		_.forEach( filter, (condition, field) => {
       const attribute = entity.getAttribute(field);
 			if( ! attribute ) return;
-      const filterType = entity.context.filterType( _.toString(attribute.graphqlType) ); // oder filterType?
+      const filterType = entity.context.filterType( attribute.filterType, attribute.graphqlType );
       if( ! filterType ) return;
 			const expression = filterType.getFilterExpression( condition, field );
 			if( expression ) _.set( filterQuery, field, expression );
@@ -222,9 +221,7 @@ export class MongoDbResolver extends Resolver {
 	async deleteEntity( entityType:Entity, resolverCtx:ResolverContext  ):Promise<boolean> {
     const collection = this.getCollection( entityType );
     const id = _.get( resolverCtx.args, 'id' );
-		const result = await collection.updateOne( {"_id": new ObjectId( id )}, {
-			$set: { "deleted": true }
-		});
+    collection.deleteOne( { "_id": new ObjectId( id ) } );
 		return true;
   }
 

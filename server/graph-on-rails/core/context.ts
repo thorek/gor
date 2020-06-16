@@ -15,6 +15,7 @@ import { ResolverContext } from './resolver-context';
 import { EntityConfig } from '../entities/config-entity';
 import { EnumConfig } from '../builder/enum-config-builder';
 import { EntityResolveHandler } from '../entities/entity-resolve-handler';
+import { GraphQLInputType, GraphQLType } from 'graphql';
 
 export type GorConfig = {
   name?:string
@@ -89,8 +90,14 @@ export class Context {
     return this.config.entitySeeder(entity);
   }
 
-  filterType( type:string ):FilterType|undefined {
-    return this.filterTypes[ SchemaBuilder.getFilterName(type) ];
+  filterType( filterType:string|FilterType|false|undefined, fieldType:string|GraphQLType ):FilterType|undefined {
+    if( filterType === false ) return undefined;
+    if( ! filterType ) {
+      if( ! _.isString( fieldType ) ) fieldType = _.get( fieldType, 'name' );
+      return this.filterTypes[ SchemaBuilder.getFilterName(fieldType as string) ];
+    } else if( _.isString( filterType ) ) {
+      return this.filterTypes[ filterType ];
+    } else return filterType;
   }
 
   readonly contextUser = this.config.contextUser;

@@ -53,7 +53,7 @@ export abstract class FilterType extends SchemaBuilder {
 	//
 	protected setAttributes( fields:any ):void {
 		_.forEach( this.attributes(), (attribute,name) => {
-			_.set( fields, name, { type: attribute.graphqlType } );
+			_.set( fields, name, { type: attribute.graphqlType, description: attribute.description } );
 		});
 	}
 
