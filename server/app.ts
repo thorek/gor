@@ -1,4 +1,4 @@
-
+import YAML from 'yaml';
 import { AuthenticationError } from 'apollo-server-express';
 import compression from 'compression';
 import cors from 'cors';
@@ -28,7 +28,28 @@ import { ResolverContext } from './graph-on-rails/core/resolver-context';
     }
   );
   const configFolder = ['./server/config-types/d2prom'];
-  const runtime = await Runtime.create( "D2PROM", { virtualResolver, configFolder } );
+
+  const domainConfiguration = YAML.parse(`
+  enum:
+    Color:
+      - red
+      - green
+      - yellow
+
+  entity:
+    Alpha:
+      attributes:
+        name: key
+      assocTo:
+        - type: Beta
+          input: true
+
+    Beta:
+      attributes:
+        name: key
+        color: Color!
+`);
+  const runtime = await Runtime.create( "D2PROM", {domainConfiguration } );
 
   const users:{[token:string]:any} = {
     admin: { id: 100, username: "Admin", roles: ["admin"], clientId: "5ec3b745d3a47f8284414125" },

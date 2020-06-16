@@ -1,4 +1,3 @@
-import { GraphQLType } from 'graphql';
 import _ from 'lodash';
 
 import { Context } from '../core/context';

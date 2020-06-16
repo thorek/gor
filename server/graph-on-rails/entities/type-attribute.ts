@@ -10,5 +10,6 @@ export type TypeAttribute = {
   required?:boolean|'create'|'update'
   description?:string
   virtual?:boolean
+  input?:boolean
 }
 

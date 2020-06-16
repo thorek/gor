@@ -13,6 +13,7 @@ export class EntityResolveHandler extends EntityModule {
    *
    */
   async createType( resolverCtx:ResolverContext ) {
+    console.log(resolverCtx.args.alpha )
     // TODO set defaults
     let validationViolations = await this.entity.validate( resolverCtx );
     if( _.size( validationViolations ) ) return { validationViolations };

@@ -13,8 +13,9 @@ import { EntityAccessor } from './entity-accessor';
 //
 //
 export type EntityReference = {
-	type:string;
-  required?:boolean;
+	type:string
+  required?:boolean
+  input?:boolean
 }
 
 //
@@ -54,6 +55,7 @@ export abstract class Entity {
   get typeName(){ return this.getTypeName() }
   get attributes() { return this.getAttributes() }
   get assocTo() { return this.getAssocTo() }
+  get assocToInput() { return _.filter( this.getAssocTo(), assocTo => assocTo.input === true ) }
   get assocToMany() { return this.getAssocToMany() }
   get assocFrom() { return this.getAssocFrom() }
   get singular() { return this.getSingular() }

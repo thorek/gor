@@ -4,9 +4,9 @@ import YAML from 'yaml';
 
 import { Context } from '../graph-on-rails/core/context';
 import { Runtime } from '../graph-on-rails/core/runtime';
+import { ResolverContext } from 'graph-on-rails/core/resolver-context';
 
-const domainConfiguration = YAML.parse(
-  `
+const domainConfiguration = YAML.parse(`
   enum:
     Color:
       - red
@@ -25,7 +25,7 @@ const domainConfiguration = YAML.parse(
       attributes:
         name: key
         color: Color!
-  `);
+`);
 
 describe('Inline Input', () => {
 
@@ -35,7 +35,7 @@ describe('Inline Input', () => {
     const runtime = await Runtime.create( "test:inline-input", { domainConfiguration } );
     await runtime.server({});
     context = runtime.context;
-    // console.log( printSchema( await runtime.schema() ));
+    console.log( printSchema( await runtime.schema() ));
   })
 
   it('should find create entities',  async () => {
@@ -53,13 +53,20 @@ describe('Inline Input', () => {
 
 
   it('should find create entities with inline input',  async () => {
-    // const alpha = context.entities['Alpha'];
-    // expect( alpha ).toBeDefined();
-    // const beta = context.entities['Beta'];
-    // expect( beta ).toBeDefined();
-    // await alpha.entityResolveHandler.createType( {root:{}, args:{ alpha: { name: 'alpha1', beta: { name: 'beta2', color: 'GREEN'}} }, context:{} } );
-    // const alpha1 = await beta.findOneByAttribute( {name: 'alpha1' } );
-    // expect( beta1 ).toEqual( expect.objectContaining( { name: 'beta1', color: 'RED' } ) );
+    const alpha = context.entities['Alpha'];
+    const beta = context.entities['Beta'];
+
+    const resolverCtx:ResolverContext = { root:{}, args:{}, context:{} }
+    resolverCtx.args = {
+      alpha: {
+        name: 'alpha3',
+        beta: { name: 'betaInline', color: 'red' }
+      }
+    }
+    await alpha.entityResolveHandler.createType( resolverCtx );
+    const alpha3:any = alpha.findOneByAttribute({name: 'alpha3'});
+    const betaInline = await alpha3.beta;
+    expect( betaInline ).toMatchObject({ name: 'betaInline', color: 'red' })
   })
 
 })

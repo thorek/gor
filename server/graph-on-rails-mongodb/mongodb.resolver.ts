@@ -4,7 +4,7 @@ import { Collection, Db, FilterQuery, MongoClient, ObjectId } from 'mongodb';
 
 import { FilterType } from '../graph-on-rails/builder/filter-type';
 import { Resolver } from '../graph-on-rails/core/resolver';
-import { Entity } from '../graph-on-rails/entities/entity';
+import { Entity, EntityReference } from '../graph-on-rails/entities/entity';
 import { CrudAction } from '../graph-on-rails/entities/entity-permissions';
 import { EnumFilterType } from './filter/enum-filter-type';
 import { IntFilterType } from './filter/int-filter-type';
@@ -211,9 +211,26 @@ export class MongoDbResolver extends Resolver {
 	//
 	protected async createEntity( entity:Entity, attrs: any, context: any ):Promise<any> {
     const collection = this.getCollection( entity );
+    for( const assocTo of entity.assocToInput ){
+      await this.addInlineInput( entity, assocTo, attrs, context );
+    }
     const result = await collection.insertOne( attrs );
     return this.findById( entity, result.insertedId );
 	}
+
+  /**
+   *
+   */
+  private async addInlineInput( entity: Entity, assocTo: EntityReference, attrs: any, context: any ) {
+    const refEntity = entity.context.entities[assocTo.type];
+    const input = _.get( attrs, refEntity.singular );
+    if( ! input ) return;
+    if ( _.has( attrs, refEntity.foreignKey ) ) throw new Error(
+      `'${entity.name} you cannot have '${refEntity.foreignKey}' if you provide inline input'` );
+    const item = await this.createEntity( refEntity, input, context );
+    _.set( attrs, refEntity.foreignKey, _.toString( item.id ) );
+    _.unset( attrs, refEntity.singular );
+  }
 
   /**
    *

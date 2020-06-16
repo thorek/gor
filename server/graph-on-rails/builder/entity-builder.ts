@@ -20,6 +20,7 @@ import { Context } from '../core/context';
 import { Entity, EntityReference } from '../entities/entity';
 import { TypeAttribute } from '../entities/type-attribute';
 import { SchemaBuilder } from './schema-builder';
+import { FilterType } from './filter-type';
 
 const scalarTypes:{[scalar:string]:GraphQLType} = {
   id: GraphQLID,
@@ -162,11 +163,13 @@ export class EntityBuilder extends SchemaBuilder {
 	//
 	protected addAssocTo( entity?:Entity ):void {
     if( ! entity ) entity = this.entity;
-    const assocTo = _.filter( entity.assocTo, bt => this.checkReference( 'assocTo', bt ) );
+    let assocTo = _.filter( entity.assocTo, bt => this.checkReference( 'assocTo', bt ) );
 		this.graphx.type(this.entity.typeName).extendFields(
       () => _.reduce( assocTo, (fields, ref) => this.addAssocToReferenceToType( fields, ref ), {} ));
     this.graphx.type(this.entity.createInputTypeName).extendFields(
       () => _.reduce( assocTo, (fields, ref) => this.addAssocToForeignKeyToInput( fields, ref ), {} ));
+    this.graphx.type(this.entity.createInputTypeName).extendFields(
+      () => _.reduce( assocTo, (fields, ref) => this.addAssocToInputToInput( fields, ref ), {} ));
     this.graphx.type(this.entity.updateInputTypeName).extendFields(
       () => _.reduce( assocTo, (fields, ref) => this.addAssocToForeignKeyToInput( fields, ref ), {} ));
   }
@@ -191,6 +194,16 @@ export class EntityBuilder extends SchemaBuilder {
     _.set( fields, refEntity.foreignKey, { type: GraphQLID });
     if( refEntity.isPolymorph ) _.set( fields, refEntity.typeField,
       { type: this.graphx.type( refEntity.typesEnumName ) } );
+    return fields;
+  }
+
+  //
+  //
+  private addAssocToInputToInput( fields:any, ref:EntityReference ):any {
+    if( ref.input ) {
+      const refEntity = this.context.entities[ref.type];
+      _.set( fields, refEntity.singular, {type: this.graphx.type( refEntity.createInputTypeName )} );
+    }
     return fields;
   }
 
@@ -282,7 +295,7 @@ export class EntityBuilder extends SchemaBuilder {
   /**
    *
    */
-  protected getAttributeFields( purpose:AttributePurpose, entity?:Entity,  ):Dictionary<AttrFieldConfig> {
+  protected getAttributeFields( purpose:AttributePurpose, entity?:Entity ):Dictionary<AttrFieldConfig> {
     const attributes = entity ? entity.attributes : this.attributes();
     const fields = _.mapValues( attributes, (attribute, name) => this.getFieldConfig(name, attribute, purpose));
     return _.pickBy( fields, _.identity) as Dictionary<AttrFieldConfig>;
@@ -334,7 +347,7 @@ export class EntityBuilder extends SchemaBuilder {
 			_.forEach( this.attributes(), (attribute, name) => {
         if( attribute.virtual ) return;
         const type = this.getFilterType(attribute);
-				if( type ) _.set( fields, name, { type } );
+				if( type && type.graphqlType ) _.set( fields, name, { type: type.graphqlType } );
 			});
 			return fields;
 		} });
@@ -444,7 +457,7 @@ export class EntityBuilder extends SchemaBuilder {
     /**
    *
    */
-  private getFilterType( attr:TypeAttribute):GraphQLType|undefined {
+  private getFilterType( attr:TypeAttribute):FilterType|undefined {
     if( attr.filterType === false ) return;
     if( ! attr.filterType ){
       let typeName = _.isString( attr.graphqlType ) ? attr.graphqlType : _.get(attr.graphqlType, 'name' ) as string;

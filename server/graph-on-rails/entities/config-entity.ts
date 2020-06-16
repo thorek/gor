@@ -15,6 +15,7 @@ export type AttributeConfig = {
   unique?:boolean|string
   description?:string
   virtual?:boolean
+  input?:boolean
 }
 
 /**
@@ -146,7 +147,8 @@ export class ConfigEntity extends Entity {
       unique: attrConfig.unique,
       required: attrConfig.required,
       description: attrConfig.description,
-      virtual: attrConfig.virtual
+      virtual: attrConfig.virtual,
+      input: attrConfig.input
     }
   }
 
