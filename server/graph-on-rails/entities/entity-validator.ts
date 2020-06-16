@@ -67,8 +67,8 @@ export class EntityValidator  {
     const foreignKey = _.get( attributes, refEntity.foreignKey );
     if( ! foreignKey ) return {attribute: refEntity.foreignKey, violation: "must be provided"};
     try {
-      const result = await refEntity.findById( foreignKey );
-      if( _.size( result ) ) return;
+      const result = await refEntity.findById( _.toString(foreignKey) );
+      if( result ) return;
     } catch (error) {
       return { attribute: refEntity.foreignKey, violation: _.toString(error) };
     }

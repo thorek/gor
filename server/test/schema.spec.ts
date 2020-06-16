@@ -55,7 +55,7 @@ describe('Schema Generation', () => {
     });
     const schema = printSchema( await runtime.schema() );
     expect( schema ).toContain("type Alpha");
-    console.log( schema )
+    // console.log( schema )
   })
 
 })

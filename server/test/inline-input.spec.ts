@@ -34,8 +34,8 @@ describe('Inline Input', () => {
   beforeAll( async () => {
     const runtime = await Runtime.create( "test:inline-input", { domainConfiguration } );
     await runtime.server({});
-    console.log( printSchema( await runtime.schema() ));
     context = runtime.context;
+    // console.log( printSchema( await runtime.schema() ));
   })
 
   it('should find create entities',  async () => {

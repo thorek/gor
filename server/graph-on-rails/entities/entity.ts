@@ -8,6 +8,7 @@ import { EntityValidator, ValidationViolation } from './entity-validator';
 import { TypeAttribute } from './type-attribute';
 import { ResolverContext } from '../core/resolver-context';
 import { EntityResolveHandler } from './entity-resolve-handler';
+import { EntityAccessor } from './entity-accessor';
 
 //
 //
@@ -28,12 +29,13 @@ export abstract class Entity {
   get entityPermissions() { return this._entityPermissions }
   get entityResolveHandler() { return this._entityResolveHandler }
   get entityValidator() { return this._entityValidator }
-
+  get entityAccessor() { return this._entityAccessor }
 
   protected _entitySeeder!:EntitySeeder;
   protected _entityResolveHandler!:EntityResolveHandler;
   protected _entityPermissions!:EntityPermissions;
   protected _entityValidator!:EntityValidator;
+  protected _entityAccessor!:EntityAccessor;
 
   /**
    *
@@ -44,7 +46,8 @@ export abstract class Entity {
     this._entityResolveHandler = this.context.entityResolveHandler( this );
     this._entitySeeder = this.context.entitySeeder( this );
     this._entityPermissions = this.context.entityPermissions( this );
-    this._entityValidator = new EntityValidator( this )
+    this._entityValidator = new EntityValidator( this );
+    this._entityAccessor = new EntityAccessor( this );
   }
 
   get name() { return this.getName() }
@@ -163,23 +166,29 @@ export abstract class Entity {
   /**
    *
    */
-  findById( id:any ):Promise<any> {
-    return this.entityResolveHandler.findById( id );
-  }
-
-
-  /**
-   *
-   */
-  findByAttribute( attrValue:{[name:string]:any} ):Promise<any> {
-    return this.entityResolveHandler.findByAttribute( attrValue );
+  async findById( id:any, decorate = true ):Promise<any> {
+    return this.entityAccessor.findById( id, decorate );
   }
 
   /**
    *
    */
-  async findOneByAttribute( attrValue:{[name:string]:any} ):Promise<any> {
-    return _.first( await this.entityResolveHandler.findByAttribute( attrValue ) );
+  async findByIds( ids:any[], decorate = true ):Promise<any[]> {
+    return this.entityAccessor.findByIds( ids, decorate );
+  }
+
+  /**
+   *
+   */
+  async findByAttribute( attrValue:{[name:string]:any}, decorate = true ):Promise<any> {
+    return this.entityAccessor.findByAttribute( attrValue, decorate );
+  }
+
+  /**
+   *
+   */
+  async findOneByAttribute( attrValue:{[name:string]:any}, decorate = true ):Promise<any> {
+    return _.first( await this.entityAccessor.findByAttribute( attrValue, decorate ) );
   }
 
 }

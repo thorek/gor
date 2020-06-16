@@ -48,8 +48,18 @@ export class MongoDbResolver extends Resolver {
   async findById( entity:Entity, id:ObjectId|string ):Promise<any> {
     if( ! (id instanceof ObjectId) ) id = this.getObjectId( id, entity );
     const collection = this.getCollection( entity );
-		const item = await collection.findOne( id );
+    const item = await collection.findOne( id );
 		return this.buildOutItem( item );
+  }
+
+  /**
+   *
+   */
+  async findByIds( entity:Entity, ids:(ObjectId|string)[] ):Promise<any> {
+    ids = _.map( ids, id => this.getObjectId( id, entity ) );
+    const collection = this.getCollection( entity );
+		const items = await collection.find( {id: ids} ).toArray();
+		return _.map( items, item => this.buildOutItem( item ) );
   }
 
   /**
@@ -66,7 +76,7 @@ export class MongoDbResolver extends Resolver {
    */
   async findByAttribute( entity:Entity, attrValue:{[name:string]:any} ):Promise<any[]> {
     const expression = { $and: _.map( attrValue, (value, attribute) => _.set({}, attribute, { $eq: value } ) ) };
-    return this.findByExpression( entity, expression );
+    return this.findByExpression( entity, attrValue );
   }
 
 

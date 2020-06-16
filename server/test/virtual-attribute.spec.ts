@@ -5,7 +5,7 @@ import { Runtime } from '../graph-on-rails/core/runtime';
 import { Seeder } from '../graph-on-rails/core/seeder';
 import { Context } from '../graph-on-rails/core/context';
 
-xdescribe('Virtual Attributes', () => {
+describe('Virtual Attributes', () => {
 
   let runtime!:Runtime;
   let context:Context;
@@ -55,15 +55,13 @@ xdescribe('Virtual Attributes', () => {
   //
   it('should resolve a virtual attribute', async () => {
 
-    expect(consoleSpy).toHaveBeenCalledWith("no virtual resolver for 'Alpha:virtualC'");
-
     const alpha = context.entities['Alpha'];
-    const alpha1 = _.first( await alpha.findByAttribute( { name: 'alpha1' } ) );
+    const alpha1:any = _.first( await alpha.findByAttribute( { name: 'alpha1' } ) );
 
     expect( alpha1 ).toMatchObject({ name: "alpha1" } );
-    expect( alpha1 ).toMatchObject({ virtualA: "virtualA" } );
-    expect( alpha1 ).toMatchObject({ virtualB: 42 } );
-    expect( alpha1 ).toMatchObject({ virtualC: "[no resolver for 'Alpha:virtualC' provided]" } );
+    expect( alpha1.virtualA() ).toEqual( "virtualA"  );
+    expect( await alpha1.virtualB() ).toEqual( 42 );
+    expect( alpha1.virtualC() ).toEqual( "[no resolver for 'Alpha:virtualC' provided]" );
   })
 
 })

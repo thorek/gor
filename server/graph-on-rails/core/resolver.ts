@@ -80,5 +80,6 @@ export abstract class Resolver {
   /**
    *
    */
-  abstract findByExpression( entity:Entity, filter:any ):Promise<any[]>
+  abstract findByIds( entity:Entity, id:any ):Promise<any>
+
 }

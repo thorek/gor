@@ -93,7 +93,7 @@ export class EntitySeeder extends EntityModule {
    */
   private async updateAssocTo( idsMap: any, name: string, refEntity: Entity, refId: string ) {
     const id = _.get( idsMap, [this.entity.typeName, name] );
-    const item = await this.entity.entityResolveHandler.findById( id );
+    const item = await this.entity.findById( id, false );
     _.set( item, refEntity.foreignKey, _.toString(refId) );
     const args = _.set( {}, this.entity.singular, item );
     await this.entity.entityResolveHandler.updateType( { root:{}, args, context:{} } );
@@ -105,7 +105,7 @@ export class EntitySeeder extends EntityModule {
   private async updateAssocToMany( idsMap:any, name:string, refEntity:Entity, refIds:any[] ) {
     refIds = _.map( refIds, refId => _.toString( refId ) );
     const id = _.get( idsMap, [this.entity.typeName, name] );
-    const item = await this.entity.entityResolveHandler.findById( id );
+    const item = await this.entity.findById( id, false );
     _.set( item, refEntity.foreignKeys, refIds );
     const args = _.set( {}, this.entity.singular, item );
     await this.entity.entityResolveHandler.updateType( { root:{}, args, context:{} } );
