@@ -121,6 +121,7 @@ export class ConfigEntity extends Entity {
   }
   protected getDescription():string|undefined { return this.entityConfig.description || super.getDescription() }
   protected getEntites():Entity[] {
+    if( this.isInterface ) return _.filter( this.context.entities, entity => entity.implementsEntityInterface( this ) );
     return _.compact( _.map( this.entityConfig.union, entity => this.context.entities[entity] ) );
   }
   protected getImplements():Entity[] {

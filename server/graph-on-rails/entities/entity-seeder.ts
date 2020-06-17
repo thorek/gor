@@ -14,7 +14,7 @@ export class EntitySeeder extends EntityModule {
    *
    */
   public async truncate():Promise<boolean> {
-    return await this.resolver.dropCollection( this.entity );
+    return await this.resolver.truncate( this.entity );
   }
 
   /**
@@ -31,8 +31,15 @@ export class EntitySeeder extends EntityModule {
    */
   private async seedInstanceAttributes( name:string, seed:any, ids:any ):Promise<any> {
     try {
-      const args = _.set( {}, this.entity.singular, seed );
-      const item:any = await this.entity.resolver.saveEntity( this.entity, {root:{}, args, context:{}} );
+      const attrs = _.concat(
+        _.keys( this.entity.attributes ),
+        _.map(this.entity.assocToInput, assocTo => this.context.entities[assocTo.type].singular ),
+        _.flatten( _.map( this.entity.implements, impl => _.keys( impl.attributes ) ) ) );
+      const args = _.set( {}, this.entity.singular, _.pick( seed, attrs ) );
+      const result:any = await this.entity.entityResolveHandler.createType( {root:{}, args, context:{}} );
+      if( _.size( result.validationViolations ) ) throw new Error( result.validationViolations );
+      const item = _.get( result, this.entity.singular );
+      if( ! item ) throw new Error("item null")
       _.set( ids, name, item.id );
     } catch (error) {
       console.error( `Entity '${this.entity.typeName }' could not seed an instance`, seed, error );
@@ -44,10 +51,19 @@ export class EntitySeeder extends EntityModule {
    */
   public async seedReferences( idsMap:any ):Promise<void> {
     await Promise.all( _.map( this.entity.seeds, async (seed, name) => {
-      await Promise.all( _.map( this.entity.assocTo, async assocTo => {
+
+      const assocTos = _.concat(
+        this.entity.assocTo,
+        _.flatten(_.map( this.entity.implements, impl => impl.assocTo )));
+      await Promise.all( _.map( assocTos, async assocTo => {
         await this.seedAssocTo( assocTo, seed, idsMap, name );
       }));
-      await Promise.all( _.map( this.entity.assocToMany, async assocToMany => {
+
+      const assocToManys = _.concat(
+        this.entity.assocToMany,
+        _.flatten(_.map( this.entity.implements, impl => impl.assocToMany )));
+
+      await Promise.all( _.map( assocToManys, async assocToMany => {
         await this.seedAssocToMany( assocToMany, seed, idsMap, name );
       }));
     }));

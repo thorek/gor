@@ -221,7 +221,8 @@ export class EntityBuilder extends SchemaBuilder {
     const refObjectType = this.graphx.type(refEntity.typeName);
     return _.set( fields, refEntity.singular, {
       type: refObjectType,
-      resolve: (root:any, args:any, context:any ) => this.resolveHandler.resolveAssocToType( refEntity, {root, args, context} )
+      resolve: (root:any, args:any, context:any ) =>
+        this.resolveHandler.resolveAssocToType( refEntity, {root, args, context} )
     });
   }
 

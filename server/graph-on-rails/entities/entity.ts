@@ -78,7 +78,7 @@ export abstract class Entity {
   get typeField() { return this.getTypeField() }
   get typesEnumName() { return this.getTypeEnumName() }
   get isInterface():boolean { return this.getIsInterface() }
-  get isUnion():boolean { return ! _.isEmpty( this.entities ) }
+  get isUnion():boolean { return  ! this.isInterface && ! _.isEmpty( this.entities ) }
   get isPolymorph():boolean { return this.isUnion || this.isInterface }
   get implements():Entity[] { return _.filter( this.getImplements(), entity => entity.isInterface ) }
   get createMutationName():string { return this.getCreateMutationName() }

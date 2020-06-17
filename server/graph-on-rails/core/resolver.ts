@@ -7,10 +7,6 @@ import { ResolverContext } from './resolver-context';
  */
 export abstract class Resolver {
 
-  /**
-   *
-   */
-  abstract resolveType( entity:Entity, resolverCtx:ResolverContext ):Promise<any>;
 
   /**
    *
@@ -20,32 +16,22 @@ export abstract class Resolver {
   /**
    *
    */
-  abstract resolveAssocToType( refType:Entity, resolverCtx:ResolverContext ):Promise<any>;
+  abstract createType( entity:Entity, attrs: any, resolverCtx:ResolverContext ):Promise<any>;
 
   /**
    *
    */
-  abstract resolveAssocFromTypes( entity:Entity, refType:Entity, resolverCtx:ResolverContext ):Promise<any[]>;
+  abstract updateType( entity:Entity, attrs: any, resolverCtx:ResolverContext ):Promise<any>;
 
   /**
    *
    */
-  abstract resolveAssocToManyTypes( entity:Entity, refType:Entity, resolverCtx:ResolverContext ):Promise<any[]>;
+  abstract deleteType( entity:Entity, resolverCtx:ResolverContext  ):Promise<boolean>;
 
   /**
    *
    */
-  abstract saveEntity( entity:Entity, resolverCtx:ResolverContext ):Promise<any>;
-
-  /**
-   *
-   */
-  abstract deleteEntity( entity:Entity, resolverCtx:ResolverContext  ):Promise<boolean>;
-
-  /**
-   *
-   */
-  abstract dropCollection( entity:Entity ):Promise<boolean>;
+  abstract truncate( entity:Entity ):Promise<boolean>;
 
   /**
    *

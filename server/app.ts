@@ -30,25 +30,81 @@ import { ResolverContext } from './graph-on-rails/core/resolver-context';
   const configFolder = ['./server/config-types/d2prom'];
 
   const domainConfiguration = YAML.parse(`
-  enum:
-    Color:
-      - red
-      - green
-      - yellow
-
   entity:
     Alpha:
       attributes:
         name: key
-      assocTo:
-        - type: Beta
-          input: true
+      seeds:
+        alpha1:
+          name: alpha1
+        alpha2:
+          name: alpha2
+        alpha3:
+          name: alpha3
 
     Beta:
       attributes:
         name: key
-        color: Color!
-`);
+      seeds:
+        beta1:
+          name: beta1
+        beta2:
+          name: beta2
+
+    AlphaBeta:
+      union:
+        - Alpha
+        - Beta
+
+    Delta:
+      attributes:
+        name: key
+      assocTo: AlphaBeta
+      assocFrom: Super
+      seeds:
+        delta1:
+          name: delta1
+          AlphaBeta:
+            id: alpha1
+            type: Alpha
+        delta2:
+          name: delta2
+          AlphaBeta:
+            id: alpha2
+            type: Alpha
+        delta3:
+          name: delta3
+          AlphaBeta:
+            id: beta1
+            type: Beta
+
+    Super:
+      interface: true
+      attributes:
+        name: key
+      assocTo: Delta
+
+    ImplementA:
+      implements: Super
+      attributes:
+        aAttr: string
+      seeds:
+        ia1:
+          name: ia1
+          aAttr: the value 1
+          Delta: delta1
+
+    ImplementB:
+      implements: Super
+      attributes:
+        bAttr: int
+      seeds:
+        ib1:
+          name: ib1
+          cAttr: 1
+          Delta: delta1
+
+  `);
   const runtime = await Runtime.create( "D2PROM", {domainConfiguration } );
 
   const users:{[token:string]:any} = {

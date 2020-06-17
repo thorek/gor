@@ -29,7 +29,7 @@ export class EntityAccessor extends EntityModule {
    *
    */
   async findByAttribute( attrValue:{[name:string]:any}, decorate = true ):Promise<any[]>{
-    const items = await this.entity.resolver.findByAttribute( this.entity, attrValue );
+    const items = await this.resolver.findByAttribute( this.entity, attrValue );
     if( decorate ) for( const item of items ) await this.decorateItem( item );
     return items;
   }
