@@ -24,8 +24,22 @@ enum:
 entity:
   DataSecurityMeasureCategory:
     attributes:
-      name: string!
+      name: key
     assocToMany: Industry
+    seeds:
+      Einbruchsicherheit:
+        name: Einbruchsicherheit
+      Brandschutz:
+        name: Brandschutz
+      IT-Sicherheit:
+        name: IT-Sicherheit
+      Organisationssicherheit:
+        name: Organisations-sicherheit
+      Vertragsgestaltung:
+        name: Vertragsgestaltung
+      Prozesse:
+        name: Prozesse
+
 
 
   DataSecurityMeasure:
@@ -34,27 +48,37 @@ entity:
       name: string!
       impact: Priority
       description: string
-    assocToMany:
-      - DataSecurityMeasureCategory
-    assocFrom:
-      - MeasureApplication
+    assocToMany: DataSecurityMeasureCategory
+    assocFrom: MeasureApplication
 
   AvailabilityMeasure:
     implements: DataSecurityMeasure
     attributes:
-      category: AvailabilityMeasureCategory
+      category: AvailabilityMeasureCategory!
+    seeds:
+
 
   FormalMeasure:
     implements: DataSecurityMeasure
     attributes:
-      category: FormalMeasureCategory
+      category: FormalMeasureCategory!
 
   ConfidentialityMeasure:
     implements: DataSecurityMeasure
     attributes:
-      category: ConfidentialityMeasureCategory
+      category: ConfidentialityMeasureCategory!
+    seeds:
+      Alarmanlage:
+        name: Alarmanlage
+        description: Einsatz einer Alarmanlage (evtl. mit Meldung an Sicherheitsdienst)
+        impact: 20
+        category: access_control
 
   IntegrityMeasure:
     implements: DataSecurityMeasure
     attributes:
-      category: IntegrityMeasureCategory
+      category: IntegrityMeasureCategory!
+
+
+
+

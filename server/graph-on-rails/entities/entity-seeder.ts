@@ -14,7 +14,7 @@ export class EntitySeeder extends EntityModule {
    *
    */
   public async truncate():Promise<boolean> {
-    return await this.resolver.dropCollection( this.entity );
+    return await this.resolver.truncate( this.entity );
   }
 
   /**
@@ -32,7 +32,7 @@ export class EntitySeeder extends EntityModule {
   private async seedInstanceAttributes( name:string, seed:any, ids:any ):Promise<any> {
     try {
       const args = _.set( {}, this.entity.singular, seed );
-      const item:any = await this.entity.resolver.saveEntity( this.entity, {root:{}, args, context:{}} );
+      const item:any = await this.entity.entityResolveHandler.createType( {root:{}, args, context:{}} );
       _.set( ids, name, item.id );
     } catch (error) {
       console.error( `Entity '${this.entity.typeName }' could not seed an instance`, seed, error );

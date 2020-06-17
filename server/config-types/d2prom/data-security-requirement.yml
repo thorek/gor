@@ -8,19 +8,6 @@ enum:
 
 entity:
 
-  Alpha:
-    attributes:
-      name: key
-      priority:
-        type: Priority
-
-  Beta:
-    attributes:
-      name: key
-    assocTo:
-      - type: Alpha
-        input: true
-
   RiskAssessment:
     description: >
       Used to asses a risk priority by the calculation: probability x damage
