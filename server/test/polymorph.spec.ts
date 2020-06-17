@@ -99,21 +99,25 @@ describe('Ploymorph Types', () => {
 
   it('should find polymorph assocTo',  async () => {
     const delta = context.entities['Delta'];
-    const delta1:any = await delta.findOneByAttribute( {name: 'delta1' } );
-    expect( delta1 ).toBeDefined();
-    const ab1 = await delta1.alphaBeta
-    expect( ab1 ).toMatchObject({name: 'alpha1'})
+    const delta1 = await delta.findOneByAttribute( {name: 'delta1' } );
+    if( ! delta1 ) return expect( delta1 ).toBeDefined();
+    const ab1 = await delta1.assocTo('alphaBeta');
+    if( ! ab1 ) return expect( ab1 ).toBeDefined();
+    expect( ab1.item ).toMatchObject({name: 'alpha1'})
 
-    const delta3:any = await delta.findOneByAttribute( {name: 'delta3' } );
-    const ab3 = await delta3.alphaBeta
-    expect( ab3 ).toMatchObject({name: 'beta1'})
+    const delta3 = await delta.findOneByAttribute( {name: 'delta3' } );
+    if( ! delta3 ) return expect( delta3 ).toBeDefined();
+    const ab3 = await delta3.assocTo('alphaBeta')
+    if( ! ab3 ) return expect( ab3 ).toBeDefined();
+    expect( ab3.item ).toMatchObject({name: 'beta1'})
   })
 
   it( 'should resolve polymorph assocFrom', async () => {
-    // const delta = context.entities['Delta'];
-    // const delta1:any = await delta.findOneByAttribute( {name: 'delta1' } );
-    // const supers = await delta1.supers
-    // expect( supers ).toHaveLength( 2 );
+    const delta = context.entities['Delta'];
+    const delta1 = await delta.findOneByAttribute( {name: 'delta1' } );
+    if( ! delta1 ) return expect( delta1 ).toBeDefined();
+    const supers = await delta1.assocFrom('supers')
+    expect( supers ).toHaveLength( 2 );
   })
 
 

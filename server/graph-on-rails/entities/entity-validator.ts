@@ -3,7 +3,6 @@ import _ from 'lodash';
 import { Validator } from '../validation/validator';
 import { Entity, EntityReference } from './entity';
 import { TypeAttribute } from './type-attribute';
-import { ResolverContext } from '../core/resolver-context';
 
 //
 //
@@ -18,7 +17,7 @@ export class EntityValidator  {
 
   private validator!:Validator;
   get context() { return this.entity.context }
-  get resolver() { return this.context.resolver }
+
 
   constructor( public readonly entity:Entity ){
     this.validator = entity.context.validator( entity );
@@ -27,23 +26,12 @@ export class EntityValidator  {
   /**
    *
    */
-  async validate( resolverCtx:ResolverContext ):Promise<ValidationViolation[]> {
-    const attributes = await this.getAttributes( resolverCtx.args );
+  async validate( attributes:any ):Promise<ValidationViolation[]> {
     const violations:ValidationViolation[] = [];
     violations.push( ... await this.validateRequiredAssocTos( attributes ) );
-    violations.push( ... await this.validateUniqe( attributes, resolverCtx ) );
-    violations.push( ... await this.validator.validate( attributes, resolverCtx ) );
+    violations.push( ... await this.validateUniqe( attributes ) );
+    violations.push( ... await this.validator.validate( attributes ) );
     return violations;
-  }
-
-  /**
-   *
-   */
-  private async getAttributes( args:any ):Promise<any> {
-    let attrs = _.get( args, this.entity.singular );
-    if( ! _.has( attrs, 'id' ) ) return attrs;
-    const current = await this.resolver.findById( this.entity, _.get( attrs, 'id' ) );
-    return _.defaultsDeep( attrs, current );
   }
 
   /**
@@ -79,12 +67,12 @@ export class EntityValidator  {
   /**
    *
    */
-  private async validateUniqe( attributes:any, resolverCtx:ResolverContext ):Promise<ValidationViolation[]> {
+  private async validateUniqe( attributes:any ):Promise<ValidationViolation[]> {
     const violations:ValidationViolation[] = [];
     for( const name of _.keys(this.entity.attributes) ){
       const attribute = this.entity.attributes[name];
       if( ! attribute.unique ) continue;
-      const violation = await this.validateUniqeAttribute( name, attribute, attributes, resolverCtx );
+      const violation = await this.validateUniqeAttribute( name, attribute, attributes );
       if( violation ) violations.push( violation );
     }
     return violations;
@@ -93,7 +81,7 @@ export class EntityValidator  {
   /**
    *
    */
-  private async validateUniqeAttribute( name:string, attribute:TypeAttribute, attributes:any, resolverCtx:ResolverContext ):Promise<ValidationViolation|undefined> {
+  private async validateUniqeAttribute( name:string, attribute:TypeAttribute, attributes:any ):Promise<ValidationViolation|undefined> {
     const value = _.get( attributes, name );
     if( _.isUndefined( value ) ) return;
     const attrValues = _.set({}, name, value );

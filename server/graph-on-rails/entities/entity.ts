@@ -9,6 +9,7 @@ import { TypeAttribute } from './type-attribute';
 import { ResolverContext } from '../core/resolver-context';
 import { EntityResolveHandler } from './entity-resolve-handler';
 import { EntityAccessor } from './entity-accessor';
+import { EntityItem } from './entity-item';
 
 //
 //
@@ -153,8 +154,8 @@ export abstract class Entity {
   /**
    *
    */
-  async validate( resolverCtx:ResolverContext ):Promise<ValidationViolation[]> {
-    return await this.entityValidator.validate( resolverCtx );
+  async validate( attributes:any ):Promise<ValidationViolation[]> {
+    return await this.entityValidator.validate( attributes );
   }
 
   /**
@@ -168,29 +169,29 @@ export abstract class Entity {
   /**
    *
    */
-  async findById( id:any, decorate = true ):Promise<any> {
-    return this.entityAccessor.findById( id, decorate );
+  async findById( id:any ):Promise<EntityItem> {
+    return this.entityAccessor.findById( id );
   }
 
   /**
    *
    */
-  async findByIds( ids:any[], decorate = true ):Promise<any[]> {
-    return this.entityAccessor.findByIds( ids, decorate );
+  async findByIds( ids:any[] ):Promise<EntityItem[]> {
+    return this.entityAccessor.findByIds( ids );
   }
 
   /**
    *
    */
-  async findByAttribute( attrValue:{[name:string]:any}, decorate = true ):Promise<any> {
-    return this.entityAccessor.findByAttribute( attrValue, decorate );
+  async findByAttribute( attrValue:{[name:string]:any} ):Promise<EntityItem[]> {
+    return this.entityAccessor.findByAttribute( attrValue );
   }
 
   /**
    *
    */
-  async findOneByAttribute( attrValue:{[name:string]:any}, decorate = true ):Promise<any> {
-    return _.first( await this.entityAccessor.findByAttribute( attrValue, decorate ) );
+  async findOneByAttribute( attrValue:{[name:string]:any} ):Promise<EntityItem|undefined> {
+    return _.first( await this.entityAccessor.findByAttribute( attrValue ) );
   }
 
 }

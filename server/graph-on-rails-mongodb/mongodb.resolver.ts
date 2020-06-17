@@ -108,17 +108,7 @@ export class MongoDbResolver extends Resolver {
   /**
    *
    */
-  async resolveTypes( entity:Entity, resolverCtx:ResolverContext ):Promise<any[]> {
-    let filter = this.getFilterQuery( entity, resolverCtx );
-    filter = await this.addPermissions( entity, "read", filter, resolverCtx );
-    return this.findByExpression( entity, filter );
-  }
-
-  /**
-   *
-   */
-	protected getFilterQuery( entity:Entity, resolverCtx:ResolverContext ):FilterQuery<any> {
-    const filter = _.get( resolverCtx.args, 'filter');
+	protected buildExpression( entity:Entity, filter:any ):FilterQuery<any> {
     const filterQuery:FilterQuery<any> = {};
 		_.forEach( filter, (condition, field) => {
       const attribute = entity.getAttribute(field);
@@ -143,7 +133,7 @@ export class MongoDbResolver extends Resolver {
 
 	//
 	//
-	async updateType( entity:Entity, attrs: any, resolverCtx:ResolverContext ):Promise<any> {
+	async updateType( entity:Entity, attrs: any ):Promise<any> {
     const _id = new ObjectId( attrs.id );
     delete attrs.id;
     const collection = this.getCollection( entity );
@@ -153,7 +143,7 @@ export class MongoDbResolver extends Resolver {
 
 	//
 	//
-	async createType( entity:Entity, attrs: any, context: any ):Promise<any> {
+	async createType( entity:Entity, attrs: any ):Promise<any> {
     const collection = this.getCollection( entity );
     const result = await collection.insertOne( attrs );
     return this.findById( entity, result.insertedId );
@@ -162,9 +152,8 @@ export class MongoDbResolver extends Resolver {
   /**
    *
    */
-	async deleteType( entityType:Entity, resolverCtx:ResolverContext  ):Promise<boolean> {
+	async deleteType( entityType:Entity, id:any  ):Promise<boolean> {
     const collection = this.getCollection( entityType );
-    const id = _.get( resolverCtx.args, 'id' );
     collection.deleteOne( { "_id": new ObjectId( id ) } );
 		return true;
   }
@@ -196,8 +185,7 @@ export class MongoDbResolver extends Resolver {
   /**
    *
    */
-  protected async addPermissions( entity:Entity, action:CrudAction, filter:any, resolverCtx:ResolverContext ):Promise<any> {
-    let ids = await entity.getPermittedIds( action, resolverCtx );
+  protected async addPermittedIds( filter:any, ids:any[]|boolean ):Promise<any> {
     if( ids === true ) return filter;
     if( ids === false ) ids = [];
     return { $and: [ { _id: { $in: ids } }, filter ] };

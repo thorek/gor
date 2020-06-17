@@ -1,60 +1,63 @@
+import { ResolverContext } from 'graph-on-rails/core/resolver-context';
 import _ from 'lodash';
-import { EntityModule } from "./entity-module";
-import { ResolverContext } from "graph-on-rails/core/resolver-context";
-import { Entity, EntityReference } from './entity';
+
+import { Entity } from './entity';
+import { EntityItem } from './entity-item';
+import { EntityModule } from './entity-module';
 
 //
 //
 export class EntityResolveHandler extends EntityModule {
 
-  get resolver() { return this.entity.resolver }
+  get accessor() { return this.entity.entityAccessor }
 
   /**
    *
    */
-  async createType( resolverCtx:ResolverContext ) {
-    // TODO set defaults
-    let validationViolations = await this.entity.validate( resolverCtx );
-    if( _.size( validationViolations ) ) return { validationViolations };
-    const attrs = _.get( resolverCtx.args, this.entity.singular );
-    for( const assocTo of this.entity.assocToInput ){
-      await this.addInlineInput( assocTo, attrs, resolverCtx );
-    }
-    const item = await this.resolver.createType( this.entity, attrs, resolverCtx );
-    return _.set( {validationViolations: []}, this.entity.singular, item );
+  async resolveType( resolverCtx:ResolverContext ):Promise<any> {
+    const id = _.get( resolverCtx.args, 'id' );
+    const enit = await this.accessor.findById( id );
+    return enit.item;
   }
 
   /**
    *
    */
-  private async addInlineInput( assocTo: EntityReference, attrs: any, resolverCtx:ResolverContext ) {
-    const refEntity = this.context.entities[assocTo.type];
-    const input = _.get( attrs, refEntity.singular );
-    if( ! input ) return;
-    if ( _.has( attrs, refEntity.foreignKey ) ) throw new Error(
-      `'${this.entity.name} you cannot have '${refEntity.foreignKey}' if you provide inline input'` );
-    const item = await this.resolver.createType( refEntity, input, resolverCtx );
-    _.set( attrs, refEntity.foreignKey, _.toString( item.id ) );
-    _.unset( attrs, refEntity.singular );
+  async resolveTypes( resolverCtx:ResolverContext ):Promise<any[]> {
+    const filter = _.get( resolverCtx.args, 'filter');
+    const enits = await this.accessor.findByFilter( filter );
+    return _.map( enits, enit => enit.item );
   }
 
   /**
    *
    */
-  async updateType( resolverCtx:ResolverContext ) {
-    // TODO set defaults
-    let validationViolations = await this.entity.validate( resolverCtx );
-    if( _.size( validationViolations ) ) return { validationViolations };
-    const attrs = _.get( resolverCtx.args, this.entity.singular );
-    const item = await this.resolver.updateType( this.entity, attrs, resolverCtx );
-    return _.set( {validationViolations: []}, this.entity.singular, item );
+  async saveType( resolverCtx:ResolverContext ):Promise<any> {
+    const attributes = await this.getAttributes( resolverCtx );
+    const result = await this.accessor.save( attributes );
+    return result instanceof EntityItem ?
+      _.set( {validationViolations: []}, this.entity.singular, result.item ) :
+      { validationViolations: result };
   }
 
   /**
    *
    */
   async deleteType( resolverCtx:ResolverContext ) {
-    return this.resolver.deleteType( this.entity, resolverCtx );
+    return this.accessor.delete( resolverCtx.args.id );
+  }
+
+  /**
+   * Retrieves the attributes from the ResolverContext, if an item exist (to be updated) the
+   * current values are loaded and used when no values where provided
+   * TODO what happens, when the user wants to delete a string value?
+   * @returns map with attributes
+   */
+  private async getAttributes( resolverCtx:ResolverContext ):Promise<any> {
+    let attributes = _.get( resolverCtx.args, this.entity.singular );
+    if( ! _.has( attributes, 'id' ) ) return attributes;
+    const current = await this.accessor.findById( _.get( attributes, 'id' ) );
+    return _.defaultsDeep( attributes, current.item );
   }
 
   /**
@@ -62,61 +65,65 @@ export class EntityResolveHandler extends EntityModule {
    */
   async resolveAssocToType( refEntity:Entity, resolverCtx:ResolverContext ):Promise<any> {
     const id = _.get( resolverCtx.root, refEntity.foreignKey );
-    if( refEntity.isPolymorph ) {
-      const polymorphType = this.context.entities[_.get( resolverCtx.root, refEntity.typeField )];
-      const result = await this.resolver.findById( polymorphType, id );
-      _.set( result, '__typename', polymorphType.typeName );
-      return result;
-    }
-    return this.resolver.findById( refEntity, id );
+    if( refEntity.isPolymorph ) return this.resolvePolymorphAssocTo( refEntity, resolverCtx, id );
+    return refEntity.findById( id );
   }
 
   /**
    *
    */
-  async resolveAssocFromTypes( refEntity:Entity, resolverCtx:ResolverContext ):Promise<any> {
-    const entities = refEntity.isPolymorph ? refEntity.entities : [refEntity];
-    const result:any[] = [];
-    const id = _.toString(resolverCtx.root.id);
-    for( const entity of entities ){
-      const fieldName = entity.isAssocToMany( this.entity ) ? entity.foreignKeys : entity.foreignKey;
-      const attr = _.set({}, fieldName, id );
-      const items = await this.resolver.findByAttribute( entity, attr );
-      if( refEntity.isPolymorph ) _.forEach( items, item => _.set(item, '__typename', entity.typeName ) );
-      result.push( items );
-    }
-    return _.compact( _.flatten( result ) );
+  private async resolvePolymorphAssocTo( refEntity:Entity, resolverCtx:ResolverContext, id:any ):Promise<any> {
+    const polymorphType = this.context.entities[_.get( resolverCtx.root, refEntity.typeField )];
+    const result = await polymorphType.findById( id );
+    _.set( result, '__typename', polymorphType.typeName );
+    return result;
   }
 
   /**
    *
    */
   async resolveAssocToManyTypes( refEntity:Entity, resolverCtx:ResolverContext ):Promise<any> {
-    const foreignKeys = _.get( resolverCtx.root, refEntity.foreignKeys );
-    return this.resolver.findByIds( refEntity, foreignKeys );
+    if( refEntity.isPolymorph ) return this.resolvePolymorphAssocToMany( refEntity, resolverCtx );
+    const ids = _.map( _.get( resolverCtx.root, refEntity.foreignKeys ), id => _.toString );
+    return refEntity.findByIds( ids );
   }
 
   /**
    *
    */
-  async resolveType( resolverCtx:ResolverContext ):Promise<any> {
-    const id = _.get( resolverCtx.args, 'id' );
-    return this.resolver.findById( this.entity, id );
+  private async resolvePolymorphAssocToMany( refEntity:Entity, resolverCtx:ResolverContext ):Promise<any> {
+    throw 'not implemented';
   }
 
   /**
    *
    */
-  async resolveTypes( resolverCtx:ResolverContext ):Promise<any> {
-    const items = await this.entity.resolver.resolveTypes( this.entity, resolverCtx );
-    return items;
+  async resolveAssocFromTypes( refEntity:Entity, resolverCtx:ResolverContext ):Promise<any[]> {
+    const id = _.toString(resolverCtx.root.id);
+    const fieldName = refEntity.isAssocToMany( this.entity ) ? refEntity.foreignKeys : refEntity.foreignKey;
+    const attr = _.set({}, fieldName, id );
+    if( refEntity.isPolymorph ) return this.resolvePolymorphAssocFromTypes( refEntity, attr );
+    return refEntity.findByAttribute( attr );
+  }
+
+  /**
+   *
+   */
+  private async resolvePolymorphAssocFromTypes(refEntity:Entity, attr:any ):Promise<any[]> {
+    const result = [];
+    for( const entity of refEntity.entities ){
+      const items = await entity.findByAttribute( attr );
+      _.forEach( items, item => _.set(item, '__typename', entity.typeName ) );
+      result.push( items );
+    }
+    return _(result).flatten().compact().value();
   }
 
   /**
    *
    */
   async truncate():Promise<boolean>{
-    return this.resolver.truncate( this.entity );
+    return this.accessor.truncate();
   }
 
 }

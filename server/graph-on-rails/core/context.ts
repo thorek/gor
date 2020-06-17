@@ -8,7 +8,6 @@ import { EntityPermissions } from '../entities/entity-permissions';
 import { EntitySeeder } from '../entities/entity-seeder';
 import { ValidateJs } from '../validation/validate-js';
 import { Validator } from '../validation/validator';
-import { EntityItem } from './entity-item';
 import { GraphX } from './graphx';
 import { Resolver } from './resolver';
 import { ResolverContext } from './resolver-context';
@@ -27,7 +26,7 @@ export type GorConfig = {
   contextUser?:string
   contextRoles?:string
   extendSchema?:(context:Context) => void
-  virtualResolver?:{[entity:string]:{[attribute:string]: ( rctx:ResolverContext, item:EntityItem ) => any|Promise<any> }}
+  virtualResolver?:{[entity:string]:{[attribute:string]: ( item:any, rctx?:ResolverContext ) => any|Promise<any> }}
   configFolder?:string[]
   schemaBuilder?:SchemaBuilder[]
   entities?:Entity[]

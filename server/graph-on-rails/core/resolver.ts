@@ -1,32 +1,33 @@
 import { FilterType } from '../builder/filter-type';
 import { Entity } from '../entities/entity';
 import { ResolverContext } from './resolver-context';
+import { CrudAction } from '../entities/entity-permissions';
 
 /**
  *
  */
 export abstract class Resolver {
 
+  abstract buildExpression( entity:Entity, filter:any ):any;
+
+  abstract findByExpression( entity:Entity, filter:any ):Promise<any[]>;
+
+  abstract addPermittedIds( expression:any, ids:any[]|boolean ):Promise<any>;
 
   /**
    *
    */
-  abstract resolveTypes( entity:Entity, resolverCtx:ResolverContext ):Promise<any[]>;
+  abstract createType( entity:Entity, attrs: any ):Promise<any>;
 
   /**
    *
    */
-  abstract createType( entity:Entity, attrs: any, resolverCtx:ResolverContext ):Promise<any>;
+  abstract updateType( entity:Entity, attrs: any ):Promise<any>;
 
   /**
    *
    */
-  abstract updateType( entity:Entity, attrs: any, resolverCtx:ResolverContext ):Promise<any>;
-
-  /**
-   *
-   */
-  abstract deleteType( entity:Entity, resolverCtx:ResolverContext  ):Promise<boolean>;
+  abstract deleteType( entity:Entity, id:any  ):Promise<boolean>;
 
   /**
    *

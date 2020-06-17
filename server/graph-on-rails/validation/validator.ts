@@ -9,7 +9,7 @@ import { ResolverContext } from "../core/resolver-context";
 export abstract class Validator extends EntityModule{
 
 
-  abstract validate( attributes:any, resolverCtx:ResolverContext):Promise<ValidationViolation[]>
+  abstract validate( attributes:any ):Promise<ValidationViolation[]>
 }
 
 
