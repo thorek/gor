@@ -154,8 +154,8 @@ export abstract class Entity {
   /**
    *
    */
-  async validate( attributes:any ):Promise<ValidationViolation[]> {
-    return await this.entityValidator.validate( attributes );
+  async validate( attributes:any, action:'create'|'update' ):Promise<ValidationViolation[]> {
+    return await this.entityValidator.validate( attributes, action );
   }
 
   /**

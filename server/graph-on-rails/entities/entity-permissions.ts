@@ -7,7 +7,13 @@ import { ResolverContext } from '../core/resolver-context';
 export type CrudAction = "read" | "create" | "update" | "delete";
 
 /**
+ *  TODO refactor
+ *  it was wrong to assume the allowed values and the "default restrictions" could be done simultaneously
+ *  permissions should
+ *  1. allow / disallow action on entity (role based)
+ *  2. add additional "filter" to remove unallowed items - based on the item
  *
+ *  Another definition should decide about the "select" of entities
  */
 export class EntityPermissions extends EntityModule {
 

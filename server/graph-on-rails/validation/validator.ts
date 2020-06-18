@@ -1,17 +1,18 @@
 import { EntityModule } from "../entities/entity-module";
 import { ValidationViolation } from "../entities/entity-validator";
-import { ResolverContext } from "../core/resolver-context";
-
 
 /**
  *
  */
 export abstract class Validator extends EntityModule{
 
-
-  abstract validate( attributes:any ):Promise<ValidationViolation[]>
+  /**
+   *
+   * @param attributes
+   * @param action
+   */
+  abstract validate( attributes:any, action:'create'|'update' ):Promise<ValidationViolation[]>
 }
-
 
 /**
  *

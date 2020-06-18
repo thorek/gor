@@ -4,12 +4,11 @@ import { Collection, Db, FilterQuery, MongoClient, ObjectId } from 'mongodb';
 
 import { FilterType } from '../graph-on-rails/builder/filter-type';
 import { Resolver } from '../graph-on-rails/core/resolver';
-import { Entity, EntityReference } from '../graph-on-rails/entities/entity';
-import { CrudAction } from '../graph-on-rails/entities/entity-permissions';
+import { ResolverContext } from '../graph-on-rails/core/resolver-context';
+import { Entity } from '../graph-on-rails/entities/entity';
 import { EnumFilterType } from './filter/enum-filter-type';
 import { IntFilterType } from './filter/int-filter-type';
 import { StringFilterType } from './filter/string-filter-type';
-import { ResolverContext } from '../graph-on-rails/core/resolver-context';
 
 /**
  *
@@ -65,85 +64,23 @@ export class MongoDbResolver extends Resolver {
   /**
    *
    */
-  async findByExpression( entity:Entity, filter:any ):Promise<any[]> {
-    const collection = this.getCollection( entity );
-    const items = await collection.find( filter ).toArray();
-		return _.map( items, item => this.buildOutItem( item ) );
-  }
-
-  /**
-   *
-   */
   async findByAttribute( entity:Entity, attrValue:{[name:string]:any} ):Promise<any[]> {
     // const expression = { $and: _.map( attrValue, (value, attribute) => _.set({}, attribute, { $eq: value } ) ) };
     return this.findByExpression( entity, attrValue );
   }
 
-
   /**
    *
    */
-  protected getCollection( entity:Entity ):Collection {
-    return this.db.collection( entity.plural  );
+  async findByFilter( entity:Entity, filter:any ):Promise<any[]> {
+    const expression = this.buildExpression( entity, filter );
+    return this.findByExpression( entity, expression );
   }
 
   /**
    *
    */
-  getScalarFilterTypes():FilterType[] {
-    return [
-      new StringFilterType(),
-      new IntFilterType()
-    ]
-  }
-
-  /**
-   *
-   */
-  getEnumFilterType( enumName: string ) {
-    return new EnumFilterType( enumName );
-  }
-
-
-  /**
-   *
-   */
-	protected buildExpression( entity:Entity, filter:any ):FilterQuery<any> {
-    const filterQuery:FilterQuery<any> = {};
-		_.forEach( filter, (condition, field) => {
-      const attribute = entity.getAttribute(field);
-			if( ! attribute ) return;
-      const filterType = entity.context.filterType( attribute.filterType, attribute.graphqlType );
-      if( ! filterType ) return;
-			const expression = filterType.getFilterExpression( condition, field );
-			if( expression ) _.set( filterQuery, field, expression );
-    });
-		return filterQuery;
-	}
-
-	//
-	//
-	protected buildOutItem( entity:any ):any {
-    if( ! _.has( entity, '_id' ) ) return null;
-    _.set( entity, 'id', entity._id );
-    _.unset( entity, '_id' );
-    return entity;
-	}
-
-
-	//
-	//
-	async updateType( entity:Entity, attrs: any ):Promise<any> {
-    const _id = new ObjectId( attrs.id );
-    delete attrs.id;
-    const collection = this.getCollection( entity );
-    const result = await collection.updateOne( { _id }, { $set: attrs }, { upsert: false } );
-    return this.findById( entity, _id );
-	}
-
-	//
-	//
-	async createType( entity:Entity, attrs: any ):Promise<any> {
+  async create( entity:Entity, attrs: any ):Promise<any> {
     const collection = this.getCollection( entity );
     const result = await collection.insertOne( attrs );
     return this.findById( entity, result.insertedId );
@@ -152,7 +89,19 @@ export class MongoDbResolver extends Resolver {
   /**
    *
    */
-	async deleteType( entityType:Entity, id:any  ):Promise<boolean> {
+	async update( entity:Entity, attrs: any ):Promise<any> {
+    const _id = new ObjectId( attrs.id );
+    delete attrs.id;
+    const collection = this.getCollection( entity );
+    const result = await collection.updateOne( { _id }, { $set: attrs }, { upsert: false } );
+    return this.findById( entity, _id );
+	}
+
+
+  /**
+   *
+   */
+	async delete( entityType:Entity, id:any  ):Promise<boolean> {
     const collection = this.getCollection( entityType );
     collection.deleteOne( { "_id": new ObjectId( id ) } );
 		return true;
@@ -172,10 +121,85 @@ export class MongoDbResolver extends Resolver {
     return false;
   }
 
+
   /**
    *
    */
-  private async collectionExist( name:string ):Promise<boolean> {
+  getEnumFilterType( enumName: string ) {
+    return new EnumFilterType( enumName );
+  }
+
+  /**
+   *
+   */
+  getScalarFilterTypes():FilterType[] {
+    return [
+      new StringFilterType(),
+      new IntFilterType()
+    ]
+  }
+
+  /**
+   *
+   */
+  protected getObjectId( id:any, entity:Entity ):ObjectId {
+    if( ! id ) throw new Error(`cannot resolve type '${entity.name}' without id`);
+    try {
+      return new ObjectId( _.toString( id ) );
+    } catch (error) {
+      throw new Error( `could not convert '${id}' for '${entity.name}' to an ObjectId` );
+    }
+  }
+
+
+
+  /**
+   *
+   */
+  protected async findByExpression( entity:Entity, filter:any ):Promise<any[]> {
+    const collection = this.getCollection( entity );
+    const items = await collection.find( filter ).toArray();
+		return _.map( items, item => this.buildOutItem( item ) );
+  }
+
+  /**
+   *
+   */
+	protected buildExpression( entity:Entity, filter:any ):FilterQuery<any> {
+    const filterQuery:FilterQuery<any> = {};
+		_.forEach( filter, (condition, field) => {
+      const attribute = entity.getAttribute(field);
+			if( ! attribute ) return;
+      const filterType = entity.context.filterType( attribute.filterType, attribute.graphqlType );
+      if( ! filterType ) return;
+			const expression = filterType.getFilterExpression( condition, field );
+			if( expression ) _.set( filterQuery, field, expression );
+    });
+		return filterQuery;
+	}
+
+  /**
+   *
+   */
+  protected getCollection( entity:Entity ):Collection {
+    return this.db.collection( entity.plural  );
+  }
+
+  /**
+   *
+   */
+	protected buildOutItem( entity:any ):any {
+    if( ! _.has( entity, '_id' ) ) return null;
+    _.set( entity, 'id', entity._id );
+    _.unset( entity, '_id' );
+    return entity;
+	}
+
+
+  /**
+   *
+   */
+  protected async collectionExist( name:string ):Promise<boolean> {
     const collection = await this.db.listCollections({name}).next();
     return collection != null;
   }
@@ -185,7 +209,7 @@ export class MongoDbResolver extends Resolver {
   /**
    *
    */
-  protected async addPermittedIds( filter:any, ids:any[]|boolean ):Promise<any> {
+  async addPermittedIds( filter:any, ids:any[]|boolean ):Promise<any> {
     if( ids === true ) return filter;
     if( ids === false ) ids = [];
     return { $and: [ { _id: { $in: ids } }, filter ] };
@@ -245,18 +269,6 @@ export class MongoDbResolver extends Resolver {
   private resolvePermissionValue( entity:Entity, attribute:string, value:any, context:any ):any {
     value = _.get( context, value, value );
     return attribute === '_id' || entity.isAssocToAttribute( attribute ) ? new ObjectId( value ) : value;
-  }
-
-  /**
-   *
-   */
-  getObjectId( id:any, entity:Entity ):ObjectId {
-    if( ! id ) throw new Error(`cannot resolve type '${entity.name}' without id`);
-    try {
-      return new ObjectId( _.toString( id ) );
-    } catch (error) {
-      throw new Error( `could not convert '${id}' for '${entity.name}' to an ObjectId` );
-    }
   }
 
 }

@@ -1,13 +1,21 @@
 import _ from 'lodash';
-import { Entity } from "./entity";
+import { ValidationViolation } from './entity-validator';
+import { Entity } from './entity';
 
 //
 //
 export class EntityItem {
 
   get context() { return this.entity.context }
+  get id() { return _.toString( this.item.id ) }
+  get name() { return this.entity.name }
 
-  constructor( public readonly entity:Entity, public readonly item:any ){}
+  /**
+   *
+   * @param entity
+   * @param item
+   */
+  constructor( private readonly entity:Entity, public readonly item:any ){}
 
   static async create( entity:Entity, item:any ):Promise<EntityItem>{
     const entityItem = new EntityItem( entity, item );
@@ -66,18 +74,36 @@ export class EntityItem {
    *
    */
   async save():Promise<EntityItem>{
-    const allowed = _.concat(
-      _.keys( this.entity.attributes ),
-      _.flatten( _.map( this.entity.assocTo, assocTo => this.context.entities[assocTo.type].foreignKey ) ),
-      _.flatten( _.map( this.entity.assocToMany, assocTo => this.context.entities[assocTo.type].foreignKeys ) ),
-      _.flatten( _.map( this.entity.implements, impl => _.keys( impl.attributes ) ) )
-    );
+    const allowed = this.getAllowedAttributes();
     const attrs = _.pick( this.item, allowed );
-    const item = attrs.id ?
-      await this.entity.resolver.updateType( this.entity, attrs ) :
-      await this.entity.resolver.createType( this.entity, attrs );
+    const item = await this.entity.entityAccessor.save( attrs );
+    if( _.isArray( item ) ) throw this.getValidationError( item );
     return EntityItem.create( this.entity, item );
   }
+
+
+
+  //
+  //
+  private getAllowedAttributes():string[]{
+    const entities = _.compact( _.concat( this.entity, this.entity.implements ) );
+    return _.concat( 'id', _.flatten( _.map( entities, entity => {
+      return _.flatten( _.compact( _.concat(
+        _.keys(entity.attributes),
+        _(entity.assocTo).map( assocTo => {
+            const entity = this.context.entities[assocTo.type];
+            if( ! entity ) return;
+            return entity.isPolymorph ? [entity.foreignKey, entity.typeField ] : entity.foreignKey;
+          }).compact().flatten().value(),
+        _(this.entity.assocToMany).map( assocTo => {
+            const entity = this.context.entities[assocTo.type];
+            if( ! entity ) return;
+            return entity.isPolymorph ? [entity.foreignKeys, entity.typeField ] : entity.foreignKeys;
+        }).compact().flatten().value()
+      )));
+    })));
+  }
+
 
   //
   //
@@ -104,6 +130,14 @@ export class EntityItem {
   private warn<T>( msg:string, returnValue:T ):T{
     console.warn( `EntitItem '${this.entity.name}': ${msg}`);
     return returnValue;
+  }
+
+  //
+  //
+  private getValidationError( violations:ValidationViolation[] ):Error {
+    const msg = [`${this.entity.name}] could not save, there are validation violations`];
+    msg.push( ... _.map( violations, violation => `[${violation.attribute}] ${violation.violation}`) );
+    return new Error( _.join(msg, '\n') );
   }
 
 }

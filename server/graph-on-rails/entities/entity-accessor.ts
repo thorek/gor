@@ -41,10 +41,7 @@ export class EntityAccessor extends EntityModule {
    * @param filter as it comes from the graqpql request
    */
   async findByFilter( filter:any ):Promise<EntityItem[]>{
-    let expression = this.dataStore.buildExpression( this.entity, filter );
-    let ids = await this.entity.getPermittedIds( "read", resolverCtx );
-    expression = await this.dataStore.addPermittedIds( expression, ids  );
-    return this.dataStore.findByExpression( this.entity, expression );
+    return this.dataStore.findByFilter( this.entity, filter );
   }
 
   /**
@@ -52,22 +49,30 @@ export class EntityAccessor extends EntityModule {
    */
   async save( attributes:any, skipValidation = false ):Promise<EntityItem|ValidationViolation[]> {
     // TODO set defaults
+    const action = _.has( attributes, 'id' ) ? 'update' : 'create';
     if( ! skipValidation ){
-      const validationViolations = await this.entity.validate( attributes );
+      const validationViolations = await this.entity.validate( attributes, action );
       if( _.size( validationViolations ) ) return validationViolations;
     }
-    for( const assocTo of this.entity.assocToInput ){
-      await this.createInlineInput( assocTo, attributes );
-    }
-    const item = await this.dataStore.createType( this.entity, attributes );
+    const item = action === 'create' ?
+      await this.create( attributes ) :
+      await this.dataStore.update( this.entity, attributes );
     return EntityItem.create( this.entity, item );
   }
 
   /**
    *
    */
+  private async create( attributes:any ){
+    for( const assocTo of this.entity.assocToInput ) await this.createInlineInput( assocTo, attributes );
+    return this.dataStore.create( this.entity, attributes );
+  }
+
+  /**
+   *
+   */
   delete( id:any ):Promise<boolean> {
-    return this.dataStore.deleteType( this.entity, id );
+    return this.dataStore.delete( this.entity, id );
   }
 
   /**
@@ -86,7 +91,7 @@ export class EntityAccessor extends EntityModule {
     if( ! input ) return;
     if ( _.has( attrs, refEntity.foreignKey ) ) throw new Error(
       `'${this.entity.name} you cannot have '${refEntity.foreignKey}' if you provide inline input'` );
-    const item = await this.dataStore.createType( refEntity, input );
+    const item = await this.dataStore.create( refEntity, input );
     _.set( attrs, refEntity.foreignKey, _.toString( item.id ) );
     _.unset( attrs, refEntity.singular );
   }

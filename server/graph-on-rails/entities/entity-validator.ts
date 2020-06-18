@@ -26,11 +26,11 @@ export class EntityValidator  {
   /**
    *
    */
-  async validate( attributes:any ):Promise<ValidationViolation[]> {
+  async validate( attributes:any, action:'create'|'update' ):Promise<ValidationViolation[]> {
     const violations:ValidationViolation[] = [];
     violations.push( ... await this.validateRequiredAssocTos( attributes ) );
     violations.push( ... await this.validateUniqe( attributes ) );
-    violations.push( ... await this.validator.validate( attributes ) );
+    violations.push( ... await this.validator.validate( attributes, action ) );
     return violations;
   }
 

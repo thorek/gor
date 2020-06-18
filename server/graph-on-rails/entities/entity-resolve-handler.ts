@@ -1,6 +1,6 @@
-import { ResolverContext } from 'graph-on-rails/core/resolver-context';
 import _ from 'lodash';
 
+import { ResolverContext } from '../core/resolver-context';
 import { Entity } from './entity';
 import { EntityItem } from './entity-item';
 import { EntityModule } from './entity-module';
