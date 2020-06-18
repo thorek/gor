@@ -13,6 +13,12 @@ export abstract class Resolver {
 
   abstract findByAttribute( entity:Entity, attrValue:{[name:string]:any} ):Promise<any[]>;
 
+  /**
+   *
+   * @param entity the entity
+   * @param filter the filter as it would be build from the filter types of this datasource
+   * @returns all items matching the filter
+   */
   abstract findByFilter( entity:Entity, filter:any ):Promise<any[]>;
 
   abstract create( entity:Entity, attrs: any ):Promise<any>;

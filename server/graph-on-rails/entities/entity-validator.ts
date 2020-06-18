@@ -3,6 +3,7 @@ import _ from 'lodash';
 import { Validator } from '../validation/validator';
 import { Entity, EntityReference } from './entity';
 import { TypeAttribute } from './type-attribute';
+import { NotFoundError } from './entity-accessor';
 
 //
 //
@@ -26,12 +27,27 @@ export class EntityValidator  {
   /**
    *
    */
-  async validate( attributes:any, action:'create'|'update' ):Promise<ValidationViolation[]> {
+  async validate( attributes:any ):Promise<ValidationViolation[]> {
+    const action = _.has( attributes, 'id') ? 'update' : 'create';
+    const validatable = await this.completeAttributes( attributes );
     const violations:ValidationViolation[] = [];
-    violations.push( ... await this.validateRequiredAssocTos( attributes ) );
-    violations.push( ... await this.validateUniqe( attributes ) );
-    violations.push( ... await this.validator.validate( attributes, action ) );
+    violations.push( ... await this.validateRequiredAssocTos( validatable ) );
+    violations.push( ... await this.validateUniqe( validatable ) );
+    violations.push( ... await this.validator.validate( validatable, action ) );
     return violations;
+  }
+
+  /**
+   * Retrieves the attributes from the ResolverContext, if an item exist (to be updated) the
+   * current values are loaded and used when no values where provided
+   * TODO what happens, when the user wants to delete a string value?
+   * @returns map with attributes
+   */
+  private async completeAttributes( attributes:any ):Promise<any> {
+    const id = _.get( attributes, 'id' );
+    if( ! id ) return attributes;
+    const current = await this.entity.findById( id );
+    return _.defaultsDeep( _.cloneDeep(attributes), current.item );
   }
 
   /**
@@ -55,14 +71,12 @@ export class EntityValidator  {
     const foreignKey = _.get( attributes, refEntity.foreignKey );
     if( ! foreignKey ) return {attribute: refEntity.foreignKey, violation: "must be provided"};
     try {
-      const result = await refEntity.findById( _.toString(foreignKey) );
-      if( result ) return;
+      await refEntity.findById( _.toString(foreignKey) );
     } catch (error) {
+      if( error instanceof NotFoundError ) return { attribute: refEntity.foreignKey, violation: "must refer to existing item" };
       return { attribute: refEntity.foreignKey, violation: _.toString(error) };
     }
-    return { attribute: refEntity.foreignKey, violation: "must refer to existing item" };
   }
-
 
   /**
    *

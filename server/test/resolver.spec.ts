@@ -43,11 +43,11 @@ describe('Resolver', () => {
   it('should find items by string filter', async () => {
     const resolverCtx = { root:{}, args:{}, context:{} };
     const alpha = context.entities['Alpha'];
-    const a1 = await alpha.resolver.resolveTypes( alpha, _.set( resolverCtx, 'args', { filter: { name: { is: "a1" } } } ) );
+    const a1 = await alpha.resolver.findByFilter( alpha, { name: { is: "a1" } } );
     expect( a1 ).toHaveLength(1);
-    const arr = await alpha.resolver.resolveTypes( alpha, _.set( resolverCtx, 'args', { filter: { name: { contains: "a" } } } ) );
+    const arr = await alpha.resolver.findByFilter( alpha, { name: { contains: "a" } } );
     expect( arr ).toHaveLength(4);
-    const aX = await alpha.resolver.resolveTypes( alpha, _.set( resolverCtx, 'args', { filter: { name: { is: "aX" } } } ) );
+    const aX = await alpha.resolver.findByFilter( alpha, { name: { is: "aX" } } );
     expect( aX ).toHaveLength(0);
   })
 
@@ -55,13 +55,13 @@ describe('Resolver', () => {
     const resolverCtx = { root:{}, args:{}, context:{} };
     const alpha = context.entities['Alpha'];
 
-    const aLt2 = await alpha.resolver.resolveTypes( alpha, _.set( resolverCtx, 'args', { filter: { number: { lt: 2 } } } ) );
+    const aLt2 = await alpha.resolver.findByFilter( alpha, { number: { lt: 2 } } );
     expect( aLt2 ).toHaveLength(1);
 
-    const aGt1 = await alpha.resolver.resolveTypes( alpha, _.set( resolverCtx, 'args', { filter: { number: { gt: 1 } } } ) );
+    const aGt1 = await alpha.resolver.findByFilter( alpha, { number: { gt: 1 } } );
     expect( aGt1 ).toHaveLength(2);
 
-    const aBetween2_4 = await alpha.resolver.resolveTypes( alpha, _.set( resolverCtx, 'args', { filter: { number: { between: [2,4] } } } ) );
+    const aBetween2_4 = await alpha.resolver.findByFilter( alpha, { number: { between: [2,4] } } );
     expect( aBetween2_4 ).toHaveLength(2);
   })
 

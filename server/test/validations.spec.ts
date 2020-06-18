@@ -1,14 +1,12 @@
 import _ from 'lodash';
 
 import { Context } from '../graph-on-rails/core/context';
-import { ResolverContext } from '../graph-on-rails/core/resolver-context';
 import { Runtime } from '../graph-on-rails/core/runtime';
 import { Seeder } from '../graph-on-rails/core/seeder';
 
 describe('Validations', () => {
 
   let context!:Context;
-  const resolverCtx:ResolverContext = { root:{}, args:{}, context:{} };
 
   beforeAll( async () => {
     const runtime = await Runtime.create( "test:validations", { domainConfiguration:{
@@ -62,8 +60,7 @@ describe('Validations', () => {
   //
   it('should validate attributes', async () => {
     const alpha = context.entities['Alpha'];
-    resolverCtx.args = { alpha: { some: "some" } };
-    let result = await alpha.validate( resolverCtx);
+    let result = await alpha.validate( { some: "some" } );
     expect( result ).toHaveLength( 1 );
     expect( result ).toEqual( expect.arrayContaining([
       expect.objectContaining( {
@@ -72,8 +69,7 @@ describe('Validations', () => {
       })
     ]));
 
-    resolverCtx.args = { alpha: { name: "x" } };
-    result = await alpha.validate( resolverCtx );
+    result = await alpha.validate( { name: "x" } );
     expect( result ).toHaveLength( 2 );
     expect( result ).toEqual( expect.arrayContaining([
       expect.objectContaining( {
@@ -86,8 +82,7 @@ describe('Validations', () => {
       })
     ]));
 
-    resolverCtx.args = { alpha: { name: "Cool this", some: "Some that" } };
-    result = await alpha.validate( resolverCtx );
+    result = await alpha.validate( { name: "Cool this", some: "Some that" } );
     expect( result ).toHaveLength( 0 );
   })
 
@@ -95,8 +90,7 @@ describe('Validations', () => {
   //
   it( 'should validate required assocTo', async () => {
     const beta = context.entities['Beta'];
-    resolverCtx.args = { beta: { name: "aName" } };
-    const result = await beta.validate( resolverCtx);
+    const result = await beta.validate( { name: "aName" } );
     expect( result ).toHaveLength( 1 );
     expect( result ).toEqual( expect.arrayContaining([
       expect.objectContaining( {
@@ -110,8 +104,7 @@ describe('Validations', () => {
   //
   it( 'should validate existing foreignKey', async () => {
     const beta = context.entities['Beta'];
-    resolverCtx.args = { beta: { name: "someName", deltaId: "1234" } };
-    let result = await beta.validate( resolverCtx);
+    let result = await beta.validate( { name: "someName", deltaId: "1234" } );
     expect( result ).toHaveLength( 1 );
     expect( result ).toEqual( expect.arrayContaining([
       expect.objectContaining({
@@ -121,9 +114,8 @@ describe('Validations', () => {
     ]));
 
     const alpha = context.entities['Alpha']; // to get a valid but not matching id
-    const alpha1:any = _.first( await alpha.findByAttribute( {name: 'alpha1'}) );
-    resolverCtx.args = { beta: { name: "someName", deltaId: alpha1.id } };
-    result = await beta.validate( resolverCtx );
+    const alpha1 = _.first( await alpha.findByAttribute( {name: 'alpha1'}) );
+    result = await beta.validate( { name: "someName", deltaId: alpha1?.id } );
     expect( result ).toHaveLength( 1 );
     expect( result ).toEqual( expect.arrayContaining([
       expect.objectContaining( {
@@ -133,10 +125,9 @@ describe('Validations', () => {
     ]));
 
     const delta = context.entities['Delta'];
-    const delta1:any = await delta.findOneByAttribute({name: 'delta1'});
+    const delta1 = await delta.findOneByAttribute({name: 'delta1'});
     expect( delta1 ).toBeDefined()
-    resolverCtx.args = { beta: { name: "someName", deltaId: _.toString(delta1.id) } };
-    result = await beta.validate( resolverCtx );
+    result = await beta.validate( { name: "someName", deltaId: delta1?.id } );
     expect( result ).toHaveLength( 0 );
   })
 
@@ -145,8 +136,7 @@ describe('Validations', () => {
   it('should have validation violation for unique attribute', async () => {
     const alpha = context.entities['Alpha'];
 
-    resolverCtx.args = { alpha: { name: "alpha1", some: "some" } };
-    let result = await alpha.validate( resolverCtx);
+    const result = await alpha.validate( { name: "alpha1", some: "some" } );
     expect( result ).toHaveLength( 1 );
     expect( result ).toEqual( expect.arrayContaining([
       expect.objectContaining( {
@@ -161,13 +151,12 @@ describe('Validations', () => {
   it('should have validation violation for unique attribute with scope', async () => {
     const alpha = context.entities['Alpha'];
     const delta = context.entities['Delta'];
-    const delta1:any = _.first( await delta.findByAttribute({name: 'delta1'}) );
-    const delta2:any = _.first( await delta.findByAttribute({name: 'delta2'}) );
+    const delta1 = _.first( await delta.findByAttribute({name: 'delta1'}) );
+    const delta2 = _.first( await delta.findByAttribute({name: 'delta2'}) );
 
-    expect( delta1.id ).toBeDefined()
+    expect( delta1?.id ).toBeDefined()
 
-    resolverCtx.args = { alpha: { name: "alphaNeu", some: "some1", deltaId: _.toString(delta1.id) } };
-    let result = await alpha.validate( resolverCtx );
+    let result = await alpha.validate( { name: "alphaNeu", some: "some1", deltaId: delta1?.id } );
     expect( result ).toHaveLength( 1 );
     expect( result ).toEqual( expect.arrayContaining([
       expect.objectContaining( {
@@ -176,8 +165,7 @@ describe('Validations', () => {
       })
     ]));
 
-    resolverCtx.args = { alpha: { name: "aX", some: "some1", deltaId: _.toString(delta2.id) } };
-    result = await alpha.validate( resolverCtx );
+    result = await alpha.validate( { name: "aX", some: "some1", deltaId: delta2?.id } );
     expect( result ).toHaveLength( 0 );
   })
 
@@ -185,9 +173,9 @@ describe('Validations', () => {
   //
   it('should validate the updated item (not just the input)', async () => {
     const alpha = context.entities['Alpha'];
-    const alpha1:any = _.first( await alpha.findByAttribute({name: 'alpha1'}));
-    resolverCtx.args = { alpha: { id: _.toString(alpha1.id) } };
-    const result = await alpha.validate( resolverCtx );
+    const alpha1 = _.first( await alpha.findByAttribute({name: 'alpha1'}));
+    expect( alpha1 ).toBeDefined();
+    const result = await alpha.validate( { id: alpha1?.id } );
     expect( result ).toHaveLength( 0 );
   })
 
@@ -195,9 +183,8 @@ describe('Validations', () => {
   //
   it( 'should not complain for update with the same unique value', async () => {
     const alpha = context.entities['Alpha'];
-    const alpha1:any = _.first( await alpha.findByAttribute({name: 'alpha1'}));
-    resolverCtx.args = { alpha: { id: _.toString(alpha1.id), name: 'alpha1' } };
-    const result = await alpha.validate( resolverCtx );
+    const alpha1 = _.first( await alpha.findByAttribute({name: 'alpha1'}));
+    const result = await alpha.validate( { id: alpha1?.id, name: 'alpha1' } );
     expect( result ).toHaveLength( 0 );
   })
 

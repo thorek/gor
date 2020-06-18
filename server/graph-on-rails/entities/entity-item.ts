@@ -61,22 +61,22 @@ export class EntityItem {
     if( ! assocFrom ) return this.warn(`no such assocFrom '${name}'`, []);
     const foreignEntity = this.context.entities[assocFrom.type];
     if( ! foreignEntity ) return this.warn( `assocFrom '${name}' is no entity`, [] );
-    const entites = foreignEntity.isPolymorph ? foreignEntity.entities : [this.entity];
-    const items:EntityItem[] = [];
+    const entites = foreignEntity.isPolymorph ? foreignEntity.entities : [foreignEntity];
+    const enits:EntityItem[] = [];
     for( const entity of entites ){
       const attr = _.set({}, this.entity.foreignKey, _.toString( this.item.id ) );
-      items.push( ... await entity.findByAttribute( attr ) );
+      enits.push( ... await entity.findByAttribute( attr ) );
     }
-    return items;
+    return enits;
   }
 
   /**
    *
    */
-  async save():Promise<EntityItem>{
+  async save( skipValidation = false ):Promise<EntityItem>{
     const allowed = this.getAllowedAttributes();
     const attrs = _.pick( this.item, allowed );
-    const item = await this.entity.entityAccessor.save( attrs );
+    const item = await this.entity.entityAccessor.save( attrs, skipValidation );
     if( _.isArray( item ) ) throw this.getValidationError( item );
     return EntityItem.create( this.entity, item );
   }
@@ -138,6 +138,10 @@ export class EntityItem {
     const msg = [`${this.entity.name}] could not save, there are validation violations`];
     msg.push( ... _.map( violations, violation => `[${violation.attribute}] ${violation.violation}`) );
     return new Error( _.join(msg, '\n') );
+  }
+
+  toString(){
+    return `[${this.entity.name}:${this.id}]\n${this.item}`
   }
 
 }

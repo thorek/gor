@@ -31,7 +31,7 @@ export class EntitySeeder extends EntityModule {
   private async seedInstanceAttributes( name:string, seed:any, ids:any ):Promise<any> {
     try {
       let enit = await EntityItem.create( this.entity, seed );
-      enit = await enit.save();
+      enit = await enit.save( true );
       if( ! enit ) throw `seed '${name}' could not be saved`;
       const id = enit.item.id;
       if( ! id ) throw `seed '${name}' has no id`;
@@ -111,10 +111,12 @@ export class EntitySeeder extends EntityModule {
    */
   private async updateAssocTo( idsMap: any, name: string, refEntity: Entity, refId: string, refType?: string ) {
     const id = _.get( idsMap, [this.entity.typeName, name] );
+    if( ! id ) return console.warn(
+      `[${this.entity.name}] cannot update assocTo, no id for '${refEntity.name}'.${name}`);
     const enit = await this.entity.findById( id );
     _.set( enit.item, refEntity.foreignKey, _.toString(refId) );
     if( refType ) _.set( enit.item, refEntity.typeField, refType );
-    await enit.save();
+    await enit.save( true );
   }
 
   /**
@@ -125,7 +127,7 @@ export class EntitySeeder extends EntityModule {
     const id = _.get( idsMap, [this.entity.typeName, name] );
     const enit = await this.entity.findById( id );
     _.set( enit.item, refEntity.foreignKeys, refIds );
-    await enit.save();
+    await enit.save( true );
   }
 
 

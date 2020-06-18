@@ -7,6 +7,17 @@ import { ValidationViolation } from './entity-validator';
 
 //
 //
+export class NotFoundError extends Error {
+
+  constructor(message?: string) {
+    super(message);
+    Object.setPrototypeOf(this, new.target.prototype); // restore prototype chain
+    this.name = NotFoundError.name; // stack traces display correctly now
+}
+}
+
+//
+//
 export class EntityAccessor extends EntityModule {
 
   get dataStore() { return this.entity.resolver }
@@ -15,8 +26,9 @@ export class EntityAccessor extends EntityModule {
    *
    */
   async findById( id:any ):Promise<EntityItem> {
+    if( ! id ) throw new Error( `[${this.entity.name}].findById - no id provided` );
     const item = await this.dataStore.findById( this.entity, id );
-    if( ! item ) throw new Error( `[${this.entity.name}] with id '${id}' does not exist`);
+    if( ! item ) throw new NotFoundError( `[${this.entity.name}] with id '${id}' does not exist`);
     return EntityItem.create( this.entity, item );
   }
 
@@ -49,14 +61,13 @@ export class EntityAccessor extends EntityModule {
    */
   async save( attributes:any, skipValidation = false ):Promise<EntityItem|ValidationViolation[]> {
     // TODO set defaults
-    const action = _.has( attributes, 'id' ) ? 'update' : 'create';
     if( ! skipValidation ){
-      const validationViolations = await this.entity.validate( attributes, action );
+      const validationViolations = await this.entity.validate( attributes );
       if( _.size( validationViolations ) ) return validationViolations;
     }
-    const item = action === 'create' ?
-      await this.create( attributes ) :
-      await this.dataStore.update( this.entity, attributes );
+    const item = _.has( attributes, 'id') ?
+      await this.dataStore.update( this.entity, attributes ) :
+      await this.create( attributes );
     return EntityItem.create( this.entity, item );
   }
 

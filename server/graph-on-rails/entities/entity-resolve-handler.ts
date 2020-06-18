@@ -33,7 +33,7 @@ export class EntityResolveHandler extends EntityModule {
    *
    */
   async saveType( resolverCtx:ResolverContext ):Promise<any> {
-    const attributes = await this.getAttributes( resolverCtx );
+    const attributes = _.get( resolverCtx.args, this.entity.singular );
     const result = await this.accessor.save( attributes );
     return result instanceof EntityItem ?
       _.set( {validationViolations: []}, this.entity.singular, result.item ) :
@@ -45,19 +45,6 @@ export class EntityResolveHandler extends EntityModule {
    */
   async deleteType( resolverCtx:ResolverContext ) {
     return this.accessor.delete( resolverCtx.args.id );
-  }
-
-  /**
-   * Retrieves the attributes from the ResolverContext, if an item exist (to be updated) the
-   * current values are loaded and used when no values where provided
-   * TODO what happens, when the user wants to delete a string value?
-   * @returns map with attributes
-   */
-  private async getAttributes( resolverCtx:ResolverContext ):Promise<any> {
-    let attributes = _.get( resolverCtx.args, this.entity.singular );
-    if( ! _.has( attributes, 'id' ) ) return attributes;
-    const current = await this.accessor.findById( _.get( attributes, 'id' ) );
-    return _.defaultsDeep( attributes, current.item );
   }
 
   /**
