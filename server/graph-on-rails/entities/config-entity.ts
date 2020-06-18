@@ -84,8 +84,13 @@ export class ConfigEntity extends Entity {
 	protected getAssocTo() {
     if( ! this.entityConfig.assocTo ) return super.getAssocTo();
     if( ! _.isArray( this.entityConfig.assocTo) ) this.entityConfig.assocTo = [this.entityConfig.assocTo];
-    return _.map( this.entityConfig.assocTo, bt => {
-      return _.isString(bt) ? { type: bt } : bt;
+    return _.map( this.entityConfig.assocTo, assocTo => {
+      if( _.isString( assocTo ) ) assocTo = { type : assocTo }
+      if( _.endsWith( assocTo.type, '!' ) ){
+        assocTo.type = assocTo.type.slice(0, -1);
+        assocTo.required = true;
+      }
+      return assocTo;
     });
   }
 	protected getAssocToMany() {

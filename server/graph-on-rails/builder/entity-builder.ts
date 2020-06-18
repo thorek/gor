@@ -13,7 +13,7 @@ import {
   GraphQLType,
   GraphQLUnionType,
 } from 'graphql';
-import _, { Dictionary } from 'lodash';
+import _, { Dictionary, entries } from 'lodash';
 
 import { Context } from '../core/context';
 import { Entity, EntityReference } from '../entities/entity';
@@ -97,21 +97,25 @@ export class EntityBuilder extends SchemaBuilder {
     this.graphx.type( name, {
       from: GraphQLUnionType,
       name,
-      types: () => _.compact( _.map( this.entity.entities, entity => this.graphx.type(entity.typeName) ) ),
+      types: () => _.compact( _.map( this.getSpecificEntities( this.entity),
+        entity => this.graphx.type( entity.typeName) ) ),
       description: this.entity.description
     });
+  }
+
+  getSpecificEntities( entity:Entity ):Entity[]{
+    if( ! entity.isPolymorph ) return [entity];
+    return _.flatten( _.map( entity.entities, e => this.getSpecificEntities(e) ) );
   }
 
   //
   //
   protected createEntityTypesEnum():void {
     if( ! this.entity.isPolymorph ) return;
-    const entities = this.entity.isUnion ?
-      this.entity.entities :
-      _.filter( this.context.entities, entity => entity.implementsEntityInterface( this.entity ) );
+    const entities = this.getSpecificEntities( this.entity );
+    const values = _.reduce( entities, (values, entity) =>
+      _.set( values, entity.name, {value: entity.name } ), {} );
     const name = this.entity.typesEnumName;
-    const values = _.reduce( entities,
-      (values, entity) => _.set( values, entity.name, {value: entity.name } ), {}  );
     this.graphx.type( name, { name, values, from: GraphQLEnumType });
   }
 
@@ -123,6 +127,7 @@ export class EntityBuilder extends SchemaBuilder {
       this.addFieldsFromInterface( entity );
       this.addAssocTo( entity );
       this.addAssocToMany( entity );
+      this.addAssocFrom( entity );
     });
     _.set( this.graphx.type(this.entity.typeName), 'interfaceTypes',
       () => _.map( this.entity.implements, entity => this.graphx.type(entity.typeName)) );
@@ -240,8 +245,9 @@ export class EntityBuilder extends SchemaBuilder {
 
 	//
 	//
-	protected addAssocFrom():void {
-    const assocFrom = _.filter( this.entity.assocFrom, assocFrom => this.checkReference( 'assocFrom', assocFrom ) );
+	protected addAssocFrom( entity?:Entity ):void {
+    if( ! entity ) entity = this.entity;
+    const assocFrom = _.filter( entity.assocFrom, assocFrom => this.checkReference( 'assocFrom', assocFrom ) );
 		this.graphx.type(this.entity.typeName).extendFields(
       () => _.reduce( assocFrom, (fields, ref) => this.addAssocFromReferenceToType( fields, ref ), {} ));
   }
