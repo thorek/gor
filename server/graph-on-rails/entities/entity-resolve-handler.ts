@@ -1,78 +1,116 @@
 import _ from 'lodash';
-import { EntityModule } from "./entity-module";
-import { ResolverContext } from "graph-on-rails/core/resolver-context";
+
+import { ResolverContext } from '../core/resolver-context';
 import { Entity } from './entity';
+import { EntityItem } from './entity-item';
+import { EntityModule } from './entity-module';
 
 //
 //
 export class EntityResolveHandler extends EntityModule {
 
-  get resolver() { return this.entity.resolver }
+  get accessor() { return this.entity.entityAccessor }
 
   /**
    *
    */
-  async createType( resolverCtx:ResolverContext ) {
-    // TODO set defaults
-    let validationViolations = await this.entity.validate( resolverCtx );
-    if( _.size( validationViolations ) ) return { validationViolations };
-    const item = await this.entity.resolver.saveEntity( this.entity, resolverCtx );
-    return _.set( {validationViolations: []}, this.entity.singular, item );
+  async resolveType( resolverCtx:ResolverContext ):Promise<any> {
+    const id = _.get( resolverCtx.args, 'id' );
+    const enit = await this.accessor.findById( id );
+    return enit.item;
   }
 
   /**
    *
    */
-  async updateType( resolverCtx:ResolverContext ) {
-    // TODO set defaults
-    let validationViolations = await this.entity.validate( resolverCtx );
-    if( _.size( validationViolations ) ) return { validationViolations };
-    return _.set( {validationViolations: []}, this.entity.singular, this.entity.resolver.saveEntity( this.entity, resolverCtx ) );
+  async resolveTypes( resolverCtx:ResolverContext ):Promise<any[]> {
+    const filter = _.get( resolverCtx.args, 'filter');
+    const enits = await this.accessor.findByFilter( filter );
+    return _.map( enits, enit => enit.item );
+  }
+
+  /**
+   *
+   */
+  async saveType( resolverCtx:ResolverContext ):Promise<any> {
+    const attributes = _.get( resolverCtx.args, this.entity.singular );
+    const result = await this.accessor.save( attributes );
+    return result instanceof EntityItem ?
+      _.set( {validationViolations: []}, this.entity.singular, result.item ) :
+      { validationViolations: result };
   }
 
   /**
    *
    */
   async deleteType( resolverCtx:ResolverContext ) {
-    return this.resolver.deleteEntity( this.entity, resolverCtx );
+    return this.accessor.delete( resolverCtx.args.id );
   }
 
   /**
    *
    */
   async resolveAssocToType( refEntity:Entity, resolverCtx:ResolverContext ):Promise<any> {
-    return this.resolver.resolveAssocToType( refEntity, resolverCtx );
+    const id = _.get( resolverCtx.root, refEntity.foreignKey );
+    if( refEntity.isPolymorph ) return this.resolvePolymorphAssocTo( refEntity, resolverCtx, id );
+    return refEntity.findById( id );
   }
 
   /**
    *
    */
-  async resolveAssocFromTypes( refEntity:Entity, resolverCtx:ResolverContext ):Promise<any> {
-    return this.resolver.resolveAssocFromTypes( this.entity, refEntity, resolverCtx );
+  private async resolvePolymorphAssocTo( refEntity:Entity, resolverCtx:ResolverContext, id:any ):Promise<any> {
+    const polymorphType = this.context.entities[_.get( resolverCtx.root, refEntity.typeField )];
+    const result = await polymorphType.findById( id );
+    _.set( result, '__typename', polymorphType.typeName );
+    return result;
   }
 
   /**
    *
    */
   async resolveAssocToManyTypes( refEntity:Entity, resolverCtx:ResolverContext ):Promise<any> {
-    return this.resolver.resolveAssocToManyTypes( this.entity, refEntity, resolverCtx );
+    if( refEntity.isPolymorph ) return this.resolvePolymorphAssocToMany( refEntity, resolverCtx );
+    const ids = _.map( _.get( resolverCtx.root, refEntity.foreignKeys ), id => _.toString );
+    return refEntity.findByIds( ids );
   }
 
   /**
    *
    */
-  async resolveType( resolverCtx:ResolverContext ):Promise<any> {
-    return await this.entity.resolver.resolveType( this.entity, resolverCtx );
+  private async resolvePolymorphAssocToMany( refEntity:Entity, resolverCtx:ResolverContext ):Promise<any> {
+    throw 'not implemented';
   }
 
   /**
    *
    */
-  async resolveTypes( resolverCtx:ResolverContext ):Promise<any> {
-    const items = await this.entity.resolver.resolveTypes( this.entity, resolverCtx );
-    return items;
+  async resolveAssocFromTypes( refEntity:Entity, resolverCtx:ResolverContext ):Promise<any[]> {
+    const id = _.toString(resolverCtx.root.id);
+    const fieldName = refEntity.isAssocToMany( this.entity ) ? refEntity.foreignKeys : refEntity.foreignKey;
+    const attr = _.set({}, fieldName, id );
+    if( refEntity.isPolymorph ) return this.resolvePolymorphAssocFromTypes( refEntity, attr );
+    return refEntity.findByAttribute( attr );
   }
 
+  /**
+   *
+   */
+  private async resolvePolymorphAssocFromTypes(refEntity:Entity, attr:any ):Promise<any[]> {
+    const result = [];
+    for( const entity of refEntity.entities ){
+      const items = await entity.findByAttribute( attr );
+      _.forEach( items, item => _.set(item, '__typename', entity.typeName ) );
+      result.push( items );
+    }
+    return _(result).flatten().compact().value();
+  }
 
+  /**
+   *
+   */
+  async truncate():Promise<boolean>{
+    return this.accessor.truncate();
+  }
 
 }

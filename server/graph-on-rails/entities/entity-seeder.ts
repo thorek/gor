@@ -2,19 +2,18 @@ import _ from 'lodash';
 
 import { Entity, EntityReference } from './entity';
 import { EntityModule } from './entity-module';
+import { EntityItem } from './entity-item';
 
 /**
  *
  */
 export class EntitySeeder extends EntityModule {
 
-  get resolver() { return this.context.resolver }
-
   /**
    *
    */
   public async truncate():Promise<boolean> {
-    return await this.resolver.truncate( this.entity );
+    return await this.entity.entityResolveHandler.truncate();
   }
 
   /**
@@ -31,9 +30,12 @@ export class EntitySeeder extends EntityModule {
    */
   private async seedInstanceAttributes( name:string, seed:any, ids:any ):Promise<any> {
     try {
-      const args = _.set( {}, this.entity.singular, seed );
-      const item:any = await this.entity.entityResolveHandler.createType( {root:{}, args, context:{}} );
-      _.set( ids, name, item.id );
+      let enit = await EntityItem.create( this.entity, seed );
+      enit = await enit.save( true );
+      if( ! enit ) throw `seed '${name}' could not be saved`;
+      const id = enit.item.id;
+      if( ! id ) throw `seed '${name}' has no id`;
+      _.set( ids, name, id );
     } catch (error) {
       console.error( `Entity '${this.entity.typeName }' could not seed an instance`, seed, error );
     }
@@ -44,10 +46,19 @@ export class EntitySeeder extends EntityModule {
    */
   public async seedReferences( idsMap:any ):Promise<void> {
     await Promise.all( _.map( this.entity.seeds, async (seed, name) => {
-      await Promise.all( _.map( this.entity.assocTo, async assocTo => {
+
+      const assocTos = _.concat(
+        this.entity.assocTo,
+        _.flatten(_.map( this.entity.implements, impl => impl.assocTo )));
+      await Promise.all( _.map( assocTos, async assocTo => {
         await this.seedAssocTo( assocTo, seed, idsMap, name );
       }));
-      await Promise.all( _.map( this.entity.assocToMany, async assocToMany => {
+
+      const assocToManys = _.concat(
+        this.entity.assocToMany,
+        _.flatten(_.map( this.entity.implements, impl => impl.assocToMany )));
+
+      await Promise.all( _.map( assocToManys, async assocToMany => {
         await this.seedAssocToMany( assocToMany, seed, idsMap, name );
       }));
     }));
@@ -100,11 +111,12 @@ export class EntitySeeder extends EntityModule {
    */
   private async updateAssocTo( idsMap: any, name: string, refEntity: Entity, refId: string, refType?: string ) {
     const id = _.get( idsMap, [this.entity.typeName, name] );
-    const item = await this.entity.findById( id, false );
-    _.set( item, refEntity.foreignKey, _.toString(refId) );
-    if( refType ) _.set( item, refEntity.typeField, refType );
-    const args = _.set( {}, this.entity.singular, item );
-    await this.entity.entityResolveHandler.updateType( { root:{}, args, context:{} } );
+    if( ! id ) return console.warn(
+      `[${this.entity.name}] cannot update assocTo, no id for '${refEntity.name}'.${name}`);
+    const enit = await this.entity.findById( id );
+    _.set( enit.item, refEntity.foreignKey, _.toString(refId) );
+    if( refType ) _.set( enit.item, refEntity.typeField, refType );
+    await enit.save( true );
   }
 
   /**
@@ -113,10 +125,9 @@ export class EntitySeeder extends EntityModule {
   private async updateAssocToMany( idsMap:any, name:string, refEntity:Entity, refIds:any[] ) {
     refIds = _.map( refIds, refId => _.toString( refId ) );
     const id = _.get( idsMap, [this.entity.typeName, name] );
-    const item = await this.entity.findById( id, false );
-    _.set( item, refEntity.foreignKeys, refIds );
-    const args = _.set( {}, this.entity.singular, item );
-    await this.entity.entityResolveHandler.updateType( { root:{}, args, context:{} } );
+    const enit = await this.entity.findById( id );
+    _.set( enit.item, refEntity.foreignKeys, refIds );
+    await enit.save( true );
   }
 
 

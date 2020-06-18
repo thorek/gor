@@ -1,152 +1,110 @@
 import _ from 'lodash';
 
+import { EntityReference } from './entity';
+import { EntityItem } from './entity-item';
 import { EntityModule } from './entity-module';
+import { ValidationViolation } from './entity-validator';
+
+//
+//
+export class NotFoundError extends Error {
+
+  constructor(message?: string) {
+    super(message);
+    Object.setPrototypeOf(this, new.target.prototype); // restore prototype chain
+    this.name = NotFoundError.name; // stack traces display correctly now
+}
+}
 
 //
 //
 export class EntityAccessor extends EntityModule {
 
-  get resolver() { return this.entity.resolver }
+  get dataStore() { return this.entity.resolver }
 
   /**
    *
    */
-  async findById( id:any, decorate = true ):Promise<any> {
-    const item = await this.resolver.findById( this.entity, id );
-    return decorate ? await this.decorateItem( item ) : item;
-  }
-
-  /**
-   *
-   */
-  async findByIds( ids:any[], decorate = true ):Promise<any> {
-    const items = await this.entity.resolver.findByIds( this.entity, ids );
-    if( decorate ) for( const item of items ) await this.decorateItem( item );
-    return items;
+  async findById( id:any ):Promise<EntityItem> {
+    if( ! id ) throw new Error( `[${this.entity.name}].findById - no id provided` );
+    const item = await this.dataStore.findById( this.entity, id );
+    if( ! item ) throw new NotFoundError( `[${this.entity.name}] with id '${id}' does not exist`);
+    return EntityItem.create( this.entity, item );
   }
 
   /**
    *
    */
-  async findByAttribute( attrValue:{[name:string]:any}, decorate = true ):Promise<any[]>{
-    const items = await this.entity.resolver.findByAttribute( this.entity, attrValue );
-    if( decorate ) for( const item of items ) await this.decorateItem( item );
-    return items;
-  }
-
-
-  /**
-   *
-   */
-  private async decorateItem( item:any ):Promise<any> {
-    await this.resolveVirtualAttributes( item );
-    await this.resolveAssocTo( item );
-    this.resolveAssocToMany( item );
-    this.resolveAssocFrom( item );
-    return item;
-  }
-
-  /**
-   * @param item the item to decorate, this item will be mutated
-   * @returns the item
-   */
-  private async resolveVirtualAttributes( item:any ):Promise<any> {
-    for( const name of _.keys(this.entity.attributes) ){
-      const attribute = this.entity.attributes[name];
-      if( attribute.virtual ) await this.resolveVirtualAttribute( item, name );
-    }
-    return item;
+  async findByIds( ids:any[] ):Promise<EntityItem[]> {
+    const items = await this.dataStore.findByIds( this.entity, ids );
+    return Promise.all( _.map( items, item => EntityItem.create( this.entity, item ) ) );
   }
 
   /**
    *
    */
-  private async resolveVirtualAttribute( item:any, name:string ):Promise<void> {
-    let resolver = _.get( this.context.virtualResolver, [this.entity.name, name] );
-    if( ! _.isFunction( resolver ) ) resolver = () => {
-      return `[no resolver for '${this.entity.name}:${name}' provided]`
-    }
-    _.set( item, name, resolver);
-  }
-
-
-  /**
-   * @param item the item to decorate, this item will be mutated
-   * @returns the item
-   */
-  private async resolveAssocTo( item:any ){
-    for( const assocTo of this.entity.assocTo ){
-      let foreignEntity = this.context.entities[assocTo.type];
-      const fieldName = foreignEntity.singular;
-      const foreignKey = _.get( item, foreignEntity.foreignKey);
-      if( foreignEntity.isPolymorph ){
-        const specificType = _.get( item, foreignEntity.typeField );
-        foreignEntity = this.context.entities[specificType];
-      }
-      Object.defineProperty( item, fieldName, {
-        get: async () => { return foreignKey ? foreignEntity.findById( foreignKey ) : undefined }
-      });
-    }
-    return item;
+  async findByAttribute( attrValue:{[name:string]:any} ):Promise<EntityItem[]>{
+    const items = await this.dataStore.findByAttribute( this.entity, attrValue );
+    return Promise.all( _.map( items, item => EntityItem.create( this.entity, item ) ) );
   }
 
   /**
-   * @param item the item to decorate, this item will be mutated
-   * @returns the item
+   *
+   * @param filter as it comes from the graqpql request
    */
-  private resolveAssocToMany( item:any ):any {
-    for( const assocToMany of this.entity.assocToMany ){
-      const foreignEntity = this.context.entities[assocToMany.type];
-      const foreignKeys = _.get( item, foreignEntity.foreignKeys);
-      Object.defineProperty( item, foreignEntity.plural, {
-        get: async () => { return foreignEntity.findByIds( foreignKeys )  }
-      });
-    }
-    return item;
+  async findByFilter( filter:any ):Promise<EntityItem[]>{
+    return this.dataStore.findByFilter( this.entity, filter );
   }
-
 
   /**
-   * @param item the item to decorate, this item will be mutated
-   * @returns the item
+   *
    */
-  private resolveAssocFrom( item:any ):any {
-    for( const assocFrom of this.entity.assocFrom ){
-      const foreignEntity = this.context.entities[assocFrom.type];
-      Object.defineProperty( item, foreignEntity.plural, {
-        get: async () => foreignEntity.findByAttribute( _.set( {}, this.entity.foreignKey , _.toString(item.id) ) )
-      });
+  async save( attributes:any, skipValidation = false ):Promise<EntityItem|ValidationViolation[]> {
+    // TODO set defaults
+    if( ! skipValidation ){
+      const validationViolations = await this.entity.validate( attributes );
+      if( _.size( validationViolations ) ) return validationViolations;
     }
-    return item;
+    const item = _.has( attributes, 'id') ?
+      await this.dataStore.update( this.entity, attributes ) :
+      await this.create( attributes );
+    return EntityItem.create( this.entity, item );
   }
 
-  // /**
-  //  *  @returns the assocTo EntityInstance
-  //  */
-  // async getAssocTo( ei:EntityItem, assocTo:string, context:any ):Promise<EntityItem> {
-  //   const entity = ei.entity.context.entities[assocTo];
-  //   if( ! entity ) throw new Error(`no such type '${assocTo}'`);
-  //   const foreignKey = _.get( ei.item, entity.foreignKey );
-  //   if( ! foreignKey ) throw new Error(`no foreignKey for '${assocTo}' in '${ei.entity.typeName}'`);
-  //   const item = await entity.findById( foreignKey );
-  //   return {entity, item};
-  // }
+  /**
+   *
+   */
+  private async create( attributes:any ){
+    for( const assocTo of this.entity.assocToInput ) await this.createInlineInput( assocTo, attributes );
+    return this.dataStore.create( this.entity, attributes );
+  }
 
-  // /**
-  //  *  returns the actual instance from a chain of types with sequential belongTo relations
-  //  */
-  // async getItemFromAssocToChain( ei:EntityItem, typeNames: string, context: any ):Promise<any> {
-  //   const typeChain = _.split( typeNames, '.' );
-  //   try {
-  //     for( const type of typeChain ){
-  //       ei = await this.getAssocTo( ei, type, context );
-  //     }
-  //     return ei.item;
-  //   } catch (error) {
-  //     console.error( error );
-  //     return null;
-  //   }
-  // }
+  /**
+   *
+   */
+  delete( id:any ):Promise<boolean> {
+    return this.dataStore.delete( this.entity, id );
+  }
 
+  /**
+   *
+   */
+  truncate():Promise<boolean>{
+    return this.dataStore.truncate( this.entity );
+  }
+
+  /**
+   *
+   */
+  private async createInlineInput( assocTo: EntityReference, attrs: any ) {
+    const refEntity = this.context.entities[assocTo.type];
+    const input = _.get( attrs, refEntity.singular );
+    if( ! input ) return;
+    if ( _.has( attrs, refEntity.foreignKey ) ) throw new Error(
+      `'${this.entity.name} you cannot have '${refEntity.foreignKey}' if you provide inline input'` );
+    const item = await this.dataStore.create( refEntity, input );
+    _.set( attrs, refEntity.foreignKey, _.toString( item.id ) );
+    _.unset( attrs, refEntity.singular );
+  }
 
 }

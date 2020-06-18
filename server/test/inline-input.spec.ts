@@ -51,18 +51,17 @@ describe('Inline Input', () => {
     expect( alpha ).toBeDefined();
     const beta = context.entities['Beta'];
     expect( beta ).toBeDefined();
-    await beta.entityResolveHandler.createType( {root:{}, args:{ beta: { name: 'beta1', color: 'RED'} }, context:{} } );
+    await beta.entityResolveHandler.saveType( {root:{}, args:{ beta: { name: 'beta1', color: 'RED'} }, context:{} } );
     const beta1 = await beta.findOneByAttribute( {name: 'beta1' } );
-    expect( beta1 ).toEqual( expect.objectContaining( {name: 'beta1', color: 'RED' }) );
-    await alpha.entityResolveHandler.createType( {root:{}, args:{ alpha: { name: 'alpha1', betaId: _.toString(beta1.id)} }, context:{} } );
+    expect( beta1?.item ).toEqual( expect.objectContaining( {name: 'beta1', color: 'RED' }) );
+    await alpha.entityResolveHandler.saveType( {root:{}, args:{ alpha: { name: 'alpha1', betaId: beta1?.id } }, context:{} } );
     const alpha1 = await alpha.findOneByAttribute( {name: 'alpha1' } );
-    expect( alpha1 ).toEqual( expect.objectContaining( { name: 'alpha1', betaId: _.toString( beta1.id ) } ) );
+    expect( alpha1?.item ).toEqual( expect.objectContaining( { name: 'alpha1', betaId: beta1?.id } ) );
   })
 
 
   it('should find create entities with inline input',  async () => {
     const alpha = context.entities['Alpha'];
-    const beta = context.entities['Beta'];
 
     const resolverCtx:ResolverContext = { root:{}, args:{}, context:{} }
     resolverCtx.args = {
@@ -71,10 +70,10 @@ describe('Inline Input', () => {
         beta: { name: 'betaInline', color: 'red' }
       }
     }
-    await alpha.entityResolveHandler.createType( resolverCtx );
-    const alpha3:any = await alpha.findOneByAttribute({name: 'alpha3'});
-    const betaInline = await alpha3.beta;
-    expect( betaInline ).toMatchObject({ name: 'betaInline', color: 'red' })
+    await alpha.entityResolveHandler.saveType( resolverCtx );
+    const alpha3 = await alpha.findOneByAttribute({name: 'alpha3'});
+    const betaInline = await alpha3?.assocTo('Beta');
+    expect( betaInline?.item ).toMatchObject({ name: 'betaInline', color: 'red' })
   })
 
 })

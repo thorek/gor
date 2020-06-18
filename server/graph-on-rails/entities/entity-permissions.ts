@@ -7,17 +7,28 @@ import { ResolverContext } from '../core/resolver-context';
 export type CrudAction = "read" | "create" | "update" | "delete";
 
 /**
+ *  TODO refactor
+ *  it was wrong to assume the allowed values and the "default restrictions" could be done simultaneously
+ *  permissions should
+ *  1. allow / disallow action on entity (role based)
+ *  2. add additional "filter" to remove unallowed items - based on the item
  *
+ *  Another definition should decide about the "select" of entities
  */
 export class EntityPermissions extends EntityModule {
 
   /**
+   * Will return `true`
+   *   * if no user/roles definition is present in resolver context
+   *   * the entity definition has no permission definition
    *
+   * @return array of ids, that are allowed to access or true (everything), false (nothing) is allowed
    */
   async getPermittedIds( action:CrudAction, resolverCtx:ResolverContext ):Promise<boolean|number[]> {
     if( ! this.isUserAndRolesDefined() ) return true;
     if( ! this.entity.permissions ) return true;
-    const roles = this.getUserRoles( resolverCtx );
+    const user = _.get( resolverCtx.context, this.context.contextUser as string );
+    const roles = this.getUserRoles( user );
     let ids:number[] = [];
     for( const role of roles ){
       const roleIds = await this.getPermittedIdsForRole( role, action, resolverCtx );
@@ -219,8 +230,7 @@ export class EntityPermissions extends EntityModule {
   /**
    *
    */
-  protected getUserRoles( resolverCtx:ResolverContext ):string[] {
-    const user = _.get( resolverCtx.context, this.context.contextUser as string );
+  protected getUserRoles( user:string ):string[] {
     if( ! user ) throw "should not happen, no user in context";
     let roles:any = _.get( user, this.context.contextRoles as string );
     if( ! roles ) throw new AuthenticationError( `User has no role - ${JSON.stringify( user ) }` );

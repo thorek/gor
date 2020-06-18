@@ -15,12 +15,12 @@ import {
 } from 'graphql';
 import _, { Dictionary } from 'lodash';
 
-
 import { Context } from '../core/context';
 import { Entity, EntityReference } from '../entities/entity';
 import { TypeAttribute } from '../entities/type-attribute';
-import { SchemaBuilder } from './schema-builder';
 import { FilterType } from './filter-type';
+import { SchemaBuilder } from './schema-builder';
+
 
 const scalarTypes:{[scalar:string]:GraphQLType} = {
   id: GraphQLID,
@@ -221,7 +221,8 @@ export class EntityBuilder extends SchemaBuilder {
     const refObjectType = this.graphx.type(refEntity.typeName);
     return _.set( fields, refEntity.singular, {
       type: refObjectType,
-      resolve: (root:any, args:any, context:any ) => this.resolveHandler.resolveAssocToType( refEntity, {root, args, context} )
+      resolve: (root:any, args:any, context:any ) =>
+        this.resolveHandler.resolveAssocToType( refEntity, {root, args, context} )
     });
   }
 
@@ -400,7 +401,7 @@ export class EntityBuilder extends SchemaBuilder {
     this.graphx.type( 'mutation' ).extendFields( () => {
       const args = _.set( {}, this.entity.singular, { type: this.graphx.type(this.entity.createInputTypeName)} );
       return _.set( {}, this.entity.createMutationName, {
-        type,	args, resolve: (root:any, args:any, context:any ) => this.resolveHandler.createType( {root, args, context} )
+        type,	args, resolve: (root:any, args:any, context:any ) => this.resolveHandler.saveType( {root, args, context} )
       });
     });
   }
@@ -412,7 +413,7 @@ export class EntityBuilder extends SchemaBuilder {
     this.graphx.type( 'mutation' ).extendFields( () => {
       const args = _.set( {}, this.entity.singular, { type: this.graphx.type(this.entity.updateInputTypeName)} );
       return _.set( {}, this.entity.updateMutationName, {
-        type,	args, resolve: (root:any, args:any, context:any ) => this.resolveHandler.updateType( {root, args, context} )
+        type,	args, resolve: (root:any, args:any, context:any ) => this.resolveHandler.saveType( {root, args, context} )
       });
     });
   }

@@ -38,6 +38,7 @@ const domainConfiguration = YAML.parse(`
       attributes:
         name: key
       assocTo: AlphaBeta
+      assocFrom: Super
       seeds:
         delta1:
           name: delta1
@@ -55,6 +56,32 @@ const domainConfiguration = YAML.parse(`
             id: beta1
             type: Beta
 
+    Super:
+      interface: true
+      attributes:
+        name: key
+      assocTo: Delta
+
+    ImplementA:
+      implements: Super
+      attributes:
+        aAttr: string
+      seeds:
+        ia1:
+          name: ia1
+          aAttr: the value 1
+          Delta: delta1
+
+    ImplementB:
+      implements: Super
+      attributes:
+        bAttr: int
+      seeds:
+        ib1:
+          name: ib1
+          cAttr: 1
+          Delta: delta1
+
 `);
 
 describe('Ploymorph Types', () => {
@@ -69,17 +96,28 @@ describe('Ploymorph Types', () => {
     // console.log( printSchema( await runtime.schema() ));
   })
 
-  it('should find create entities',  async () => {
+  it('should find polymorph assocTo',  async () => {
     const delta = context.entities['Delta'];
-    const delta1:any = await delta.findOneByAttribute( {name: 'delta1' } );
-    const ab1 = await delta1.alphaBeta
-    expect( ab1 ).toMatchObject({name: 'alpha1'})
+    const delta1 = await delta.findOneByAttribute( {name: 'delta1' } );
+    if( ! delta1 ) return expect( delta1 ).toBeDefined();
+    const ab1 = await delta1.assocTo('AlphaBeta');
+    if( ! ab1 ) return expect( ab1 ).toBeDefined();
+    expect( ab1.item ).toMatchObject({name: 'alpha1'})
 
-    const delta3:any = await delta.findOneByAttribute( {name: 'delta3' } );
-    const ab3 = await delta3.alphaBeta
-    expect( ab3 ).toMatchObject({name: 'beta1'})
+    const delta3 = await delta.findOneByAttribute( {name: 'delta3' } );
+    if( ! delta3 ) return expect( delta3 ).toBeDefined();
+    const ab3 = await delta3.assocTo('AlphaBeta')
+    if( ! ab3 ) return expect( ab3 ).toBeDefined();
+    expect( ab3.item ).toMatchObject({name: 'beta1'})
   })
 
+  it( 'should resolve polymorph assocFrom', async () => {
+    const delta = context.entities['Delta'];
+    const delta1 = await delta.findOneByAttribute( {name: 'delta1' } );
+    if( ! delta1 ) return expect( delta1 ).toBeDefined();
+    const supers = await delta1.assocFrom('Super')
+    expect( supers ).toHaveLength( 2 );
+  })
 
 
 })

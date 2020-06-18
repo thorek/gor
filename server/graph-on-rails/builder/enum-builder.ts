@@ -1,12 +1,12 @@
 import { GraphQLEnumType } from 'graphql';
-import _ from 'lodash';
+import _, { Dictionary } from 'lodash';
 
 import { SchemaBuilder } from './schema-builder';
 
 export abstract class EnumBuilder extends SchemaBuilder {
 
 
-  abstract enum():{[name:string]:{[key:string]:string}}
+  abstract enum():Dictionary<any>
 
 
   protected createObjectType(): void {
