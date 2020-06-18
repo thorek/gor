@@ -350,11 +350,11 @@ export class EntityBuilder extends SchemaBuilder {
   protected createFilterType():void {
 		const name = this.entity.filterName;
 		this.graphx.type( name, { name, from: GraphQLInputObjectType, fields: () => {
-			const fields = { id: { type: GraphQLID } };
+      const fields = { id: { type: GraphQLID } };
 			_.forEach( this.attributes(), (attribute, name) => {
         if( attribute.virtual ) return;
-        const type = this.getFilterType(attribute);
-				if( type && type.graphqlType ) _.set( fields, name, { type: type.graphqlType } );
+        const filterType = this.getFilterType(attribute);
+				if( filterType ) _.set( fields, name, { type: filterType } );
 			});
 			return fields;
 		} });
