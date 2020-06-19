@@ -25,6 +25,8 @@ entity:
     seeds:
       personal:
         name: Personendaten
+      vertrag:
+        name: Vertragsdaten
       empl:
         name: Mitarbeiterdaten
       health:
@@ -32,6 +34,10 @@ entity:
         Industry:
           - finance
           - health
+      identifikationsDaten:
+        name: Identifikations-Daten
+      gwg-risiko-hoehe:
+        name: GWG Risiko Höhe
 
   DataSecurityRiskSource:
     union:
@@ -41,18 +47,74 @@ entity:
       - Organisation
 
   DataAtom:
+    attributes:
+      description: string
+    assocTo: ProcessingActivity
     assocToMany:
       - PersonCategory
       - DataCategory
+    seeds:
+      "1":
+        ProcessingActivity: BeratungHP
+        PersonCategory:
+          - vn
+        DataCategory:
+          - personal
+      "2":
+        ProcessingActivity: BeratungHP
+        PersonCategory:
+          - vp
+        DataCategory:
+          - personal
+      "3":
+        ProcessingActivity: BeratungHP
+        PersonCategory:
+          - vn
+        DataCategory:
+          - vertrag
+      "4":
+        ProcessingActivity: BeratungHP
+        PersonCategory:
+          - vp
+        DataCategory:
+          - vertrag
 
   ProcessingActivity:
     attributes:
       name:
-        key: Organisation
+        type: string
+        required: true
+        unique: Organisation
       purpose: string
       description: string
     assocTo: Organisation
     assocToMany: OrganisationalUnit
+    assocFrom: DataAtom
+    seeds:
+      BeratungHP:
+        name: Beratung Haftpflichtversicherung
+        Organisation: mtp
+        OrganisationalUnit:
+          - mtpInnen
+          - mtpVertrieb
+
+      GwG:
+        name: Erfüllung der GwG-Sorgfaltspflichten
+        Organisation: mtp
+        OrganisationalUnit:
+          - mtpInnen
+          - mtpVertrieb
+        DataAtom:
+          - PersonCategory:
+              - vn
+            DataCategory:
+              - identifikationsDaten
+            description: Ausweiskopien der VN
+          - PersonCategory:
+              - vn
+            DataCategory:
+              - gwg-risiko-hoehe
+
 
   OrganisationalUnit:
     attributes:
