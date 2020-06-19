@@ -21,7 +21,7 @@ describe('Schema Generation', () => {
     const schema = printSchema( await runtime.schema() );
     // expect( schema ).toContain("type Alpha");
     // expect( schema ).toContain("type Beta");
-    console.log( schema );
+    // console.log( schema );
   });
 
   it( 'should generate schema with custom entity', async () => {

@@ -1,6 +1,7 @@
 import _ from 'lodash';
-import { ValidationViolation } from './entity-validator';
+
 import { Entity } from './entity';
+import { ValidationViolation } from './entity-validator';
 
 //
 //
@@ -76,7 +77,7 @@ export class EntityItem {
   async save( skipValidation = false ):Promise<EntityItem>{
     const allowed = this.getAllowedAttributes();
     const attrs = _.pick( this.item, allowed );
-    const item = await this.entity.entityAccessor.save( attrs, skipValidation );
+    const item = await this.entity.accessor.save( attrs, skipValidation );
     if( _.isArray( item ) ) throw this.getValidationError( item );
     return EntityItem.create( this.entity, item );
   }

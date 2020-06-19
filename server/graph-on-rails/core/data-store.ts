@@ -5,7 +5,7 @@ import { ResolverContext } from './resolver-context';
 /**
  *
  */
-export abstract class Resolver {
+export abstract class DataStore {
 
   abstract findById( entity:Entity, id:any ):Promise<any>
 

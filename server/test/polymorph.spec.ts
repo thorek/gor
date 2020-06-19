@@ -1,10 +1,7 @@
-import { printSchema } from 'graphql';
-import _ from 'lodash';
 import YAML from 'yaml';
 
 import { Context } from '../graph-on-rails/core/context';
 import { Runtime } from '../graph-on-rails/core/runtime';
-import { ResolverContext } from '../graph-on-rails/core/resolver-context';
 import { Seeder } from '../graph-on-rails/core/seeder';
 
 const domainConfiguration = YAML.parse(`

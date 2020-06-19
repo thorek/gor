@@ -20,7 +20,7 @@ export class NotFoundError extends Error {
 //
 export class EntityAccessor extends EntityModule {
 
-  get dataStore() { return this.entity.resolver }
+  get dataStore() { return this.entity.context.dataStore }
 
   /**
    *

@@ -13,7 +13,7 @@ export class EntitySeeder extends EntityModule {
    *
    */
   public async truncate():Promise<boolean> {
-    return await this.entity.entityResolveHandler.truncate();
+    return await this.entity.resolver.truncate();
   }
 
   /**

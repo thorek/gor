@@ -1,26 +1,26 @@
+import { GraphQLType } from 'graphql';
 import _ from 'lodash';
 
-import { MongoDbResolver } from '../../graph-on-rails-mongodb/mongodb.resolver';
+import { MongoDbDataStore } from '../../graph-on-rails-mongodb/mongodb.data-store';
+import { EnumConfig } from '../builder/enum-config-builder';
 import { FilterType } from '../builder/filter-type';
 import { SchemaBuilder } from '../builder/schema-builder';
+import { EntityConfig } from '../entities/config-entity';
 import { Entity } from '../entities/entity';
 import { EntityPermissions } from '../entities/entity-permissions';
+import { EntityResolver } from '../entities/entity-resolver';
 import { EntitySeeder } from '../entities/entity-seeder';
 import { ValidateJs } from '../validation/validate-js';
 import { Validator } from '../validation/validator';
+import { DataStore } from './data-store';
 import { GraphX } from './graphx';
-import { Resolver } from './resolver';
 import { ResolverContext } from './resolver-context';
-import { EntityConfig } from '../entities/config-entity';
-import { EnumConfig } from '../builder/enum-config-builder';
-import { EntityResolveHandler } from '../entities/entity-resolve-handler';
-import { GraphQLInputType, GraphQLType } from 'graphql';
 
 export type GorConfig = {
   name?:string
-  resolver?:Resolver
+  dataStore?:DataStore
   validator?:(entity:Entity) => Validator
-  entityResolveHandler?:(entity:Entity) => EntityResolveHandler
+  entityResolver?:(entity:Entity) => EntityResolver
   entityPermissions?:(entity:Entity) => EntityPermissions
   entitySeeder?:(entity:Entity) => EntitySeeder
   contextUser?:string
@@ -48,10 +48,10 @@ export class Context {
    */
   static async create( name:string, config?:GorConfig):Promise<Context> {
     if( ! config ) config = {};
-    if( ! config.resolver ) config.resolver = await this.getDefaultResolver( name );
+    if( ! config.dataStore ) config.dataStore = await this.getDefaultResolver( name );
     _.defaults( config, {
       validator: (entity:Entity) => new ValidateJs( entity ),
-      entityResolveHandler: (entity:Entity) => new EntityResolveHandler( entity ),
+      entityResolver: (entity:Entity) => new EntityResolver( entity ),
       entityPermissions: (entity:Entity) => new EntityPermissions( entity ),
       entitySeeder: (entity:Entity) => new EntitySeeder( entity ),
       contextUser: 'user',
@@ -60,13 +60,13 @@ export class Context {
     return new Context(config);
   }
 
-  private static getDefaultResolver( dbName:string ):Promise<Resolver> {
-    return MongoDbResolver.create( { url: 'mongodb://localhost:27017', dbName } );
+  private static getDefaultResolver( dbName:string ):Promise<DataStore> {
+    return MongoDbDataStore.create( { url: 'mongodb://localhost:27017', dbName } );
   }
 
-  get resolver() {
-    if( ! this.config.resolver ) throw new Error("Context - you must provide a resolver" );
-    return this.config.resolver;
+  get dataStore() {
+    if( ! this.config.dataStore ) throw new Error("Context - you must provide a dataStore" );
+    return this.config.dataStore;
   }
 
   validator( entity:Entity ) {
@@ -74,9 +74,9 @@ export class Context {
     return this.config.validator(entity);
   }
 
-  entityResolveHandler( entity:Entity ) {
-    if( ! this.config.entityResolveHandler ) throw new Error("Context - you must provide an entityResolveHandler factory method" );
-    return this.config.entityResolveHandler(entity);
+  entityResolver( entity:Entity ) {
+    if( ! this.config.entityResolver ) throw new Error("Context - you must provide an entityResolver factory method" );
+    return this.config.entityResolver(entity);
   }
 
   entityPermissions( entity:Entity ) {

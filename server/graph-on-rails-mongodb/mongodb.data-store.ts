@@ -3,7 +3,7 @@ import _ from 'lodash';
 import { Collection, Db, FilterQuery, MongoClient, ObjectId } from 'mongodb';
 
 import { FilterType } from '../graph-on-rails/builder/filter-type';
-import { Resolver } from '../graph-on-rails/core/resolver';
+import { DataStore } from '../graph-on-rails/core/data-store';
 import { ResolverContext } from '../graph-on-rails/core/resolver-context';
 import { Entity } from '../graph-on-rails/entities/entity';
 import { EnumFilterType } from './filter/enum-filter-type';
@@ -13,7 +13,7 @@ import { StringFilterType } from './filter/string-filter-type';
 /**
  *
  */
-export class MongoDbResolver extends Resolver {
+export class MongoDbDataStore extends DataStore {
 
 
   /**
@@ -24,9 +24,9 @@ export class MongoDbResolver extends Resolver {
   /**
    *
    */
-  public static async create( config:{url:string, dbName:string} ):Promise<Resolver> {
+  public static async create( config:{url:string, dbName:string} ):Promise<DataStore> {
     const db = await this.getDb( config );
-    return new MongoDbResolver( db );
+    return new MongoDbDataStore( db );
   }
 
   /**

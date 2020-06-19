@@ -70,11 +70,11 @@ export class EntityPermissions extends EntityModule {
    */
   private async resolvePermittedIds( permission:object, resolverCtx:ResolverContext ):Promise<boolean|number[]>{
     try {
-      return await this.entity.resolver.getPermittedIds( this.entity, permission, resolverCtx );
+      "return await this.entity.resolver.getPermittedIds( this.entity, permission, resolverCtx );"
     } catch (error) {
       console.error(`'${this.entity.name}' resolver could not resolve permission`, permission, error);
-      return false;
     }
+    return false;
   }
 
   /**
@@ -94,12 +94,12 @@ export class EntityPermissions extends EntityModule {
     const ids = await entity.entityPermissions.getPermittedIdsForRole( role, action as CrudAction, resolverCtx );
     if( _.isBoolean( ids ) ) return ids;
     try {
-      return await this.entity.resolver.getPermittedIdsForForeignKeys( this.entity, entity.foreignKey, ids );
+      "return await this.entity.resolver.getPermittedIdsForForeignKeys( this.entity, entity.foreignKey, ids );"
     } catch (error) {
       console.error(`'${this.entity.typeName}' resolver could not resolve permission for foreign keys for`,
         entity.foreignKey, error);
-      return false;
     }
+    return false;
   }
 
   /**

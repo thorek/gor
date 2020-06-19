@@ -53,7 +53,7 @@ export class SchemaFactory {
     if( this._builders ) return this._builders;
     const configTypeBuilders = this.getConfigTypeBuilder();
     const customBuilders = this.getCustomBuilders();
-    const scalarFilterTypeBuilders = this.context.resolver.getScalarFilterTypes();
+    const scalarFilterTypeBuilders = this.context.dataStore.getScalarFilterTypes();
     this._builders = [
       ...scalarFilterTypeBuilders,
       ...configTypeBuilders,

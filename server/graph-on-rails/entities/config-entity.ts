@@ -1,5 +1,5 @@
-import _, { at } from 'lodash';
-import inflection from 'inflection';
+import _ from 'lodash';
+
 import { Entity } from './entity';
 import { TypeAttribute } from './type-attribute';
 

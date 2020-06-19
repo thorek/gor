@@ -7,9 +7,9 @@ import { EntityModule } from './entity-module';
 
 //
 //
-export class EntityResolveHandler extends EntityModule {
+export class EntityResolver extends EntityModule {
 
-  get accessor() { return this.entity.entityAccessor }
+  get accessor() { return this.entity.accessor }
 
   /**
    *

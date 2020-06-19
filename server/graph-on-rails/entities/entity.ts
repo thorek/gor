@@ -7,7 +7,7 @@ import { EntitySeeder } from './entity-seeder';
 import { EntityValidator, ValidationViolation } from './entity-validator';
 import { TypeAttribute } from './type-attribute';
 import { ResolverContext } from '../core/resolver-context';
-import { EntityResolveHandler } from './entity-resolve-handler';
+import { EntityResolver } from './entity-resolver';
 import { EntityAccessor } from './entity-accessor';
 import { EntityItem } from './entity-item';
 
@@ -26,15 +26,14 @@ export abstract class Entity {
   private _context!:Context;
   get context() { return this._context }
   get graphx() { return this.context.graphx }
-  get resolver() { return this.context.resolver }
-  get entitySeeder() { return this._entitySeeder }
   get entityPermissions() { return this._entityPermissions }
-  get entityResolveHandler() { return this._entityResolveHandler }
-  get entityValidator() { return this._entityValidator }
-  get entityAccessor() { return this._entityAccessor }
+  get seeder() { return this._entitySeeder }
+  get resolver() { return this._entityResolver }
+  get validator() { return this._entityValidator }
+  get accessor() { return this._entityAccessor }
 
   protected _entitySeeder!:EntitySeeder;
-  protected _entityResolveHandler!:EntityResolveHandler;
+  protected _entityResolver!:EntityResolver;
   protected _entityPermissions!:EntityPermissions;
   protected _entityValidator!:EntityValidator;
   protected _entityAccessor!:EntityAccessor;
@@ -45,7 +44,7 @@ export abstract class Entity {
   init( context:Context ){
     this._context = context;
     this.context.entities[this.typeName] = this;
-    this._entityResolveHandler = this.context.entityResolveHandler( this );
+    this._entityResolver = this.context.entityResolver( this );
     this._entitySeeder = this.context.entitySeeder( this );
     this._entityPermissions = this.context.entityPermissions( this );
     this._entityValidator = new EntityValidator( this );
@@ -155,7 +154,7 @@ export abstract class Entity {
    *
    */
   async validate( attributes:any ):Promise<ValidationViolation[]> {
-    return this.entityValidator.validate( attributes );
+    return this.validator.validate( attributes );
   }
 
   /**
@@ -170,28 +169,28 @@ export abstract class Entity {
    *
    */
   async findById( id:any ):Promise<EntityItem> {
-    return this.entityAccessor.findById( id );
+    return this.accessor.findById( id );
   }
 
   /**
    *
    */
   async findByIds( ids:any[] ):Promise<EntityItem[]> {
-    return this.entityAccessor.findByIds( ids );
+    return this.accessor.findByIds( ids );
   }
 
   /**
    *
    */
   async findByAttribute( attrValue:{[name:string]:any} ):Promise<EntityItem[]> {
-    return this.entityAccessor.findByAttribute( attrValue );
+    return this.accessor.findByAttribute( attrValue );
   }
 
   /**
    *
    */
   async findOneByAttribute( attrValue:{[name:string]:any} ):Promise<EntityItem|undefined> {
-    return _.first( await this.entityAccessor.findByAttribute( attrValue ) );
+    return _.first( await this.accessor.findByAttribute( attrValue ) );
   }
 
 }

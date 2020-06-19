@@ -43,7 +43,7 @@ type AttrFieldConfig = {
 export class EntityBuilder extends SchemaBuilder {
 
   name() { return this.entity.name }
-  get resolveHandler() { return this.entity.entityResolveHandler }
+  get resolver() { return this.entity.resolver }
   attributes():{[name:string]:TypeAttribute} { return this.entity.attributes };
 
 	//
@@ -227,7 +227,7 @@ export class EntityBuilder extends SchemaBuilder {
     return _.set( fields, refEntity.singular, {
       type: refObjectType,
       resolve: (root:any, args:any, context:any ) =>
-        this.resolveHandler.resolveAssocToType( refEntity, {root, args, context} )
+        this.resolver.resolveAssocToType( refEntity, {root, args, context} )
     });
   }
 
@@ -239,7 +239,7 @@ export class EntityBuilder extends SchemaBuilder {
     return _.set( fields, refEntity.plural, {
       type: new GraphQLList( refObjectType),
       resolve: (root:any, args:any, context:any ) =>
-        this.resolveHandler.resolveAssocToManyTypes( refEntity, {root, args, context} )
+        this.resolver.resolveAssocToManyTypes( refEntity, {root, args, context} )
     });
   }
 
@@ -260,7 +260,7 @@ export class EntityBuilder extends SchemaBuilder {
     return _.set( fields, refEntity.plural, {
       type: new GraphQLList( refObjectType ),
       resolve: (root:any, args:any, context:any ) =>
-        this.resolveHandler.resolveAssocFromTypes( refEntity, {root, args, context} )
+        this.resolver.resolveAssocFromTypes( refEntity, {root, args, context} )
     });
   }
 
@@ -368,7 +368,7 @@ export class EntityBuilder extends SchemaBuilder {
 			return _.set( {}, this.entity.singular, {
 				type: this.graphx.type(this.entity.typeName),
 				args: { id: { type: GraphQLID } },
-				resolve: ( root:any, args:any, context:any ) => this.resolveHandler.resolveType( {root, args, context} )
+				resolve: ( root:any, args:any, context:any ) => this.resolver.resolveType( {root, args, context} )
 			});
     });
 	}
@@ -381,7 +381,7 @@ export class EntityBuilder extends SchemaBuilder {
 			return _.set( {}, this.entity.plural, {
 				type: new GraphQLList( this.graphx.type(this.entity.typeName) ),
 				args: { filter: { type: this.graphx.type(this.entity.filterName) } },
-        resolve: (root:any, args:any, context:any) => this.resolveHandler.resolveTypes( {root, args, context} )
+        resolve: (root:any, args:any, context:any) => this.resolver.resolveTypes( {root, args, context} )
 			});
 		});
 	}
@@ -407,7 +407,7 @@ export class EntityBuilder extends SchemaBuilder {
     this.graphx.type( 'mutation' ).extendFields( () => {
       const args = _.set( {}, this.entity.singular, { type: this.graphx.type(this.entity.createInputTypeName)} );
       return _.set( {}, this.entity.createMutationName, {
-        type,	args, resolve: (root:any, args:any, context:any ) => this.resolveHandler.saveType( {root, args, context} )
+        type,	args, resolve: (root:any, args:any, context:any ) => this.resolver.saveType( {root, args, context} )
       });
     });
   }
@@ -419,7 +419,7 @@ export class EntityBuilder extends SchemaBuilder {
     this.graphx.type( 'mutation' ).extendFields( () => {
       const args = _.set( {}, this.entity.singular, { type: this.graphx.type(this.entity.updateInputTypeName)} );
       return _.set( {}, this.entity.updateMutationName, {
-        type,	args, resolve: (root:any, args:any, context:any ) => this.resolveHandler.saveType( {root, args, context} )
+        type,	args, resolve: (root:any, args:any, context:any ) => this.resolver.saveType( {root, args, context} )
       });
     });
   }
@@ -433,7 +433,7 @@ export class EntityBuilder extends SchemaBuilder {
 			return _.set( {}, `delete${this.entity.typeName}`, {
 				type: GraphQLBoolean,
 				args: { id: { type: GraphQLID } },
-				resolve: (root:any, args:any, context:any ) => this.resolveHandler.deleteType( {root, args, context} )
+				resolve: (root:any, args:any, context:any ) => this.resolver.deleteType( {root, args, context} )
 			});
 		});
   }
