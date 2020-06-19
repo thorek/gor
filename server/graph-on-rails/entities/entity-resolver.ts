@@ -53,7 +53,8 @@ export class EntityResolver extends EntityModule {
   async resolveAssocToType( refEntity:Entity, resolverCtx:ResolverContext ):Promise<any> {
     const id = _.get( resolverCtx.root, refEntity.foreignKey );
     if( refEntity.isPolymorph ) return this.resolvePolymorphAssocTo( refEntity, resolverCtx, id );
-    return refEntity.findById( id );
+    const enit = await refEntity.findById( id );
+    return enit.item;
   }
 
   /**
@@ -61,9 +62,9 @@ export class EntityResolver extends EntityModule {
    */
   private async resolvePolymorphAssocTo( refEntity:Entity, resolverCtx:ResolverContext, id:any ):Promise<any> {
     const polymorphType = this.context.entities[_.get( resolverCtx.root, refEntity.typeField )];
-    const result = await polymorphType.findById( id );
-    _.set( result, '__typename', polymorphType.typeName );
-    return result;
+    const enit = await polymorphType.findById( id );
+    _.set( enit.item, '__typename', polymorphType.typeName );
+    return enit.item;
   }
 
   /**
@@ -72,7 +73,8 @@ export class EntityResolver extends EntityModule {
   async resolveAssocToManyTypes( refEntity:Entity, resolverCtx:ResolverContext ):Promise<any> {
     if( refEntity.isPolymorph ) return this.resolvePolymorphAssocToMany( refEntity, resolverCtx );
     const ids = _.map( _.get( resolverCtx.root, refEntity.foreignKeys ), id => _.toString );
-    return refEntity.findByIds( ids );
+    const enits = await refEntity.findByIds( ids );
+    return _.map( enits, enit => enit.item );
   }
 
   /**
@@ -87,10 +89,12 @@ export class EntityResolver extends EntityModule {
    */
   async resolveAssocFromTypes( refEntity:Entity, resolverCtx:ResolverContext ):Promise<any[]> {
     const id = _.toString(resolverCtx.root.id);
-    const fieldName = refEntity.isAssocToMany( this.entity ) ? refEntity.foreignKeys : refEntity.foreignKey;
+    const fieldName = refEntity.isAssocToMany( this.entity ) ? this.entity.foreignKeys : this.entity.foreignKey;
     const attr = _.set({}, fieldName, id );
     if( refEntity.isPolymorph ) return this.resolvePolymorphAssocFromTypes( refEntity, attr );
-    return refEntity.findByAttribute( attr );
+    const enits = await refEntity.findByAttribute( attr );
+    return _.map( enits, enit => enit.item );
+
   }
 
   /**
@@ -99,11 +103,11 @@ export class EntityResolver extends EntityModule {
   private async resolvePolymorphAssocFromTypes(refEntity:Entity, attr:any ):Promise<any[]> {
     const result = [];
     for( const entity of refEntity.entities ){
-      const items = await entity.findByAttribute( attr );
-      _.forEach( items, item => _.set(item, '__typename', entity.typeName ) );
-      result.push( items );
+      const enits = await entity.findByAttribute( attr );
+      _.forEach( enits, enit => _.set(enit.item, '__typename', entity.typeName ) );
+      result.push( enits );
     }
-    return _(result).flatten().compact().value();
+    return _(result).flatten().compact().map( enit => enit.item ).value();
   }
 
   /**

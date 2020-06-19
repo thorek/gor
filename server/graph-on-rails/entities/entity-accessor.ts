@@ -53,7 +53,8 @@ export class EntityAccessor extends EntityModule {
    * @param filter as it comes from the graqpql request
    */
   async findByFilter( filter:any ):Promise<EntityItem[]>{
-    return this.dataStore.findByFilter( this.entity, filter );
+    const items = await this.dataStore.findByFilter( this.entity, filter );
+    return Promise.all( _.map( items, item => EntityItem.create( this.entity, item ) ) );
   }
 
   /**
